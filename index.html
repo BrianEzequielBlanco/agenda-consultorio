@@ -2258,6 +2258,7 @@
     let CONFIG_CLINICA = null;
     let ROL_USUARIO = 'secretaria';
     let FECHA_LUNES_ACTUAL = new Date();
+    let FECHA_MOVIL_ACTUAL = new Date();
     let ID_TURNO_SELECCIONADO = null;
     let VISTA_ACTUAL = 'turnos';
     let DRAG_TURNO_ID = null;
@@ -2315,6 +2316,8 @@
 
       const hoy = new Date();
       FECHA_LUNES_ACTUAL = obtenerLunesDeSemana(hoy);
+      FECHA_MOVIL_ACTUAL = new Date(hoy);
+      FECHA_MOVIL_ACTUAL.setHours(0, 0, 0, 0);
       document.getElementById('datepicker').value = formatearFechaISO(hoy);
       const mobileDate = document.getElementById('mobileDatepicker');
       if (mobileDate) mobileDate.value = formatearFechaISO(hoy);
@@ -3798,12 +3801,25 @@
       return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
+    function esVistaMovilAgenda() {
+      return (window.innerWidth || document.documentElement.clientWidth || 1200) <= 980;
+    }
+
+    function obtenerEtiquetaFechaMovil(fecha) {
+      if (!fecha) return obtenerNombreMesAnio(FECHA_LUNES_ACTUAL);
+      const dia = fecha.toLocaleDateString('es-ES', { weekday: 'short' }).replace('.', '');
+      const dd = String(fecha.getDate()).padStart(2, '0');
+      const mm = String(fecha.getMonth() + 1).padStart(2, '0');
+      return `${dia.charAt(0).toUpperCase() + dia.slice(1)} ${dd}/${mm}`;
+    }
+
     function actualizarEtiquetasMes() {
-      const texto = obtenerNombreMesAnio(FECHA_LUNES_ACTUAL);
+      const textoDesktop = obtenerNombreMesAnio(FECHA_LUNES_ACTUAL);
+      const textoMobile = obtenerEtiquetaFechaMovil(FECHA_MOVIL_ACTUAL);
       const desktop = document.getElementById('currentMonthLabel');
       const mobile = document.getElementById('mobileCurrentMonthLabel');
-      if (desktop) desktop.innerText = texto;
-      if (mobile) mobile.innerText = texto;
+      if (desktop) desktop.innerText = textoDesktop;
+      if (mobile) mobile.innerText = textoMobile;
     }
 
     function sincronizarDatepickers(fechaISO) {
@@ -3817,7 +3833,7 @@
       if (event) event.preventDefault();
       const input = document.getElementById('mobileDatepicker');
       if (!input) return;
-      input.value = formatearFechaISO(FECHA_LUNES_ACTUAL);
+      input.value = formatearFechaISO(FECHA_MOVIL_ACTUAL);
       if (typeof input.showPicker === 'function') {
         input.showPicker();
       } else {
@@ -3828,14 +3844,27 @@
 
     function irHoy() {
       const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      FECHA_MOVIL_ACTUAL = new Date(hoy);
       FECHA_LUNES_ACTUAL = obtenerLunesDeSemana(hoy);
       sincronizarDatepickers(formatearFechaISO(hoy));
       renderizarCalendarioCompleto();
     }
 
     function navegarSemana(direccion) {
-      FECHA_LUNES_ACTUAL.setDate(FECHA_LUNES_ACTUAL.getDate() + direccion * 7);
-      sincronizarDatepickers(formatearFechaISO(FECHA_LUNES_ACTUAL));
+      if (esVistaMovilAgenda()) {
+        // En celular la agenda se usa día por día, por eso las flechas avanzan/retroceden 1 día.
+        FECHA_MOVIL_ACTUAL.setDate(FECHA_MOVIL_ACTUAL.getDate() + direccion);
+        FECHA_MOVIL_ACTUAL.setHours(0, 0, 0, 0);
+        FECHA_LUNES_ACTUAL = obtenerLunesDeSemana(FECHA_MOVIL_ACTUAL);
+        sincronizarDatepickers(formatearFechaISO(FECHA_MOVIL_ACTUAL));
+      } else {
+        // En escritorio se mantiene la navegación semanal.
+        FECHA_LUNES_ACTUAL.setDate(FECHA_LUNES_ACTUAL.getDate() + direccion * 7);
+        FECHA_LUNES_ACTUAL.setHours(0, 0, 0, 0);
+        FECHA_MOVIL_ACTUAL = new Date(FECHA_LUNES_ACTUAL);
+        sincronizarDatepickers(formatearFechaISO(FECHA_LUNES_ACTUAL));
+      }
       renderizarCalendarioCompleto();
     }
 
@@ -3843,6 +3872,8 @@
       if (!fechaStr) return;
       const partes = fechaStr.split('-');
       const d = new Date(partes[0], partes[1] - 1, partes[2]);
+      d.setHours(0, 0, 0, 0);
+      FECHA_MOVIL_ACTUAL = new Date(d);
       FECHA_LUNES_ACTUAL = obtenerLunesDeSemana(d);
       sincronizarDatepickers(fechaStr);
       renderizarCalendarioCompleto();
@@ -3964,6 +3995,25 @@
         });
     }
 
+    function obtenerDiasVisiblesMovil(fecha) {
+      const fechaMovil = new Date(fecha);
+      fechaMovil.setHours(0, 0, 0, 0);
+      const fechaISO = formatearFechaISO(fechaMovil);
+      const jsDay = fechaMovil.getDay();
+      const diaBase = DIAS_CONFIG.find(d => d.jsDay === jsDay) || DIAS_CONFIG[0];
+      const horarios = obtenerHorariosConfigurados();
+      const activo = !!horarios[diaBase.key]?.activo;
+      const tieneTurnos = BASE_DATOS.some(t => t.fecha === fechaISO);
+
+      return [{
+        ...diaBase,
+        fecha: fechaMovil,
+        fechaISO,
+        activo,
+        tieneTurnosFueraDeConfig: !activo && tieneTurnos
+      }];
+    }
+
     function obtenerHorasParaRenderizarFecha(fechaISO) {
       const horas = new Set(generarHorasParaFecha(fechaISO));
       BASE_DATOS
@@ -3999,7 +4049,9 @@
       const grid = document.getElementById('calendarGrid');
       grid.innerHTML = '';
 
-      const diasVisibles = obtenerDiasVisiblesSemana(FECHA_LUNES_ACTUAL);
+      const diasVisibles = esVistaMovilAgenda()
+        ? obtenerDiasVisiblesMovil(FECHA_MOVIL_ACTUAL)
+        : obtenerDiasVisiblesSemana(FECHA_LUNES_ACTUAL);
       ajustarColumnasCalendario(grid, diasVisibles.length);
 
       if (diasVisibles.length === 0) {
@@ -4563,8 +4615,11 @@
         return;
       }
 
-      FECHA_LUNES_ACTUAL = obtenerLunesDeSemana(new Date(Number(fechaNueva.slice(0,4)), Number(fechaNueva.slice(5,7)) - 1, Number(fechaNueva.slice(8,10))));
-      document.getElementById('datepicker').value = fechaNueva;
+      const fechaReprogramada = new Date(Number(fechaNueva.slice(0,4)), Number(fechaNueva.slice(5,7)) - 1, Number(fechaNueva.slice(8,10)));
+      fechaReprogramada.setHours(0, 0, 0, 0);
+      FECHA_MOVIL_ACTUAL = new Date(fechaReprogramada);
+      FECHA_LUNES_ACTUAL = obtenerLunesDeSemana(fechaReprogramada);
+      sincronizarDatepickers(fechaNueva);
       renderizarCalendarioCompleto();
       mostrarToast('Turno reprogramado correctamente.');
     }
