@@ -1833,6 +1833,7 @@
        ===================================================== */
     body.modal-open {
       overflow: hidden !important;
+      touch-action: none;
     }
 
     .modal-overlay {
@@ -2245,7 +2246,7 @@
       <h2 class="modal-title">Tratamientos pendientes</h2>
       <div id="modalTratamientosInfo" class="modal-subtitle">Actualizá lo que queda pendiente para esta ficha.</div>
 
-      <input type="hidden" id="tratDni">
+      <input type="hidden" id="tratPacienteId">
 
       <div id="tratamientosPacienteInputs" class="treatment-grid"></div>
 
@@ -2856,7 +2857,9 @@
 
       if (!errorRecordatorios) {
         (recordatorios || []).forEach(r => {
-          SEGUIMIENTO_COMPACTO[String(r.dni || '').replace(/\D/g, '')] = {
+          const pacienteId = String(r.paciente_id || '').trim();
+          if (!pacienteId) return;
+          SEGUIMIENTO_COMPACTO[pacienteId] = {
             ultimoRecordatorio: r.ultimo_recordatorio,
             estado: r.estado || 'Recordado este mes'
           };
@@ -2872,8 +2875,9 @@
 
       if (!errorTratamientos) {
         (tratamientos || []).forEach(t => {
-          const dni = String(t.dni || '').replace(/\D/g, '');
-          TRATAMIENTOS_DB[dni] = compatPendientesDesdeFila(t);
+          const pacienteId = String(t.paciente_id || '').trim();
+          if (!pacienteId) return;
+          TRATAMIENTOS_DB[pacienteId] = compatPendientesDesdeFila(t);
         });
       } else {
         console.warn('No se pudieron cargar tratamientos pendientes:', errorTratamientos.message);
@@ -2995,8 +2999,9 @@
       return pendientes;
     }
 
-    function armarTextoTratamientosPendientes(dni) {
-      const pendientes = TRATAMIENTOS_DB[String(dni || '').replace(/\D/g, '')] || {};
+    function armarTextoTratamientosPendientes(pacienteId) {
+      const key = String(pacienteId || '').trim();
+      const pendientes = TRATAMIENTOS_DB[key] || {};
       const partes = [];
       obtenerTratamientosConfigurados().forEach(t => {
         const cant = normalizarCantidad(pendientes[t.key]);
@@ -3257,6 +3262,26 @@
       return PACIENTES_DB.find(p => String(p.dni || '').replace(/\D/g, '') === dniLimpio) || null;
     }
 
+    function buscarPacienteLocalPorId(pacienteId) {
+      const id = String(pacienteId || '').trim();
+      if (!id) return null;
+      return PACIENTES_DB.find(p => String(p.id || '').trim() === id) || null;
+    }
+
+    function obtenerKeyPaciente(paciente) {
+      const id = String(paciente?.id || '').trim();
+      if (id) return id;
+      const dni = String(paciente?.dni || '').replace(/\D/g, '');
+      return dni ? `dni:${dni}` : '';
+    }
+
+    function obtenerPacienteKeyDesdeTurno(turno) {
+      const id = String(turno?.pacienteId || turno?.paciente_id || '').trim();
+      if (id) return id;
+      const dni = String(turno?.dni || '').replace(/\D/g, '');
+      return dni ? `dni:${dni}` : '';
+    }
+
     function completarFormularioConPaciente(prefijo, paciente) {
       if (!paciente) return;
 
@@ -3380,8 +3405,9 @@
       });
     }
 
-    function armarResumenTratamientos(dni) {
-      const pendientes = TRATAMIENTOS_DB[String(dni || '').replace(/\D/g, '')] || {};
+    function armarResumenTratamientos(pacienteId) {
+      const key = String(pacienteId || '').trim();
+      const pendientes = TRATAMIENTOS_DB[key] || {};
       const items = [];
       obtenerTratamientosConfigurados().forEach(t => {
         const cant = normalizarCantidad(pendientes[t.key]);
@@ -3399,12 +3425,15 @@
       const mapaPacientes = {};
 
       PACIENTES_DB.forEach(p => {
-        const dniLimpio = String(p.dni || '').replace(/\D/g, '');
-        if (!dniLimpio) return;
+        const keyPaciente = obtenerKeyPaciente(p);
+        if (!keyPaciente) return;
 
+        const dniLimpio = String(p.dni || '').replace(/\D/g, '');
         const partes = dividirNombreCompleto(p.nombre_completo || '');
 
-        mapaPacientes[dniLimpio] = {
+        mapaPacientes[keyPaciente] = {
+          pacienteId: String(p.id || '').trim(),
+          keyPaciente,
           dni: dniLimpio,
           nombre: partes.nombre || '',
           apellido: partes.apellido || '',
@@ -3416,15 +3445,16 @@
       });
 
       BASE_DATOS.forEach(turno => {
-        if (!turno.dni) return;
+        const keyPaciente = obtenerPacienteKeyDesdeTurno(turno);
+        if (!keyPaciente) return;
 
-        const dniLimpio = String(turno.dni).replace(/\D/g, '');
-        if (!dniLimpio) return;
-
+        const dniLimpio = String(turno.dni || '').replace(/\D/g, '');
         const esPasado = turno.fecha < hoyStr;
 
-        if (!mapaPacientes[dniLimpio]) {
-          mapaPacientes[dniLimpio] = {
+        if (!mapaPacientes[keyPaciente]) {
+          mapaPacientes[keyPaciente] = {
+            pacienteId: String(turno.pacienteId || '').trim(),
+            keyPaciente,
             dni: dniLimpio,
             nombre: turno.nombre || '',
             apellido: turno.apellido || '',
@@ -3435,18 +3465,20 @@
           };
         }
 
-        if ((turno.timestamp || 0) > mapaPacientes[dniLimpio].timestampMax) {
-          mapaPacientes[dniLimpio].timestampMax = turno.timestamp || 0;
-          mapaPacientes[dniLimpio].nombre = turno.nombre || '';
-          mapaPacientes[dniLimpio].apellido = turno.apellido || '';
-          if (turno.telefono) mapaPacientes[dniLimpio].telefono = turno.telefono;
+        if ((turno.timestamp || 0) > mapaPacientes[keyPaciente].timestampMax) {
+          mapaPacientes[keyPaciente].timestampMax = turno.timestamp || 0;
+          mapaPacientes[keyPaciente].nombre = turno.nombre || '';
+          mapaPacientes[keyPaciente].apellido = turno.apellido || '';
+          if (turno.telefono) mapaPacientes[keyPaciente].telefono = turno.telefono;
+          if (dniLimpio) mapaPacientes[keyPaciente].dni = dniLimpio;
+          if (turno.pacienteId) mapaPacientes[keyPaciente].pacienteId = String(turno.pacienteId).trim();
         }
 
         if (esPasado) {
-          mapaPacientes[dniLimpio].fechasVisita[turno.fecha] = true;
+          mapaPacientes[keyPaciente].fechasVisita[turno.fecha] = true;
 
-          if (!mapaPacientes[dniLimpio].ultimaVisita || turno.fecha > mapaPacientes[dniLimpio].ultimaVisita) {
-            mapaPacientes[dniLimpio].ultimaVisita = turno.fecha;
+          if (!mapaPacientes[keyPaciente].ultimaVisita || turno.fecha > mapaPacientes[keyPaciente].ultimaVisita) {
+            mapaPacientes[keyPaciente].ultimaVisita = turno.fecha;
           }
         }
       });
@@ -3480,7 +3512,7 @@
         let badgeClase = 'badge-al-dia';
         let cardClase = 'normal';
 
-        const segInfo = SEGUIMIENTO_COMPACTO[p.dni] || { ultimoRecordatorio: '', estado: '' };
+        const segInfo = SEGUIMIENTO_COMPACTO[p.pacienteId] || { ultimoRecordatorio: '', estado: '' };
         let ultRecLabel = segInfo.ultimoRecordatorio ? convertirFechaLatina(segInfo.ultimoRecordatorio) : 'Ninguno';
 
         if (p.ultimaVisita) {
@@ -3569,16 +3601,16 @@
         const card = document.createElement('div');
         card.className = `patient-card ${p.cardClase}`;
 
+        const pacienteIdJson = JSON.stringify(p.pacienteId || '');
         const nombreJson = JSON.stringify(nombreCompleto || '');
         const telJson = JSON.stringify(p.telefono || '');
-        const dniJson = JSON.stringify(p.dni || '');
 
         card.innerHTML = `
           <div>
             <div class="patient-name">${e(nombreCompleto || 'Sin nombre')}</div>
-            <div class="patient-small">DNI: ${e(p.dni)} · Última visita: ${e(fechaVisitaLegible)}</div>
+            <div class="patient-small">DNI: ${e(p.dni || 'No cargado')} · Última visita: ${e(fechaVisitaLegible)}</div>
             <div class="patient-small">Visitas registradas: ${e(p.cantVisitas)} ${p.cantVisitas === 1 ? 'día' : 'días'} de atención</div>
-            <div class="treatment-summary">${armarResumenTratamientos(p.dni)}</div>
+            <div class="treatment-summary">${armarResumenTratamientos(p.pacienteId)}</div>
           </div>
 
           <div>
@@ -3601,19 +3633,19 @@
           </div>
 
           <div class="patient-actions">
-            <button class="btn-table-action btn-whatsapp-green" onclick='abrirWhatsAppPaciente(${telJson}, ${nombreJson}, ${dniJson}, event)'>
+            <button class="btn-table-action btn-whatsapp-green" onclick='abrirWhatsAppPaciente(${telJson}, ${nombreJson}, ${pacienteIdJson}, event)'>
               WhatsApp
             </button>
-            <button class="btn-table-action" onclick='copiarWhatsAppSeguimiento(${nombreJson}, ${telJson}, ${dniJson})'>
+            <button class="btn-table-action" onclick='copiarWhatsAppSeguimiento(${nombreJson}, ${telJson}, ${pacienteIdJson})'>
               Copiar recordatorio
             </button>
-            <button class="btn-table-action btn-recordado" onclick='marcarPacienteRecordado(${dniJson})'>
+            <button class="btn-table-action btn-recordado" onclick='marcarPacienteRecordado(${pacienteIdJson})'>
               Marcar recordado
             </button>
-            <button class="btn-table-action btn-mini-blue" onclick='abrirTratamientosPaciente(${dniJson})'>
+            <button class="btn-table-action btn-mini-blue" onclick='abrirTratamientosPaciente(${pacienteIdJson})'>
               Tratamientos pendientes
             </button>
-            <button class="btn-table-action btn-delete-ficha" onclick='borrarFichaPaciente(${dniJson}, event)'>
+            <button class="btn-table-action btn-delete-ficha" onclick='borrarFichaPaciente(${pacienteIdJson}, event)'>
               Borrar ficha
             </button>
           </div>
@@ -3666,20 +3698,20 @@
       return `${anio}-${mes}-${dia}`;
     }
 
-    function copiarWhatsAppSeguimiento(nombre, telefono, dni) {
-      const msg = construirMensajeSeguimientoPaciente(nombre, dni);
+    function copiarWhatsAppSeguimiento(nombre, telefono, pacienteId) {
+      const msg = construirMensajeSeguimientoPaciente(nombre, pacienteId);
 
       navigator.clipboard.writeText(msg).then(() => {
         mostrarToast('Recordatorio copiado. Pegalo en WhatsApp.');
       });
     }
 
-    async function marcarPacienteRecordado(dni) {
-      const dniLimpio = String(dni || '').replace(/\D/g, '');
+    async function marcarPacienteRecordado(pacienteId) {
+      const id = String(pacienteId || '').trim();
       const hoyStr = new Date().toISOString().split('T')[0];
 
-      if (!dniLimpio) {
-        alert('DNI inválido.');
+      if (!id) {
+        alert('No se encontró el ID interno del paciente. Recargá la página e intentá nuevamente.');
         return;
       }
 
@@ -3687,19 +3719,19 @@
         .from('recordatorios')
         .upsert({
           clinica_id: CLINICA_ID,
-          dni: dniLimpio,
+          paciente_id: id,
           ultimo_recordatorio: hoyStr,
           estado: 'Recordado este mes'
         }, {
-          onConflict: 'clinica_id,dni'
+          onConflict: 'clinica_id,paciente_id'
         });
 
       if (error) {
-        alert('Error guardando recordatorio: ' + error.message + '\n\nEjecutá el SQL de permisos/RLS que te pasé para la tabla recordatorios.');
+        alert('Error guardando recordatorio: ' + error.message + '\n\nVerificá que ya hayas ejecutado el SQL de migración a paciente_id.');
         return;
       }
 
-      SEGUIMIENTO_COMPACTO[dniLimpio] = {
+      SEGUIMIENTO_COMPACTO[id] = {
         ultimoRecordatorio: hoyStr,
         estado: 'Recordado este mes'
       };
@@ -3708,16 +3740,16 @@
       mostrarToast('Paciente marcado como recordado.');
     }
 
-    async function borrarFichaPaciente(dni, event) {
+    async function borrarFichaPaciente(pacienteId, event) {
       if (event) event.stopPropagation();
 
-      const dniLimpio = String(dni || '').replace(/\D/g, '');
-      if (!dniLimpio) {
-        alert('DNI inválido.');
+      const id = String(pacienteId || '').trim();
+      if (!id) {
+        alert('No se encontró el ID interno del paciente. Recargá la página e intentá nuevamente.');
         return;
       }
 
-      const paciente = buscarPacienteLocalPorDni(dniLimpio);
+      const paciente = buscarPacienteLocalPorId(id);
       const nombre = paciente?.nombre_completo || 'este paciente';
 
       const ok = confirm(
@@ -3736,52 +3768,18 @@
         seguimiento: { ...SEGUIMIENTO_COMPACTO }
       };
 
-      PACIENTES_DB = PACIENTES_DB.filter(p => String(p.dni || '').replace(/\D/g, '') !== dniLimpio);
-      BASE_DATOS = BASE_DATOS.filter(t => String(t.dni || '').replace(/\D/g, '') !== dniLimpio);
-      delete TRATAMIENTOS_DB[dniLimpio];
-      delete SEGUIMIENTO_COMPACTO[dniLimpio];
+      PACIENTES_DB = PACIENTES_DB.filter(p => String(p.id || '').trim() !== id);
+      BASE_DATOS = BASE_DATOS.filter(t => String(t.pacienteId || '').trim() !== id);
+      delete TRATAMIENTOS_DB[id];
+      delete SEGUIMIENTO_COMPACTO[id];
       renderizarCalendarioCompleto();
       calcularYRenderizarPacientes();
-
-      const { error: errTrat } = await supabaseClient
-        .from('tratamientos_pendientes')
-        .delete()
-        .eq('clinica_id', CLINICA_ID)
-        .eq('dni', dniLimpio);
-
-      if (errTrat) {
-        PACIENTES_DB = backup.pacientes;
-        BASE_DATOS = backup.turnos;
-        TRATAMIENTOS_DB = backup.tratamientos;
-        SEGUIMIENTO_COMPACTO = backup.seguimiento;
-        renderizarCalendarioCompleto();
-        calcularYRenderizarPacientes();
-        alert('Error borrando tratamientos pendientes: ' + errTrat.message);
-        return;
-      }
-
-      const { error: errRec } = await supabaseClient
-        .from('recordatorios')
-        .delete()
-        .eq('clinica_id', CLINICA_ID)
-        .eq('dni', dniLimpio);
-
-      if (errRec) {
-        PACIENTES_DB = backup.pacientes;
-        BASE_DATOS = backup.turnos;
-        TRATAMIENTOS_DB = backup.tratamientos;
-        SEGUIMIENTO_COMPACTO = backup.seguimiento;
-        renderizarCalendarioCompleto();
-        calcularYRenderizarPacientes();
-        alert('Error borrando recordatorios: ' + errRec.message);
-        return;
-      }
 
       const { error: errPac } = await supabaseClient
         .from('pacientes')
         .delete()
         .eq('clinica_id', CLINICA_ID)
-        .eq('dni', dniLimpio);
+        .eq('id', id);
 
       if (errPac) {
         PACIENTES_DB = backup.pacientes;
@@ -3800,13 +3798,17 @@
       mostrarToast('Ficha borrada correctamente.');
     }
 
-    function abrirTratamientosPaciente(dni) {
-      const dniLimpio = String(dni || '').replace(/\D/g, '');
-      const paciente = buscarPacienteLocalPorDni(dniLimpio);
-      const t = TRATAMIENTOS_DB[dniLimpio] || {};
-      document.getElementById('tratDni').value = dniLimpio;
+    function abrirTratamientosPaciente(pacienteId) {
+      const id = String(pacienteId || '').trim();
+      const paciente = buscarPacienteLocalPorId(id);
+      if (!id || !paciente) {
+        alert('No se encontró el paciente. Recargá la página e intentá nuevamente.');
+        return;
+      }
+      const t = TRATAMIENTOS_DB[id] || {};
+      document.getElementById('tratPacienteId').value = id;
       renderInputsTratamientos('tratamientosPacienteInputs', 'trat', t);
-      const nombre = paciente?.nombre_completo || dniLimpio;
+      const nombre = paciente?.nombre_completo || paciente?.dni || id;
       document.getElementById('modalTratamientosInfo').innerText = `Ficha de ${nombre}. Usá + y − para actualizar las cantidades pendientes.`;
       abrirModal('modalTratamientos');
     }
@@ -3819,27 +3821,27 @@
     }
 
     async function guardarTratamientosPaciente() {
-      const dni = String(document.getElementById('tratDni').value || '').replace(/\D/g, '');
-      if (!dni) { alert('DNI inválido.'); return; }
+      const pacienteId = String(document.getElementById('tratPacienteId').value || '').trim();
+      if (!pacienteId) { alert('No se encontró el ID interno del paciente.'); return; }
       const nuevo = leerInputsTratamientos('tratamientosPacienteInputs');
-      const anterior = TRATAMIENTOS_DB[dni] || {};
-      TRATAMIENTOS_DB[dni] = nuevo;
+      const anterior = TRATAMIENTOS_DB[pacienteId] || {};
+      TRATAMIENTOS_DB[pacienteId] = nuevo;
       calcularYRenderizarPacientes();
       cerrarModales();
       const { error } = await supabaseClient.from('tratamientos_pendientes').upsert({
         clinica_id: CLINICA_ID,
-        dni: dni,
+        paciente_id: pacienteId,
         pendientes: nuevo,
         caries: normalizarCantidad(nuevo.caries),
         conductos: normalizarCantidad(nuevo.conductos),
         extracciones: normalizarCantidad(nuevo.extracciones),
         coronas: normalizarCantidad(nuevo.coronas),
         updated_at: new Date().toISOString()
-      }, { onConflict: 'clinica_id,dni' });
+      }, { onConflict: 'clinica_id,paciente_id' });
       if (error) {
-        TRATAMIENTOS_DB[dni] = anterior;
+        TRATAMIENTOS_DB[pacienteId] = anterior;
         calcularYRenderizarPacientes();
-        alert('Error guardando tratamientos pendientes: ' + error.message);
+        alert('Error guardando tratamientos pendientes: ' + error.message + '\n\nVerificá que ya hayas ejecutado el SQL de migración a paciente_id.');
         return;
       }
       mostrarToast('Tratamientos pendientes guardados.');
@@ -3872,7 +3874,7 @@
       }
       if (dniIngresado.length < 6) return;
       const paciente = buscarPacienteLocalPorDni(dniIngresado);
-      const tratamientos = TRATAMIENTOS_DB[dniIngresado] || {};
+      const tratamientos = paciente ? (TRATAMIENTOS_DB[paciente.id] || {}) : {};
       if (paciente) {
         document.getElementById('fichaNombreCompleto').value = paciente.nombre_completo || '';
         document.getElementById('fichaTelefono').value = paciente.telefono || '';
@@ -3897,15 +3899,15 @@
       if (!dni || !nombreCompleto) { alert('DNI y nombre del paciente son obligatorios para crear la ficha.'); return; }
       const tratamientos = leerInputsTratamientos('fichaTratamientosInputs');
       const tieneTratamientos = Object.values(tratamientos).some(v => v > 0);
-      const { error: errorPaciente } = await supabaseClient.from('pacientes').upsert({ clinica_id: CLINICA_ID, dni, nombre_completo: nombreCompleto, telefono }, { onConflict: 'clinica_id,dni' }).select().single();
-      if (errorPaciente) { alert('Error guardando ficha: ' + errorPaciente.message); return; }
+      const { data: paciente, error: errorPaciente } = await guardarPacienteSupabaseSeguro(dni, nombreCompleto, telefono, buscarPacienteLocalPorDni(dni)?.id || null);
+      if (errorPaciente || !paciente) { alert('Error guardando ficha: ' + (errorPaciente?.message || 'No se pudo obtener el paciente guardado.')); return; }
       if (tieneTratamientos) {
         const { error: errorTratamientos } = await supabaseClient.from('tratamientos_pendientes').upsert({
-          clinica_id: CLINICA_ID, dni, pendientes: tratamientos,
+          clinica_id: CLINICA_ID, paciente_id: paciente.id, pendientes: tratamientos,
           caries: normalizarCantidad(tratamientos.caries), conductos: normalizarCantidad(tratamientos.conductos),
           extracciones: normalizarCantidad(tratamientos.extracciones), coronas: normalizarCantidad(tratamientos.coronas),
           updated_at: new Date().toISOString()
-        }, { onConflict: 'clinica_id,dni' });
+        }, { onConflict: 'clinica_id,paciente_id' });
         if (errorTratamientos) alert('La ficha se guardó, pero no se pudieron guardar tratamientos pendientes: ' + errorTratamientos.message);
       }
       await cargarDatosDesdeSupabase();
@@ -4411,18 +4413,7 @@
       renderizarCalendarioCompleto();
       calcularYRenderizarPacientes();
 
-      const { data: paciente, error: errorPaciente } = await supabaseClient
-        .from('pacientes')
-        .upsert({
-          clinica_id: CLINICA_ID,
-          dni: data.dni,
-          nombre_completo: nombreCompleto,
-          telefono: data.telefono
-        }, {
-          onConflict: 'clinica_id,dni'
-        })
-        .select()
-        .single();
+      const { data: paciente, error: errorPaciente } = await guardarPacienteSupabaseSeguro(data.dni, nombreCompleto, data.telefono, null);
 
       if (errorPaciente) {
         BASE_DATOS = BASE_DATOS.filter(t => t.id !== tempId);
@@ -4481,6 +4472,44 @@
           created_at: new Date().toISOString()
         });
       }
+    }
+
+    async function guardarPacienteSupabaseSeguro(dni, nombreCompleto, telefono, pacienteIdPreferido) {
+      const dniLimpio = String(dni || '').replace(/\D/g, '');
+      const idPreferido = String(pacienteIdPreferido || '').trim();
+
+      if (!dniLimpio || !nombreCompleto) {
+        return { data: null, error: { message: 'DNI y nombre del paciente son obligatorios.' } };
+      }
+
+      const pacienteExistenteConDni = buscarPacienteLocalPorDni(dniLimpio);
+
+      if (idPreferido && (!pacienteExistenteConDni || String(pacienteExistenteConDni.id || '').trim() === idPreferido)) {
+        const respuestaUpdate = await supabaseClient
+          .from('pacientes')
+          .update({ dni: dniLimpio, nombre_completo: nombreCompleto, telefono })
+          .eq('clinica_id', CLINICA_ID)
+          .eq('id', idPreferido)
+          .select()
+          .single();
+
+        if (!respuestaUpdate.error && respuestaUpdate.data) {
+          return respuestaUpdate;
+        }
+      }
+
+      return await supabaseClient
+        .from('pacientes')
+        .upsert({
+          clinica_id: CLINICA_ID,
+          dni: dniLimpio,
+          nombre_completo: nombreCompleto,
+          telefono
+        }, {
+          onConflict: 'clinica_id,dni'
+        })
+        .select()
+        .single();
     }
 
     async function alternarConfirmacionRapida(id, event) {
@@ -4566,18 +4595,7 @@
       renderizarCalendarioCompleto();
       calcularYRenderizarPacientes();
 
-      const { data: paciente, error: errorPaciente } = await supabaseClient
-        .from('pacientes')
-        .upsert({
-          clinica_id: CLINICA_ID,
-          dni: dni,
-          nombre_completo: nombreCompleto,
-          telefono: telefono
-        }, {
-          onConflict: 'clinica_id,dni'
-        })
-        .select()
-        .single();
+      const { data: paciente, error: errorPaciente } = await guardarPacienteSupabaseSeguro(dni, nombreCompleto, telefono, t.pacienteId);
 
       if (errorPaciente) {
         Object.assign(t, backupTurno);
@@ -4770,6 +4788,7 @@
       document.getElementById('modalConfirmarCancelacion').classList.remove('active');
       ID_TURNO_SELECCIONADO = null;
       liberarScrollSiNoHayModal();
+      liberarScrollSiNoHayModal();
     }
 
     async function ejecutarEliminacionConfirmada() {
@@ -4779,6 +4798,7 @@
 
       document.getElementById('modalConfirmarCancelacion').classList.remove('active');
       ID_TURNO_SELECCIONADO = null;
+      liberarScrollSiNoHayModal();
       liberarScrollSiNoHayModal();
 
       const backup = [...BASE_DATOS];
@@ -4882,9 +4902,9 @@
       return aplicarTemplateMensaje(template, { paciente: nombrePaciente, fecha: fechaTxt, hora: t.hora || '', tratamientos: '' });
     }
 
-    function construirMensajeSeguimientoPaciente(nombre, dni) {
+    function construirMensajeSeguimientoPaciente(nombre, pacienteId) {
       const nombrePaciente = String(nombre || '').trim();
-      const pendientesTxt = armarTextoTratamientosPendientes(dni);
+      const pendientesTxt = armarTextoTratamientosPendientes(pacienteId);
       const mensajes = (CONFIG_CLINICA || DEFAULT_CONFIG_CLINICA).mensajes || DEFAULT_CONFIG_CLINICA.mensajes;
       const template = pendientesTxt ? (mensajes.paciente_con_pendientes || DEFAULT_CONFIG_CLINICA.mensajes.paciente_con_pendientes) : (mensajes.paciente_sin_pendientes || DEFAULT_CONFIG_CLINICA.mensajes.paciente_sin_pendientes);
       return aplicarTemplateMensaje(template, { paciente: nombrePaciente, tratamientos: pendientesTxt });
@@ -4908,9 +4928,9 @@
       abrirWhatsAppTurno(ID_TURNO_SELECCIONADO);
     }
 
-    function abrirWhatsAppPaciente(telefono, nombre, dni, event) {
+    function abrirWhatsAppPaciente(telefono, nombre, pacienteId, event) {
       if (event) event.stopPropagation();
-      const mensaje = construirMensajeSeguimientoPaciente(nombre, dni);
+      const mensaje = construirMensajeSeguimientoPaciente(nombre, pacienteId);
       abrirWhatsAppTelefono(telefono, mensaje, event);
     }
 
@@ -4945,7 +4965,6 @@
       if (modalConfiguracion) modalConfiguracion.classList.remove('active');
 
       ID_TURNO_SELECCIONADO = null;
-      document.body.classList.remove('modal-open');
     }
 
   </script>
