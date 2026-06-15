@@ -1753,6 +1753,76 @@
       }
     }
 
+
+    /* Ajustes móviles extra v20: mes + calendario visibles junto a Salir */
+    .mobile-month-label,
+    .mobile-calendar-btn,
+    .mobile-date-input-inline {
+      display: none;
+    }
+
+    @media (max-width: 980px) {
+      .navigation-controls #currentMonthLabel {
+        display: none !important;
+      }
+
+      .header-right {
+        flex-wrap: wrap !important;
+        overflow-x: visible !important;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .mobile-month-label {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text);
+        padding: 8px 10px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: #fff;
+        white-space: nowrap;
+        flex: 0 0 auto;
+      }
+
+      .mobile-calendar-btn {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        min-width: 42px;
+        padding: 8px 10px;
+      }
+
+      .mobile-date-input-inline {
+        display: block;
+        position: fixed;
+        left: -1000px;
+        top: -1000px;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: none;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .app-header {
+        padding: 9px 10px;
+      }
+
+      .header-right {
+        padding-bottom: 0 !important;
+      }
+
+      .mobile-month-label {
+        font-size: 13px;
+        padding: 8px 9px;
+      }
+    }
+
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -1814,6 +1884,9 @@
       <button id="btnConfig" class="btn-nav btn-config" onclick="abrirConfiguracion()" style="display:none;">Configuración</button>
       <button class="btn-nav btn-support" onclick="abrirSoporteWhatsApp(event)">Soporte</button>
       <button class="btn-nav" onclick="cerrarSesion()">Salir</button>
+      <span id="mobileCurrentMonthLabel" class="mobile-month-label" title="Mes visible">Junio 2026</span>
+      <button id="mobileCalendarBtn" class="btn-nav mobile-calendar-btn" onclick="abrirSelectorFechaMovil(event)" title="Elegir fecha">📅</button>
+      <input type="date" id="mobileDatepicker" class="mobile-date-input-inline" onchange="seleccionarFechaManual(this.value)" aria-label="Seleccionar fecha">
     </div>
   </header>
 
@@ -2243,6 +2316,8 @@
       const hoy = new Date();
       FECHA_LUNES_ACTUAL = obtenerLunesDeSemana(hoy);
       document.getElementById('datepicker').value = formatearFechaISO(hoy);
+      const mobileDate = document.getElementById('mobileDatepicker');
+      if (mobileDate) mobileDate.value = formatearFechaISO(hoy);
 
       await inicializarSesionSegura();
 
@@ -3016,6 +3091,10 @@
         document.getElementById('ctrlPrev').style.display = 'inline-block';
         document.getElementById('ctrlNext').style.display = 'inline-block';
         document.getElementById('currentMonthLabel').style.display = 'inline-block';
+        const mobileMonth = document.getElementById('mobileCurrentMonthLabel');
+        const mobileCalendarBtn = document.getElementById('mobileCalendarBtn');
+        if (mobileMonth) mobileMonth.style.display = '';
+        if (mobileCalendarBtn) mobileCalendarBtn.style.display = '';
       } else {
         document.getElementById('navPacientes').classList.add('active-view');
         document.getElementById('navTurnos').classList.remove('active-view');
@@ -3026,6 +3105,10 @@
         document.getElementById('ctrlPrev').style.display = 'none';
         document.getElementById('ctrlNext').style.display = 'none';
         document.getElementById('currentMonthLabel').style.display = 'none';
+        const mobileMonth = document.getElementById('mobileCurrentMonthLabel');
+        const mobileCalendarBtn = document.getElementById('mobileCalendarBtn');
+        if (mobileMonth) mobileMonth.style.display = 'none';
+        if (mobileCalendarBtn) mobileCalendarBtn.style.display = 'none';
         calcularYRenderizarPacientes();
       }
     }
@@ -3715,15 +3798,44 @@
       return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
+    function actualizarEtiquetasMes() {
+      const texto = obtenerNombreMesAnio(FECHA_LUNES_ACTUAL);
+      const desktop = document.getElementById('currentMonthLabel');
+      const mobile = document.getElementById('mobileCurrentMonthLabel');
+      if (desktop) desktop.innerText = texto;
+      if (mobile) mobile.innerText = texto;
+    }
+
+    function sincronizarDatepickers(fechaISO) {
+      const d1 = document.getElementById('datepicker');
+      const d2 = document.getElementById('mobileDatepicker');
+      if (d1) d1.value = fechaISO;
+      if (d2) d2.value = fechaISO;
+    }
+
+    function abrirSelectorFechaMovil(event) {
+      if (event) event.preventDefault();
+      const input = document.getElementById('mobileDatepicker');
+      if (!input) return;
+      input.value = formatearFechaISO(FECHA_LUNES_ACTUAL);
+      if (typeof input.showPicker === 'function') {
+        input.showPicker();
+      } else {
+        input.focus();
+        input.click();
+      }
+    }
+
     function irHoy() {
       const hoy = new Date();
       FECHA_LUNES_ACTUAL = obtenerLunesDeSemana(hoy);
-      document.getElementById('datepicker').value = formatearFechaISO(hoy);
+      sincronizarDatepickers(formatearFechaISO(hoy));
       renderizarCalendarioCompleto();
     }
 
     function navegarSemana(direccion) {
       FECHA_LUNES_ACTUAL.setDate(FECHA_LUNES_ACTUAL.getDate() + direccion * 7);
+      sincronizarDatepickers(formatearFechaISO(FECHA_LUNES_ACTUAL));
       renderizarCalendarioCompleto();
     }
 
@@ -3732,6 +3844,7 @@
       const partes = fechaStr.split('-');
       const d = new Date(partes[0], partes[1] - 1, partes[2]);
       FECHA_LUNES_ACTUAL = obtenerLunesDeSemana(d);
+      sincronizarDatepickers(fechaStr);
       renderizarCalendarioCompleto();
     }
 
@@ -3881,7 +3994,7 @@
     }
 
     function renderizarCalendarioCompleto() {
-      document.getElementById('currentMonthLabel').innerText = obtenerNombreMesAnio(FECHA_LUNES_ACTUAL);
+      actualizarEtiquetasMes();
 
       const grid = document.getElementById('calendarGrid');
       grid.innerHTML = '';
