@@ -1,0 +1,4645 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Consultorio - Turnos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --blue: #1a73e8;
+      --blue-hover: #1557b0;
+      --blue-light: #e8f0fe;
+      --green: #137333;
+      --green-light: #e6f4ea;
+      --red: #c5221f;
+      --red-light: #fce8e6;
+      --text: #2f3437;
+      --muted: #667085;
+      --border: #dadce0;
+      --bg: #f8fafd;
+      --card: #ffffff;
+      --shadow: 0 4px 14px rgba(60,64,67,0.12);
+      --font: 'Roboto', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font);
+      color: var(--text);
+      background: var(--bg);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 24px;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .app-logo {
+      font-size: 22px;
+      color: var(--blue);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .app-logo span {
+      color: var(--text);
+      font-weight: 400;
+    }
+
+    .navigation-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn-nav {
+      background: #fff;
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      cursor: pointer;
+      transition: 0.15s ease;
+    }
+
+    .btn-nav:hover {
+      background: var(--blue-light);
+      border-color: #b4d1f9;
+    }
+
+    .btn-nav.active-view {
+      background: var(--blue);
+      color: white;
+      border-color: var(--blue);
+    }
+
+    .btn-arrow {
+      padding: 8px 11px;
+      border-radius: 50%;
+    }
+
+    .current-month-label {
+      font-size: 17px;
+      color: var(--text);
+      margin-left: 6px;
+    }
+
+    .main-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: 280px;
+      border-right: 1px solid var(--border);
+      background: #fff;
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      overflow-y: auto;
+    }
+
+    .sidebar-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+
+    .sidebar-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .sidebar-subtitle {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .input-date {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .input-date:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 2px rgba(26,115,232,0.12);
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .history-item {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+
+    .history-item:hover {
+      background: var(--blue-light);
+      border-color: #b4d1f9;
+    }
+
+    .history-name {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .history-meta {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    .grid-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+      background: var(--bg);
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(170px, 1fr));
+      gap: 12px;
+    }
+
+    .day-column {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+
+    .day-column.day-past {
+      background: rgba(255, 167, 38, 0.11);
+      border-color: rgba(245, 124, 0, 0.28);
+      box-shadow: inset 0 0 0 9999px rgba(255, 167, 38, 0.035), 0 1px 4px rgba(0,0,0,0.04);
+    }
+
+    .day-column.day-past .day-header {
+      background: rgba(255, 237, 213, 0.72);
+      border-bottom-color: rgba(245, 124, 0, 0.22);
+    }
+
+    .day-column.day-past .day-slots {
+      background: rgba(255, 247, 237, 0.40);
+    }
+
+    .day-column.day-past .time-slot:not(.booked) {
+      background: rgba(255, 255, 255, 0.72);
+      border-color: rgba(251, 146, 60, 0.35);
+    }
+
+    .day-header {
+      background: #fff;
+      padding: 14px 8px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .day-name {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: 0.9px;
+    }
+
+    .day-number {
+      margin-top: 6px;
+      font-size: 15px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 44px;
+      height: 32px;
+      padding: 0 10px;
+      border-radius: 999px;
+      color: var(--text);
+    }
+
+    .day-header.is-today .day-name { color: var(--blue); }
+
+    .day-header.is-today .day-number {
+      background: var(--blue);
+      color: white;
+      font-weight: 600;
+    }
+
+    .day-slots {
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .time-slot {
+      min-height: 46px;
+      border-radius: 10px;
+      border: 1px dashed #cbd5e1;
+      background: #fff;
+      font-size: 13px;
+      color: var(--blue);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+
+    .time-slot:hover {
+      background: var(--blue-light);
+      border-color: var(--blue);
+    }
+
+    .time-slot.drag-over {
+      background: #d2e3fc;
+      border: 2px solid var(--blue);
+      transform: scale(1.01);
+    }
+
+    .time-slot.booked {
+      background: var(--green-light);
+      border: 1px solid #9bd3ad;
+      border-left: 5px solid var(--green);
+      color: var(--green);
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: flex-start;
+      padding: 8px 10px;
+      cursor: grab;
+      min-height: 96px;
+    }
+
+    .time-slot.booked:active { cursor: grabbing; }
+
+    .time-slot.booked.style-blue {
+      background: var(--blue-light);
+      border: 1px solid #b4d1f9;
+      border-left: 5px solid var(--blue);
+      color: var(--blue-hover);
+    }
+
+    .time-slot.booked.extension {
+      border-style: solid;
+      opacity: 0.92;
+    }
+
+    .booked-header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .booked-tag {
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 10px;
+      background: rgba(19,115,51,0.12);
+      color: var(--green);
+      white-space: nowrap;
+    }
+
+    .time-slot.booked.style-blue .booked-tag {
+      background: rgba(26,115,232,0.12);
+      color: var(--blue-hover);
+    }
+
+    .booked-body {
+      font-size: 14px;
+      font-weight: 700;
+      margin-top: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+    }
+
+    .booked-footer {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .booked-phone-row {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .booked-actions-row {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 5px;
+      flex-wrap: nowrap;
+    }
+
+    .booked-phone {
+      font-size: 11px;
+      opacity: 0.9;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .card-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+      flex-wrap: nowrap;
+    }
+
+    .btn-card-action {
+      background: rgba(255,255,255,0.7);
+      border: 1px solid rgba(0,0,0,0.08);
+      cursor: pointer;
+      width: 23px;
+      height: 23px;
+      border-radius: 7px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.12s;
+      color: inherit;
+      font-size: 13px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .btn-card-action.btn-whatsapp {
+      color: var(--green);
+    }
+
+    .btn-card-action:hover {
+      background: white;
+      transform: translateY(-1px);
+    }
+
+    .btn-card-action svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .status-dot.green { background: var(--green); }
+    .status-dot.blue { background: var(--blue); }
+
+
+    .phone-copy-line {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      max-width: 100%;
+    }
+
+    .btn-copy-phone {
+      width: 24px;
+      height: 24px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--blue);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+      transition: 0.12s ease;
+    }
+
+    .btn-copy-phone:hover {
+      background: var(--blue-light);
+      border-color: var(--blue);
+      transform: translateY(-1px);
+    }
+
+    .booked-phone-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .booked-phone-wrap .booked-phone {
+      min-width: 0;
+    }
+
+    .patients-filter-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-bottom: 18px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .patients-filter-fields {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .filter-group label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 6px;
+    }
+
+    .filter-input {
+      width: 240px;
+      max-width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-family: var(--font);
+      font-size: 14px;
+      outline: none;
+      background: white;
+    }
+
+    .filter-input:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(26,115,232,0.12);
+    }
+
+    .filter-info {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    .pacientes-container {
+      flex: 1;
+      overflow-y: auto;
+      background: var(--bg);
+      padding: 22px;
+      display: none;
+    }
+
+    .page-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 18px;
+      gap: 16px;
+    }
+
+    .page-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .page-subtitle {
+      font-size: 14px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .metrics-panel {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .metric-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+
+    .metric-val {
+      font-size: 34px;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    .metric-lbl {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .patients-board {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .patient-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px 16px;
+      display: grid;
+      grid-template-columns: minmax(220px, 1.3fr) minmax(120px, 0.8fr) minmax(120px, 0.8fr) minmax(140px, 0.8fr) minmax(220px, 1fr);
+      gap: 14px;
+      align-items: center;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+
+    .patient-card.critical {
+      border-left: 5px solid var(--red);
+      background: #fffafa;
+    }
+
+    .patient-card.ok {
+      border-left: 5px solid var(--green);
+      background: #fbfffc;
+    }
+
+    .patient-card.normal {
+      border-left: 5px solid #cbd5e1;
+    }
+
+    .patient-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .patient-small {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+      line-height: 1.35;
+    }
+
+    .patient-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 4px;
+    }
+
+    .patient-value {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .badge-status {
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-block;
+      white-space: nowrap;
+    }
+
+    .badge-al-dia { background: #eef2f6; color: #475467; }
+    .badge-para-recordar { background: var(--red); color: white; }
+    .badge-recordado { background: var(--green); color: white; }
+
+    .patient-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .btn-table-action {
+      background: #fff;
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+      transition: 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-table-action:hover {
+      background: var(--blue-light);
+      border-color: var(--blue);
+    }
+
+    .btn-recordado {
+      background: var(--green);
+      color: white;
+      border-color: var(--green);
+    }
+
+    .btn-recordado:hover {
+      background: #0f5f2a;
+      border-color: #0f5f2a;
+    }
+
+    .btn-whatsapp-green {
+      background: #e6f4ea;
+      color: #0b7a35;
+      border-color: #b7e4c7;
+    }
+
+    .btn-whatsapp-green:hover {
+      background: #d7f0df;
+      border-color: #0b7a35;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 38px 20px;
+      background: white;
+      border: 1px dashed var(--border);
+      border-radius: 16px;
+      color: var(--muted);
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,0.55);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: 0.2s ease;
+      padding: 18px;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      width: 100%;
+      max-width: 520px;
+      padding: 24px;
+      transform: translateY(-14px);
+      transition: 0.2s ease;
+      max-height: calc(100vh - 36px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+
+    .modal-overlay.active .modal-card {
+      transform: translateY(0);
+    }
+
+    .modal-title {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .modal-subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 18px;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+      position: relative;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-family: var(--font);
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+      background: white;
+    }
+
+    .form-control:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(26,115,232,0.12);
+    }
+
+    .form-control.flash {
+      animation: flashField 0.9s ease;
+    }
+
+    @keyframes flashField {
+      0% { background: var(--green-light); }
+      100% { background: #fff; }
+    }
+
+    .patient-hint {
+      display: none;
+      margin-top: 8px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .patient-hint.found {
+      display: block;
+      background: var(--green-light);
+      color: var(--green);
+    }
+
+    .patient-hint.new {
+      display: block;
+      background: var(--blue-light);
+      color: var(--blue-hover);
+    }
+
+    .detail-row {
+      margin-bottom: 12px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .detail-label {
+      font-weight: 700;
+      color: var(--muted);
+      display: inline-block;
+      width: 145px;
+    }
+
+    .detail-value { color: var(--text); }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 22px;
+    }
+
+    .btn-action {
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid transparent;
+      background: transparent;
+    }
+
+    .btn-primary { background: var(--blue); color: #fff; }
+    .btn-primary:hover { background: var(--blue-hover); }
+    .btn-secondary { border-color: var(--border); color: var(--text); background: #fff; }
+    .btn-secondary:hover { background: var(--bg); }
+    .btn-danger { color: var(--red); border-color: var(--border); background: #fff; }
+    .btn-danger:hover { background: var(--red-light); }
+
+    .modal-actions.detail-actions {
+      justify-content: flex-start;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .modal-actions.detail-actions .btn-action {
+      min-width: 96px;
+      padding: 10px 14px;
+      text-align: center;
+    }
+
+    .btn-whatsapp-action {
+      color: #0b7a35;
+      border-color: #b7e4c7;
+      background: #f3fff7;
+    }
+
+    .btn-whatsapp-action:hover {
+      background: #e6f4ea;
+    }
+
+
+    .toast-aviso {
+      position: fixed;
+      bottom: 24px;
+      left: 24px;
+      background: #202124;
+      color: white;
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-size: 14px;
+      box-shadow: var(--shadow);
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: 0.3s ease;
+    }
+
+    .toast-aviso.show { opacity: 1; }
+
+    .confirm-text {
+      font-size: 15px;
+      color: var(--text);
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+
+    .confirm-warn {
+      font-size: 13px;
+      color: var(--red);
+      font-weight: 700;
+    }
+
+
+    .treatment-summary {
+      margin-top: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .treatment-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: var(--blue-light);
+      color: var(--blue-hover);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .treatment-pill.empty {
+      background: #eef2f6;
+      color: #667085;
+    }
+
+    .form-row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .treatment-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .treatment-control {
+      display: grid;
+      grid-template-columns: 1fr 38px 80px 38px;
+      gap: 8px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #fff;
+    }
+
+    .treatment-control-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .treatment-control button {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #fff;
+      cursor: pointer;
+      font-weight: 800;
+      color: var(--blue);
+    }
+
+    .treatment-control button:hover {
+      background: var(--blue-light);
+      border-color: var(--blue);
+    }
+
+    .treatment-control input {
+      width: 80px;
+      text-align: center;
+    }
+
+    .page-title-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn-add-ficha {
+      background: var(--blue);
+      border-color: var(--blue);
+      color: white;
+      box-shadow: 0 1px 4px rgba(26,115,232,0.24);
+    }
+
+    .btn-add-ficha:hover {
+      background: var(--blue-hover);
+      border-color: var(--blue-hover);
+    }
+
+    .manual-ficha-note {
+      background: var(--blue-light);
+      color: var(--blue-hover);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 12px;
+      line-height: 1.4;
+      margin-bottom: 14px;
+      font-weight: 500;
+    }
+
+    .helper-text {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+      line-height: 1.35;
+    }
+
+
+    #modalFichaPaciente .modal-card {
+      max-width: 600px;
+      max-height: calc(100vh - 28px);
+      padding: 18px 24px;
+    }
+
+    #modalFichaPaciente .modal-title {
+      font-size: 20px;
+    }
+
+    #modalFichaPaciente .modal-subtitle {
+      margin-bottom: 12px;
+    }
+
+    #modalFichaPaciente .manual-ficha-note {
+      margin-bottom: 10px;
+      padding: 9px 12px;
+    }
+
+    #modalFichaPaciente .form-group {
+      margin-bottom: 10px;
+    }
+
+    #modalFichaPaciente .treatment-grid {
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    #modalFichaPaciente .treatment-control {
+      padding: 8px 10px;
+      grid-template-columns: 1fr 38px 78px 38px;
+    }
+
+    #modalFichaPaciente .modal-actions {
+      position: sticky;
+      bottom: 0;
+      background: #fff;
+      padding-top: 12px;
+      margin-top: 16px;
+      border-top: 1px solid rgba(218,220,224,0.65);
+      z-index: 5;
+    }
+
+    @media (max-height: 760px) {
+      #modalFichaPaciente .modal-card {
+        padding: 14px 20px;
+      }
+
+      #modalFichaPaciente .modal-title {
+        font-size: 18px;
+      }
+
+      #modalFichaPaciente .modal-subtitle,
+      #modalFichaPaciente .manual-ficha-note,
+      #modalFichaPaciente .helper-text {
+        font-size: 11px;
+      }
+
+      #modalFichaPaciente .form-control {
+        padding: 8px 10px;
+      }
+
+      #modalFichaPaciente .treatment-control {
+        padding: 7px 9px;
+      }
+    }
+
+    .date-combo {
+      position: relative;
+      display: flex;
+      align-items: center;
+      width: 100%;
+    }
+
+    .date-combo-input {
+      padding-right: 52px;
+    }
+
+    .date-combo-btn {
+      position: absolute;
+      right: 7px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .date-combo-picker {
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 54px;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      border: 0;
+      padding: 0;
+      z-index: 4;
+    }
+
+    .date-combo:hover .date-combo-btn {
+      background: var(--blue-light);
+      border-color: var(--blue);
+    }
+
+    .select-muted {
+      color: var(--muted);
+    }
+
+    .btn-mini-blue {
+      background: rgba(26,115,232,0.10);
+      color: var(--blue-hover);
+      border-color: rgba(26,115,232,0.18);
+    }
+
+    .btn-mini-blue:hover {
+      background: white;
+    }
+
+    @media (max-width: 1100px) {
+      .patient-card { grid-template-columns: 1fr; gap: 10px; }
+      .patient-actions { justify-content: flex-start; }
+      .calendar-grid { grid-template-columns: repeat(5, minmax(150px, 1fr)); }
+    }
+
+
+    /* Login / seguridad por usuario */
+    .auth-screen {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #eef4ff 0%, #f8fafd 55%, #ffffff 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    body.app-authenticated .auth-screen { display: none; }
+    body:not(.app-authenticated) .app-header,
+    body:not(.app-authenticated) .main-container { display: none; }
+
+    .auth-card {
+      width: 100%;
+      max-width: 430px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      padding: 28px;
+    }
+
+    .auth-logo {
+      font-size: 25px;
+      font-weight: 700;
+      color: var(--blue);
+      margin-bottom: 6px;
+    }
+
+    .auth-logo span { color: var(--text); font-weight: 500; }
+
+    .auth-subtitle {
+      font-size: 14px;
+      line-height: 1.45;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+
+    .auth-error {
+      display: none;
+      background: var(--red-light);
+      color: var(--red);
+      border: 1px solid #f5b5b2;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+
+    .auth-error.show { display: block; }
+
+    .auth-help {
+      margin-top: 14px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .auth-support-box {
+      margin-top: 14px;
+      padding: 12px;
+      border: 1px solid #b7e4c7;
+      background: #f0fff4;
+      border-radius: 14px;
+      font-size: 12px;
+      color: var(--green);
+      line-height: 1.45;
+    }
+
+    .auth-support-box button {
+      border: 0;
+      background: transparent;
+      color: var(--green);
+      font-weight: 800;
+      cursor: pointer;
+      padding: 0;
+      font-family: var(--font);
+      text-decoration: underline;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    .btn-support {
+      color: var(--green);
+      border-color: #b7e4c7;
+      background: #f0fff4;
+    }
+
+    .btn-support:hover {
+      background: var(--green-light);
+      border-color: var(--green);
+    }
+
+    .btn-delete-ficha {
+      color: var(--red);
+      border-color: #f3b5b2;
+      background: #fff;
+    }
+
+    .btn-delete-ficha:hover {
+      background: var(--red-light);
+      border-color: var(--red);
+    }
+
+    .user-session-pill {
+      font-size: 12px;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 7px 11px;
+      background: #fff;
+      max-width: 260px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+
+
+    .btn-config { color: var(--blue-hover); border-color: #b4d1f9; background: var(--blue-light); }
+    .btn-config:hover { background: #d2e3fc; border-color: var(--blue); }
+    .config-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+    .config-section { border: 1px solid var(--border); border-radius: 14px; padding: 14px; background: #fff; }
+    .config-section-title { font-size: 13px; font-weight: 800; color: var(--text); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 8px; }
+    .config-help { font-size: 12px; color: var(--muted); line-height: 1.45; margin-bottom: 12px; }
+    .config-treatment-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .config-add-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); }
+    .config-textarea { min-height: 88px; resize: vertical; line-height: 1.45; }
+    .config-variable-pill { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 7px; border-radius: 999px; background: var(--blue-light); color: var(--blue-hover); margin: 2px 3px 2px 0; }
+    .modal-card.config-modal-card { max-width: 860px; max-height: calc(100vh - 38px); overflow-y: auto; }
+    .config-days-grid { display: flex; flex-direction: column; gap: 8px; }
+    .config-day-row {
+      display: grid;
+      grid-template-columns: 130px 1fr 1fr 110px;
+      gap: 10px;
+      align-items: end;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--bg);
+    }
+    .config-day-row .day-toggle { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13px; }
+    .config-day-row input[type=checkbox] { width: auto; transform: scale(1.1); }
+    .config-mini-label { display:block; font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .3px; margin-bottom: 4px; }
+    .config-day-row .form-control { margin-top: 0; }
+    .config-day-row.disabled { opacity: .62; }
+    .config-day-warning { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.45; }
+    .day-column.day-disabled-with-turns .day-header { background: #fff8ed; }
+    .day-disabled-info { display:block; margin-top: 4px; font-size: 10px; color:#b45309; font-weight:700; }
+    @media (max-width: 900px) {
+      .config-day-row { grid-template-columns: 1fr; align-items: stretch; }
+    }
+
+
+
+    /* =====================================================
+       Responsive / móvil
+       - Desktop: mantiene sidebar + grilla.
+       - Pantallas chicas: sidebar se oculta y los días se apilan.
+       - Celular: agenda usable con scroll vertical, botones compactos.
+       ===================================================== */
+    html {
+      width: 100%;
+      min-width: 0;
+      overflow-x: hidden;
+    }
+
+    body {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .app-header,
+    .header-left,
+    .navigation-controls,
+    .header-right,
+    .main-container,
+    .grid-container,
+    .calendar-grid,
+    .day-column,
+    .pacientes-container {
+      min-width: 0;
+    }
+
+    .app-header {
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 80;
+    }
+
+    .header-left {
+      flex: 1 1 auto;
+    }
+
+    .grid-container {
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .calendar-grid {
+      align-items: start;
+    }
+
+    .time-slot,
+    .day-column,
+    .sidebar-card,
+    .patient-card,
+    .modal-card {
+      max-width: 100%;
+    }
+
+    .btn-nav,
+    .btn-action,
+    .btn-table-action,
+    .btn-card-action,
+    .btn-copy-phone {
+      touch-action: manipulation;
+    }
+
+    @media (max-width: 1320px) {
+      .app-header {
+        padding: 12px 16px;
+      }
+
+      .sidebar {
+        width: 250px;
+        padding: 16px 12px;
+      }
+
+      .calendar-grid {
+        gap: 10px;
+      }
+
+      .day-slots {
+        padding: 8px;
+      }
+
+      .time-slot.booked {
+        padding: 8px;
+      }
+
+      .btn-card-action {
+        width: 23px;
+        height: 23px;
+      }
+
+      .user-session-pill {
+        max-width: 210px;
+      }
+    }
+
+    @media (max-width: 980px) {
+      body {
+        overflow: hidden;
+      }
+
+      .app-header {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 10px 12px;
+      }
+
+      .header-left {
+        width: 100%;
+        gap: 10px;
+      }
+
+      .app-logo {
+        font-size: 20px;
+      }
+
+      .navigation-controls,
+      .header-right {
+        width: 100%;
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        gap: 8px;
+        padding-bottom: 4px;
+        scrollbar-width: thin;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .navigation-controls > *,
+      .header-right > * {
+        flex: 0 0 auto;
+      }
+
+      .btn-nav {
+        padding: 8px 12px;
+        font-size: 13px;
+      }
+
+      .current-month-label {
+        font-size: 15px;
+        white-space: nowrap;
+        align-self: center;
+      }
+
+      .main-container {
+        display: block;
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .sidebar {
+        display: none !important;
+      }
+
+      .grid-container,
+      .pacientes-container {
+        width: 100%;
+        min-height: calc(100vh - 116px);
+        padding: 12px;
+        overflow: visible;
+      }
+
+      .calendar-grid {
+        grid-template-columns: 1fr !important;
+        gap: 14px;
+      }
+
+      .day-column {
+        border-radius: 18px;
+      }
+
+      .day-header {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        padding: 12px 8px;
+      }
+
+      .day-slots {
+        padding: 10px;
+        gap: 8px;
+      }
+
+      .time-slot {
+        min-height: 44px;
+        font-size: 13px;
+      }
+
+      .time-slot.booked {
+        min-height: 104px;
+      }
+
+      .booked-actions-row {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+      }
+
+      .booked-phone-row {
+        align-items: center;
+      }
+
+      .booked-phone {
+        font-size: 12px;
+      }
+
+      .patients-filter-card,
+      .page-title-row {
+        align-items: stretch;
+      }
+
+      .patients-filter-fields,
+      .page-title-row,
+      .page-title-actions {
+        width: 100%;
+      }
+
+      .filter-group,
+      .filter-input {
+        width: 100%;
+      }
+
+      .patients-filter-fields {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .metrics-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .patient-card {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        padding: 14px;
+      }
+
+      .patient-actions {
+        justify-content: flex-start;
+      }
+
+      .modal-overlay {
+        align-items: flex-start;
+        justify-content: center;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 10px;
+      }
+
+      .modal-card,
+      .modal-card.config-modal-card,
+      #modalFichaPaciente .modal-card {
+        width: 100%;
+        max-width: 680px;
+        max-height: none;
+        margin: 8px auto 18px;
+        padding: 18px;
+      }
+
+      .modal-actions {
+        flex-wrap: wrap;
+        justify-content: stretch;
+      }
+
+      .modal-actions .btn-action,
+      .modal-actions .btn-nav,
+      .modal-actions button {
+        flex: 1 1 auto;
+      }
+
+      .treatment-control,
+      #modalFichaPaciente .treatment-control {
+        grid-template-columns: 1fr 40px 78px 40px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .app-header {
+        padding: 9px 10px;
+      }
+
+      .app-logo {
+        font-size: 19px;
+      }
+
+      .user-session-pill {
+        display: none;
+      }
+
+      .btn-nav {
+        padding: 7px 10px;
+        font-size: 12.5px;
+      }
+
+      .btn-arrow {
+        width: 36px;
+        min-width: 36px;
+        padding-left: 0;
+        padding-right: 0;
+      }
+
+      .grid-container,
+      .pacientes-container {
+        padding: 10px 8px;
+      }
+
+      .calendar-grid {
+        gap: 12px;
+      }
+
+      .day-column {
+        border-radius: 16px;
+      }
+
+      .day-header {
+        padding: 10px 8px;
+      }
+
+      .day-number {
+        height: 30px;
+        min-width: 42px;
+        font-size: 14px;
+      }
+
+      .time-slot {
+        border-radius: 10px;
+      }
+
+      .time-slot.booked {
+        min-height: 116px;
+      }
+
+      .booked-body {
+        font-size: 14px;
+      }
+
+      .btn-card-action {
+        width: 30px;
+        height: 30px;
+      }
+
+      .page-title {
+        font-size: 21px;
+      }
+
+      .page-subtitle {
+        font-size: 13px;
+      }
+
+      .metric-val {
+        font-size: 28px;
+      }
+
+      .patients-filter-card,
+      .metric-card,
+      .patient-card,
+      .sidebar-card {
+        border-radius: 14px;
+      }
+
+      .patient-actions .btn-table-action {
+        flex: 1 1 140px;
+        text-align: center;
+      }
+
+      .modal-card,
+      .modal-card.config-modal-card,
+      #modalFichaPaciente .modal-card {
+        padding: 15px;
+        border-radius: 16px;
+      }
+
+      .modal-title {
+        font-size: 20px;
+      }
+
+      .form-control,
+      .filter-input,
+      .input-date {
+        font-size: 16px; /* evita zoom automático de iOS/Android */
+      }
+
+      .config-day-row {
+        grid-template-columns: 1fr;
+      }
+
+      .config-add-row,
+      .config-treatment-row {
+        grid-template-columns: 1fr;
+      }
+
+      .treatment-control,
+      #modalFichaPaciente .treatment-control {
+        grid-template-columns: 1fr 38px 72px 38px;
+        gap: 7px;
+      }
+    }
+
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+
+  <section id="authScreen" class="auth-screen">
+    <div class="auth-card">
+      <div class="auth-logo">Consultorio <span>- Agenda</span></div>
+      <div class="auth-subtitle">
+        Ingresá con el usuario del consultorio. Después de iniciar sesión, la agenda carga solamente los datos de tu clínica.
+      </div>
+
+      <div id="authError" class="auth-error"></div>
+
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="loginEmail" class="form-control" placeholder="secretaria@consultorio.com" autocomplete="email">
+      </div>
+
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" id="loginPassword" class="form-control" placeholder="Contraseña" autocomplete="current-password" onkeydown="if(event.key === 'Enter') iniciarSesion()">
+      </div>
+
+      <div class="modal-actions" style="justify-content: stretch; margin-top: 18px;">
+        <button id="btnLogin" class="btn-action btn-primary" style="width: 100%;" onclick="iniciarSesion()">Ingresar</button>
+      </div>
+
+      <div class="auth-help">
+        Si este es el primer acceso, el administrador debe crear el usuario y vincularlo a una clínica.
+      </div>
+
+      <div class="auth-support-box">
+        Centro de atención: <button onclick="abrirSoporteWhatsApp(event)">+54 11 3306 6651</button> - Brian
+      </div>
+    </div>
+  </section>
+
+  <header class="app-header">
+    <div class="header-left">
+      <h1 class="app-logo">Consultorio <span>- Agenda</span></h1>
+
+      <div class="navigation-controls">
+        <button id="navTurnos" class="btn-nav active-view" onclick="cambiarVista('turnos')">Agenda</button>
+        <button id="navPacientes" class="btn-nav" onclick="cambiarVista('pacientes')">Pacientes para recordar</button>
+        <span id="sessionClinicLabel" class="user-session-pill" title="Clínica activa">Cargando clínica...</span>
+
+        <span style="border-left: 1px solid var(--border); height: 24px; margin: 0 8px;"></span>
+
+        <button class="btn-nav" id="ctrlHoy" onclick="irHoy()">Hoy</button>
+        <button class="btn-nav btn-arrow" id="ctrlPrev" onclick="navegarSemana(-1)">◀</button>
+        <button class="btn-nav btn-arrow" id="ctrlNext" onclick="navegarSemana(1)">▶</button>
+        <span id="currentMonthLabel" class="current-month-label">Junio 2026</span>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <button id="btnConfig" class="btn-nav btn-config" onclick="abrirConfiguracion()" style="display:none;">Configuración</button>
+      <button class="btn-nav btn-support" onclick="abrirSoporteWhatsApp(event)">Soporte</button>
+      <button class="btn-nav" onclick="cerrarSesion()">Salir</button>
+    </div>
+  </header>
+
+  <div class="main-container">
+    <aside class="sidebar" id="appSidebar">
+      <div class="sidebar-card">
+        <div class="sidebar-title">Panel de control</div>
+        <div class="sidebar-subtitle">Turnos de 30 minutos. Para alargar un turno, arrastralo a otra casilla libre.</div>
+
+        <label style="display:block; font-size:12px; margin-bottom:6px; color:var(--muted); font-weight:700;">
+          Saltar a una fecha
+        </label>
+
+        <input type="date" id="datepicker" class="input-date" onchange="seleccionarFechaManual(this.value)">
+      </div>
+
+      <div class="sidebar-card" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+        <div class="sidebar-title">Últimos 10 turnos</div>
+        <div id="historyList" class="history-list" style="overflow-y: auto; flex: 1;"></div>
+      </div>
+    </aside>
+
+    <main class="grid-container" id="appGridTurnos">
+      <div id="calendarGrid" class="calendar-grid"></div>
+    </main>
+
+    <main class="pacientes-container" id="appGridPacientes">
+      <div class="page-title-row">
+        <div>
+          <div class="page-title">Pacientes para recordar</div>
+          <div class="page-subtitle">Pacientes con más de 30 días desde su última visita. También funciona como fichero general para cargar pacientes antes de darles turno.</div>
+        </div>
+        <div class="page-title-actions">
+          <button class="btn-table-action btn-add-ficha" onclick="abrirAltaFichaPaciente()">+ Agregar ficha</button>
+        </div>
+      </div>
+
+      <div class="metrics-panel">
+        <div class="metric-card">
+          <div class="metric-lbl">Fichas de pacientes</div>
+          <div id="mTotalPacientes" class="metric-val">0</div>
+        </div>
+
+        <div class="metric-card" style="border-left: 5px solid var(--red);">
+          <div class="metric-lbl" style="color: var(--red);">Para recordar</div>
+          <div id="mParaRecordar" class="metric-val" style="color: var(--red);">0</div>
+        </div>
+      </div>
+
+      <div class="patients-filter-card">
+        <div>
+          <div class="patients-filter-fields">
+            <div class="filter-group">
+              <label>Buscar paciente por DNI</label>
+              <input
+                type="text"
+                id="filtroDniPacientes"
+                class="filter-input"
+                placeholder="Ej. 35123456"
+                oninput="filtrarPacientesPorDni(this.value)"
+              >
+            </div>
+
+            <div class="filter-group">
+              <label>Buscar paciente por nombre y apellido</label>
+              <input
+                type="text"
+                id="filtroNombrePacientes"
+                class="filter-input"
+                placeholder="Ej. Juan Pérez"
+                oninput="filtrarPacientesPorNombre(this.value)"
+              >
+            </div>
+
+            <button class="btn-table-action" onclick="limpiarFiltroPacientes()">
+              Borrar filtros
+            </button>
+          </div>
+          <div id="filtroPacientesInfo" class="filter-info">Mostrando todos los pacientes.</div>
+        </div>
+      </div>
+
+      <div id="tablaPacientesBody" class="patients-board"></div>
+    </main>
+  </div>
+
+  <div id="modalAlta" class="modal-overlay">
+    <div class="modal-card">
+      <h2 class="modal-title">Nuevo turno</h2>
+      <div id="modalTurnoInfo" class="modal-subtitle">Seleccioná una fecha y horario</div>
+
+      <input type="hidden" id="formId">
+      <input type="hidden" id="formFecha">
+      <input type="hidden" id="formHora">
+
+      <div class="form-group">
+        <label>DNI / Documento</label>
+        <input
+          type="text"
+          id="formDni"
+          class="form-control"
+          placeholder="Ej. 35123456"
+          oninput="procesarEntradaDNI(this)"
+        >
+        <div id="pacienteHint" class="patient-hint"></div>
+      </div>
+
+      <div class="form-group">
+        <label>Nombre y apellido</label>
+        <input type="text" id="formNombreCompleto" class="form-control" placeholder="Ej. Juan Pérez">
+      </div>
+
+      <div class="form-group">
+        <label>Teléfono celular</label>
+        <input type="text" id="formTelefono" class="form-control" placeholder="Ej. 1122334455">
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-action btn-secondary" onclick="cerrarModales()">Cancelar</button>
+        <button class="btn-action btn-primary" onclick="guardarFormularioTurno()">Guardar turno</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalDetalle" class="modal-overlay">
+    <div class="modal-card">
+      <h2 class="modal-title">Detalle del turno</h2>
+      <div class="modal-subtitle">Información cargada en la agenda</div>
+
+      <div class="detail-row"><span class="detail-label">Paciente:</span><span id="lblPaciente" class="detail-value"></span></div>
+      <div class="detail-row"><span class="detail-label">DNI:</span><span id="lblDni" class="detail-value"></span></div>
+      <div class="detail-row"><span class="detail-label">Teléfono:</span><span id="lblTelefono" class="detail-value"></span></div>
+      <div class="detail-row"><span class="detail-label">Horario:</span><span id="lblHorario" class="detail-value"></span></div>
+      <div class="detail-row"><span class="detail-label">Estado:</span><span id="lblEstado" class="detail-value"></span></div>
+      <div class="detail-row"><span class="detail-label">Tipo:</span><span id="lblTipoTurno" class="detail-value"></span></div>
+
+      <div class="modal-actions detail-actions">
+        <button class="btn-action btn-whatsapp-action" onclick="abrirWhatsAppTurnoActual()">WhatsApp</button>
+        <button class="btn-action btn-secondary" onclick="abrirEditarTurnoActual()">Editar turno</button>
+        <button class="btn-action btn-secondary" onclick="abrirReprogramarTurnoActual()">Reprogramar</button>
+        <button class="btn-action btn-danger" onclick="eliminarTurnoActual()">Cancelar cita</button>
+        <button class="btn-action btn-secondary" onclick="cerrarModales()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalConfirmarCancelacion" class="modal-overlay">
+    <div class="modal-card" style="max-width: 390px;">
+      <h2 class="modal-title" style="font-size: 20px;">¿Cancelar turno?</h2>
+      <p class="confirm-text">¿Seguro que querés cancelar este turno?</p>
+      <p class="confirm-warn">Esta acción no se puede deshacer.</p>
+
+      <div class="modal-actions">
+        <button class="btn-action btn-secondary" onclick="cerrarConfirmacion()">No, mantener</button>
+        <button class="btn-action btn-primary" style="background: var(--red);" onclick="ejecutarEliminacionConfirmada()">Sí, cancelar</button>
+      </div>
+    </div>
+  </div>
+
+
+  <div id="modalEditarTurno" class="modal-overlay">
+    <div class="modal-card">
+      <h2 class="modal-title">Editar turno</h2>
+      <div id="modalEditarTurnoInfo" class="modal-subtitle">Modificá los datos del paciente sin cambiar la fecha ni el horario.</div>
+
+      <input type="hidden" id="editTurnoId">
+
+      <div class="form-group">
+        <label>DNI / Documento</label>
+        <input
+          type="text"
+          id="editDni"
+          class="form-control"
+          placeholder="Ej. 35123456"
+          oninput="procesarEntradaDNIEditar(this)"
+        >
+        <div id="editPacienteHint" class="patient-hint"></div>
+      </div>
+
+      <div class="form-group">
+        <label>Nombre y apellido</label>
+        <input type="text" id="editNombreCompleto" class="form-control" placeholder="Ej. Juan Pérez">
+      </div>
+
+      <div class="form-group">
+        <label>Teléfono celular</label>
+        <input type="text" id="editTelefono" class="form-control" placeholder="Ej. 1122334455">
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-action btn-secondary" onclick="cerrarModales()">Cancelar</button>
+        <button class="btn-action btn-primary" onclick="guardarEdicionTurno()">Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalReprogramarTurno" class="modal-overlay">
+    <div class="modal-card">
+      <h2 class="modal-title">Reprogramar turno</h2>
+      <div id="modalReprogramarInfo" class="modal-subtitle">Elegí una nueva fecha y horario para este turno.</div>
+
+      <input type="hidden" id="reprogTurnoId">
+
+      <div class="form-group">
+        <label>Fecha nueva</label>
+        <div class="date-combo">
+          <input
+            type="text"
+            id="reprogFechaTexto"
+            class="form-control date-combo-input"
+            placeholder="Ej. 07/12/2026"
+            oninput="actualizarHorariosReprogramacion()"
+            onchange="normalizarCampoFechaReprogramacion()"
+            autocomplete="off"
+          >
+          <button type="button" class="date-combo-btn" title="Abrir calendario" tabindex="-1">📅</button>
+          <input
+            type="date"
+            id="reprogFechaCalendario"
+            class="date-combo-picker"
+            onchange="sincronizarFechaReprogramacionDesdeCalendario()"
+            onclick="abrirCalendarioReprogramacion(event)"
+            title="Abrir calendario"
+          >
+        </div>
+        <div class="helper-text">Escribí la fecha como 07/12/2026 o tocá el calendario de la derecha. Los horarios ocupados no se muestran.</div>
+      </div>
+
+      <div class="form-group">
+        <label>Horario nuevo</label>
+        <select id="reprogHora" class="form-control"></select>
+        <div id="reprogDisponibilidadInfo" class="helper-text"></div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-action btn-secondary" onclick="cerrarModales()">Cancelar</button>
+        <button class="btn-action btn-primary" onclick="guardarReprogramacionTurno()">Guardar reprogramación</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalTratamientos" class="modal-overlay">
+    <div class="modal-card">
+      <h2 class="modal-title">Tratamientos pendientes</h2>
+      <div id="modalTratamientosInfo" class="modal-subtitle">Actualizá lo que queda pendiente para esta ficha.</div>
+
+      <input type="hidden" id="tratDni">
+
+      <div id="tratamientosPacienteInputs" class="treatment-grid"></div>
+
+      <div class="modal-actions">
+        <button class="btn-action btn-secondary" onclick="cerrarModales()">Cancelar</button>
+        <button class="btn-action btn-primary" onclick="guardarTratamientosPaciente()">Guardar pendientes</button>
+      </div>
+    </div>
+  </div>
+
+
+  <div id="modalFichaPaciente" class="modal-overlay">
+    <div class="modal-card">
+      <h2 class="modal-title">Agregar ficha de paciente</h2>
+      <div class="modal-subtitle">Creá la ficha antes de darle turno. Después, al cargar un turno con ese DNI, se autocompletan los datos.</div>
+
+      <div class="manual-ficha-note">
+        Campos necesarios: DNI, nombre y apellido. El teléfono ayuda para WhatsApp y recordatorios. Los tratamientos pendientes son opcionales.
+      </div>
+
+      <div class="form-group">
+        <label>DNI / Documento</label>
+        <input
+          type="text"
+          id="fichaDni"
+          class="form-control"
+          placeholder="Ej. 35123456"
+          oninput="procesarEntradaDNIFicha(this)"
+        >
+        <div id="fichaPacienteHint" class="patient-hint"></div>
+      </div>
+
+      <div class="form-group">
+        <label>Nombre y apellido</label>
+        <input type="text" id="fichaNombreCompleto" class="form-control" placeholder="Ej. Juan Pérez">
+      </div>
+
+      <div class="form-group">
+        <label>Teléfono celular</label>
+        <input type="text" id="fichaTelefono" class="form-control" placeholder="Ej. 1122334455">
+      </div>
+
+      <div class="form-group">
+        <label>Tratamientos pendientes iniciales</label>
+        <div class="helper-text">Opcional. Si no tiene pendientes, dejá todo en 0.</div>
+      </div>
+
+      <div id="fichaTratamientosInputs" class="treatment-grid"></div>
+
+      <div class="modal-actions">
+        <button class="btn-action btn-secondary" onclick="cerrarModales()">Cancelar</button>
+        <button class="btn-action btn-primary" onclick="guardarFichaPaciente()">Guardar ficha</button>
+      </div>
+    </div>
+  </div>
+
+
+
+  <div id="modalConfiguracion" class="modal-overlay">
+    <div class="modal-card config-modal-card">
+      <h2 class="modal-title">Configuración del consultorio</h2>
+      <div class="modal-subtitle">Personalizá tratamientos pendientes y mensajes. Esto queda guardado para la clínica activa.</div>
+      <div class="config-grid">
+        <div class="config-section">
+          <div class="config-section-title">Tratamientos disponibles</div>
+          <div class="config-help">Estos tratamientos aparecen en fichas y mensajes. Podés agregar o quitar según lo que maneje cada consultorio.</div>
+          <div id="configTratamientosLista"></div>
+          <div class="config-add-row">
+            <input type="text" id="configNuevoTratamiento" class="form-control" placeholder="Ej. Limpieza, implante, perno, ortodoncia">
+            <button class="btn-table-action" onclick="agregarTratamientoConfiguracion()">Agregar</button>
+          </div>
+        </div>
+        <div class="config-section">
+          <div class="config-section-title">Días y horarios disponibles</div>
+          <div class="config-help">
+            Activá los días que atiende el consultorio y definí desde qué hora hasta qué hora aparecen turnos disponibles. Esto no borra turnos ya cargados: si existe un turno viejo fuera del horario configurado, se sigue mostrando para que no se pierda.
+          </div>
+          <div id="configHorariosLista" class="config-days-grid"></div>
+          <div class="config-day-warning">
+            Recomendación: usá intervalos de 30 minutos si querés mantener la lógica actual de la agenda. Si un día no atienden, dejalo desactivado.
+          </div>
+        </div>
+        <div class="config-section">
+          <div class="config-section-title">Mensajes automáticos</div>
+          <div class="config-help">Variables disponibles:
+            <span class="config-variable-pill">{paciente}</span><span class="config-variable-pill">{fecha}</span><span class="config-variable-pill">{hora}</span><span class="config-variable-pill">{tratamientos}</span><span class="config-variable-pill">{consultorio}</span>
+          </div>
+          <div class="form-group">
+            <label>Agenda: recordatorio de turno</label>
+            <textarea id="configMensajeTurno" class="form-control config-textarea"></textarea>
+            <div class="helper-text">Lo usan WhatsApp y Copiar recordatorio dentro de la agenda.</div>
+          </div>
+          <div class="form-group">
+            <label>Pacientes: seguimiento sin tratamientos pendientes</label>
+            <textarea id="configMensajePacienteSinPendientes" class="form-control config-textarea"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Pacientes: seguimiento con tratamientos pendientes</label>
+            <textarea id="configMensajePacienteConPendientes" class="form-control config-textarea"></textarea>
+            <div class="helper-text">Usá {tratamientos} para insertar la lista con cantidades.</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-action btn-secondary" onclick="cerrarModales()">Cancelar</button>
+        <button id="btnGuardarConfiguracion" class="btn-action btn-primary" onclick="guardarConfiguracionClinica()">Guardar configuración</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastAviso" class="toast-aviso">Recordatorio copiado.</div>
+
+  <a id="whatsappBridge" href="#" target="PestanaUnicaWhatsAppOdonto" style="display:none;" rel=""></a>
+
+  <script>
+
+    let BASE_DATOS = [];
+    let HORAS_PERMITIDAS = [];
+    let SEGUIMIENTO_COMPACTO = {};
+    let PACIENTES_DB = [];
+    let TRATAMIENTOS_DB = {};
+    let CONFIG_CLINICA = null;
+    let ROL_USUARIO = 'secretaria';
+    let FECHA_LUNES_ACTUAL = new Date();
+    let ID_TURNO_SELECCIONADO = null;
+    let VISTA_ACTUAL = 'turnos';
+    let DRAG_TURNO_ID = null;
+    let FILTRO_DNI_PACIENTES = '';
+    let FILTRO_NOMBRE_PACIENTES = '';
+    const DEFAULT_CONFIG_CLINICA = {
+      tratamientos: [
+        { key: 'caries', label: 'Caries' },
+        { key: 'conductos', label: 'Conductos' },
+        { key: 'extracciones', label: 'Extracciones' },
+        { key: 'coronas', label: 'Coronas' }
+      ],
+      mensajes: {
+        turno: 'Hola {paciente}, te recordamos tu turno en el consultorio el día {fecha} a las {hora} hs.\n¡Te esperamos!',
+        paciente_sin_pendientes: 'Hola {paciente}, ¿cómo estás?\nTe escribimos desde el consultorio para recordarte que hace un tiempo no realizás un control.\nSi querés coordinar un turno, estamos disponibles para ayudarte.',
+        paciente_con_pendientes: 'Hola {paciente}, ¿cómo estás?\nTe escribimos desde el consultorio porque tenemos registrado que te quedó pendiente: {tratamientos}.\nSi querés, podemos coordinar un turno para ir resolviéndolo. Estamos disponibles para ayudarte.'
+      },
+      horarios: {
+        lunes: { activo: true, inicio: '09:00', fin: '16:30', intervalo: 30 },
+        martes: { activo: true, inicio: '09:00', fin: '16:30', intervalo: 30 },
+        miercoles: { activo: true, inicio: '09:00', fin: '16:30', intervalo: 30 },
+        jueves: { activo: true, inicio: '09:00', fin: '16:30', intervalo: 30 },
+        viernes: { activo: true, inicio: '09:00', fin: '16:30', intervalo: 30 },
+        sabado: { activo: false, inicio: '09:00', fin: '13:00', intervalo: 30 },
+        domingo: { activo: false, inicio: '09:00', fin: '13:00', intervalo: 30 }
+      }
+    };
+
+    const DIAS_CONFIG = [
+      { key: 'lunes', jsDay: 1, abrev: 'LUN', nombre: 'Lunes' },
+      { key: 'martes', jsDay: 2, abrev: 'MAR', nombre: 'Martes' },
+      { key: 'miercoles', jsDay: 3, abrev: 'MIÉ', nombre: 'Miércoles' },
+      { key: 'jueves', jsDay: 4, abrev: 'JUE', nombre: 'Jueves' },
+      { key: 'viernes', jsDay: 5, abrev: 'VIE', nombre: 'Viernes' },
+      { key: 'sabado', jsDay: 6, abrev: 'SÁB', nombre: 'Sábado' },
+      { key: 'domingo', jsDay: 0, abrev: 'DOM', nombre: 'Domingo' }
+    ];
+
+    const WHATSAPP_TARGET_NAME = 'PestanaUnicaWhatsAppOdonto';
+    const SUPPORT_PHONE = '1133066651';
+    let MIDNIGHT_LOGOUT_TIMER = null;
+
+    const SUPABASE_URL = 'https://utwqliqvjvchfcpkbyye.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_HTIb1qIooLrQVOBQ0owDEA_wiZJjcR4';
+
+    let CLINICA_ID = '';
+    let USUARIO_ACTUAL = null;
+    let CLINICA_ACTUAL = null;
+
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      HORAS_PERMITIDAS = generarHorasPermitidas();
+      llenarSelectHoras('reprogHora');
+
+      const hoy = new Date();
+      FECHA_LUNES_ACTUAL = obtenerLunesDeSemana(hoy);
+      document.getElementById('datepicker').value = formatearFechaISO(hoy);
+
+      await inicializarSesionSegura();
+
+      supabaseClient.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_OUT') {
+          limpiarEstadoApp();
+          mostrarPantallaLogin();
+        }
+      });
+    });
+
+
+    let AGENDA_RESIZE_TIMER = null;
+    window.addEventListener('resize', () => {
+      if (!document.body.classList.contains('app-authenticated')) return;
+      clearTimeout(AGENDA_RESIZE_TIMER);
+      AGENDA_RESIZE_TIMER = setTimeout(() => {
+        if (VISTA_ACTUAL === 'turnos') {
+          renderizarCalendarioCompleto();
+        }
+      }, 180);
+    });
+
+    async function inicializarSesionSegura() {
+      const { data, error } = await supabaseClient.auth.getSession();
+
+      if (error || !data.session) {
+        mostrarPantallaLogin();
+        return;
+      }
+
+      const diaSesion = localStorage.getItem('agenda_consultorio_session_day');
+      const hoySesion = obtenerClaveDiaLocal();
+      if (diaSesion && diaSesion !== hoySesion) {
+        await supabaseClient.auth.signOut();
+        localStorage.removeItem('agenda_consultorio_session_day');
+        limpiarEstadoApp();
+        mostrarPantallaLogin('Por seguridad, la sesión del día anterior se cerró. Iniciá sesión nuevamente.');
+        return;
+      }
+
+      await iniciarAppConSesion(data.session);
+    }
+
+    function mostrarPantallaLogin(mensaje) {
+      document.body.classList.remove('app-authenticated');
+      const err = document.getElementById('authError');
+      if (err) {
+        err.innerText = mensaje || '';
+        err.classList.toggle('show', !!mensaje);
+      }
+      setTimeout(() => {
+        const email = document.getElementById('loginEmail');
+        if (email) email.focus();
+      }, 100);
+    }
+
+    function limpiarEstadoApp() {
+      BASE_DATOS = [];
+      PACIENTES_DB = [];
+      TRATAMIENTOS_DB = {};
+      SEGUIMIENTO_COMPACTO = {};
+      CLINICA_ID = '';
+      USUARIO_ACTUAL = null;
+      CLINICA_ACTUAL = null;
+      const history = document.getElementById('historyList');
+      if (history) history.innerHTML = '';
+      const grid = document.getElementById('calendarGrid');
+      if (grid) grid.innerHTML = '';
+    }
+
+    async function iniciarSesion() {
+      const email = String(document.getElementById('loginEmail').value || '').trim();
+      const password = String(document.getElementById('loginPassword').value || '').trim();
+      const btn = document.getElementById('btnLogin');
+      const err = document.getElementById('authError');
+
+      if (err) {
+        err.innerText = '';
+        err.classList.remove('show');
+      }
+
+      if (!email || !password) {
+        mostrarPantallaLogin('Ingresá email y contraseña.');
+        return;
+      }
+
+      if (btn) {
+        btn.disabled = true;
+        btn.innerText = 'Ingresando...';
+      }
+
+      const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (btn) {
+        btn.disabled = false;
+        btn.innerText = 'Ingresar';
+      }
+
+      if (error || !data.session) {
+        mostrarPantallaLogin('No se pudo iniciar sesión: ' + (error?.message || 'credenciales inválidas.'));
+        return;
+      }
+
+      await iniciarAppConSesion(data.session);
+    }
+
+    async function iniciarAppConSesion(session) {
+      USUARIO_ACTUAL = session.user;
+
+      const { data: membresia, error } = await supabaseClient
+        .from('usuarios_clinicas')
+        .select(`
+          clinica_id,
+          rol,
+          clinicas (
+            id,
+            nombre,
+            configuracion
+          )
+        `)
+        .eq('usuario_id', session.user.id)
+        .single();
+
+      if (error || !membresia) {
+        await supabaseClient.auth.signOut();
+        mostrarPantallaLogin('El usuario existe, pero todavía no está vinculado a una clínica en usuarios_clinicas.');
+        return;
+      }
+
+      CLINICA_ID = membresia.clinica_id;
+      CLINICA_ACTUAL = membresia.clinicas || { id: membresia.clinica_id, nombre: 'Clínica' };
+      ROL_USUARIO = membresia.rol || 'secretaria';
+      CONFIG_CLINICA = normalizarConfigClinica(CLINICA_ACTUAL.configuracion || {});
+      HORAS_PERMITIDAS = obtenerTodasHorasConfiguradas();
+      aplicarEstadoBotonConfiguracion();
+
+      const label = document.getElementById('sessionClinicLabel');
+      if (label) {
+        label.innerText = `${CLINICA_ACTUAL.nombre || 'Clínica'} · ${USUARIO_ACTUAL.email || ''}`;
+        label.title = `Clínica activa: ${CLINICA_ACTUAL.nombre || CLINICA_ID}`;
+      }
+
+      document.body.classList.add('app-authenticated');
+      localStorage.setItem('agenda_consultorio_session_day', obtenerClaveDiaLocal());
+      programarCierreAutomaticoMedianoche();
+
+      await cargarDatosDesdeSupabase();
+      renderizarCalendarioCompleto();
+      calcularYRenderizarPacientes();
+    }
+
+    async function cerrarSesion() {
+      await supabaseClient.auth.signOut();
+      localStorage.removeItem('agenda_consultorio_session_day');
+      if (MIDNIGHT_LOGOUT_TIMER) clearTimeout(MIDNIGHT_LOGOUT_TIMER);
+      limpiarEstadoApp();
+      mostrarPantallaLogin();
+    }
+
+    function obtenerClaveDiaLocal() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function programarCierreAutomaticoMedianoche() {
+      if (MIDNIGHT_LOGOUT_TIMER) clearTimeout(MIDNIGHT_LOGOUT_TIMER);
+
+      const ahora = new Date();
+      const medianoche = new Date(ahora);
+      medianoche.setHours(24, 0, 2, 0);
+      const ms = Math.max(1000, medianoche.getTime() - ahora.getTime());
+
+      MIDNIGHT_LOGOUT_TIMER = setTimeout(async () => {
+        await supabaseClient.auth.signOut();
+        localStorage.removeItem('agenda_consultorio_session_day');
+        limpiarEstadoApp();
+        mostrarPantallaLogin('La sesión se cerró automáticamente a las 00:00 hs. Iniciá sesión nuevamente.');
+      }, ms);
+    }
+
+    function minutosDesdeHora(hora) {
+      const partes = String(hora || '').split(':');
+      const h = parseInt(partes[0], 10);
+      const m = parseInt(partes[1], 10);
+      if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
+      return h * 60 + m;
+    }
+
+    function horaDesdeMinutos(total) {
+      const h = Math.floor(total / 60);
+      const m = total % 60;
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    }
+
+    function esHoraValida(valor) {
+      return /^([01]\d|2[0-3]):[0-5]\d$/.test(String(valor || ''));
+    }
+
+    function generarHorasRango(inicio, fin, intervalo) {
+      const ini = minutosDesdeHora(inicio);
+      const end = minutosDesdeHora(fin);
+      const step = [15, 20, 30, 45, 60].includes(Number(intervalo)) ? Number(intervalo) : 30;
+      if (ini === null || end === null || end < ini) return [];
+      const horas = [];
+      for (let min = ini; min <= end; min += step) {
+        horas.push(horaDesdeMinutos(min));
+      }
+      return horas;
+    }
+
+    function generarHorasPermitidas() {
+      return generarHorasRango('09:00', '16:30', 30);
+    }
+
+    function offsetDesdeLunes(jsDay) {
+      return jsDay === 0 ? 6 : jsDay - 1;
+    }
+
+    function obtenerDiaConfigPorFecha(fechaISO) {
+      const p = String(fechaISO || '').split('-');
+      if (p.length !== 3) return DIAS_CONFIG[0];
+      const d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+      const jsDay = d.getDay();
+      return DIAS_CONFIG.find(x => x.jsDay === jsDay) || DIAS_CONFIG[0];
+    }
+
+    function obtenerHorariosConfigurados() {
+      return normalizarHorariosClinica((CONFIG_CLINICA || DEFAULT_CONFIG_CLINICA).horarios || DEFAULT_CONFIG_CLINICA.horarios);
+    }
+
+    function generarHorasParaFecha(fechaISO) {
+      const dia = obtenerDiaConfigPorFecha(fechaISO);
+      const horarios = obtenerHorariosConfigurados();
+      const cfg = horarios[dia.key];
+      if (!cfg || !cfg.activo) return [];
+      return generarHorasRango(cfg.inicio, cfg.fin, cfg.intervalo);
+    }
+
+    function obtenerTodasHorasConfiguradas() {
+      const set = new Set();
+      const horarios = obtenerHorariosConfigurados();
+      DIAS_CONFIG.forEach(dia => {
+        const cfg = horarios[dia.key];
+        if (cfg && cfg.activo) {
+          generarHorasRango(cfg.inicio, cfg.fin, cfg.intervalo).forEach(h => set.add(h));
+        }
+      });
+      if (set.size === 0) generarHorasPermitidas().forEach(h => set.add(h));
+      return Array.from(set).sort((a, b) => minutosDesdeHora(a) - minutosDesdeHora(b));
+    }
+
+    function llenarSelectHoras(idSelect) {
+      const select = document.getElementById(idSelect);
+      if (!select) return;
+
+      select.innerHTML = '';
+      obtenerTodasHorasConfiguradas().forEach(hora => {
+        const option = document.createElement('option');
+        option.value = hora;
+        option.textContent = hora;
+        select.appendChild(option);
+      });
+    }
+
+    function obtenerHorariosDisponibles(fechaISO, idTurnoActual) {
+      if (!fechaISO) return [];
+
+      const base = generarHorasParaFecha(fechaISO);
+      const turnoActual = BASE_DATOS.find(t => t.id === idTurnoActual);
+
+      if (turnoActual && turnoActual.fecha === fechaISO) {
+        const horaActual = String(turnoActual.hora || '').slice(0, 5);
+        if (horaActual && !base.includes(horaActual)) base.push(horaActual);
+      }
+
+      const ocupados = new Set(
+        BASE_DATOS
+          .filter(t => t.fecha === fechaISO && t.id !== idTurnoActual)
+          .map(t => String(t.hora || '').slice(0, 5))
+      );
+
+      return base
+        .filter(hora => !ocupados.has(hora))
+        .sort((a, b) => minutosDesdeHora(a) - minutosDesdeHora(b));
+    }
+
+    function llenarSelectHorasDisponibles(idSelect, fechaISO, idTurnoActual, horaPreferida) {
+      const select = document.getElementById(idSelect);
+      const info = document.getElementById('reprogDisponibilidadInfo');
+      if (!select) return;
+
+      select.innerHTML = '';
+      select.classList.remove('select-muted');
+
+      if (!fechaISO) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'Ingresá una fecha válida';
+        select.appendChild(option);
+        select.classList.add('select-muted');
+        if (info) info.innerText = 'Escribí una fecha válida para ver los horarios libres.';
+        return;
+      }
+
+      const baseDelDia = generarHorasParaFecha(fechaISO);
+      const disponibles = obtenerHorariosDisponibles(fechaISO, idTurnoActual);
+
+      if (baseDelDia.length === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'El consultorio no atiende ese día';
+        select.appendChild(option);
+        select.classList.add('select-muted');
+        if (info) info.innerText = 'Ese día está desactivado en Configuración.';
+        return;
+      }
+
+      if (disponibles.length === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'No hay horarios libres ese día';
+        select.appendChild(option);
+        select.classList.add('select-muted');
+        if (info) info.innerText = 'Ese día no tiene horarios disponibles.';
+        return;
+      }
+
+      disponibles.forEach(hora => {
+        const option = document.createElement('option');
+        option.value = hora;
+        option.textContent = hora;
+        select.appendChild(option);
+      });
+
+      if (horaPreferida && disponibles.includes(horaPreferida)) {
+        select.value = horaPreferida;
+      } else {
+        select.value = disponibles[0];
+      }
+
+      if (info) {
+        info.innerText = `${disponibles.length} horario${disponibles.length === 1 ? '' : 's'} libre${disponibles.length === 1 ? '' : 's'} para esa fecha.`;
+      }
+    }
+
+    async function cargarDatosDesdeSupabase() {
+      if (!CLINICA_ID) return;
+      const { data: pacientes, error: errorPacientes } = await supabaseClient
+        .from('pacientes')
+        .select('id, clinica_id, dni, nombre_completo, telefono, created_at')
+        .eq('clinica_id', CLINICA_ID)
+        .order('nombre_completo', { ascending: true });
+
+      if (errorPacientes) {
+        console.error(errorPacientes);
+        alert('Error cargando pacientes desde Supabase: ' + errorPacientes.message);
+        return;
+      }
+
+      PACIENTES_DB = (pacientes || []).map(p => ({
+        id: p.id,
+        dni: String(p.dni || '').replace(/\D/g, ''),
+        nombre_completo: p.nombre_completo || '',
+        telefono: p.telefono || '',
+        created_at: p.created_at
+      }));
+
+      const { data: turnos, error: errorTurnos } = await supabaseClient
+        .from('turnos')
+        .select(`
+          *,
+          pacientes (
+            id,
+            dni,
+            nombre_completo,
+            telefono
+          )
+        `)
+        .eq('clinica_id', CLINICA_ID)
+        .order('fecha', { ascending: true })
+        .order('hora', { ascending: true });
+
+      if (errorTurnos) {
+        console.error(errorTurnos);
+        alert('Error cargando turnos desde Supabase: ' + errorTurnos.message);
+        return;
+      }
+
+      BASE_DATOS = (turnos || []).map(t => {
+        const nombreCompleto = t.pacientes?.nombre_completo || '';
+        const partes = dividirNombreCompleto(nombreCompleto);
+
+        return {
+          id: t.id,
+          fecha: t.fecha,
+          hora: String(t.hora).slice(0, 5),
+          nombre: partes.nombre || '',
+          apellido: partes.apellido || '',
+          telefono: t.pacientes?.telefono || '',
+          dni: String(t.pacientes?.dni || '').replace(/\D/g, ''),
+          categoria: 'Consulta',
+          observacion: '',
+          confirmado: t.confirmado === true,
+          timestamp: new Date(t.created_at).getTime(),
+          extension: t.extension === true,
+          parentId: t.parent_id || '',
+          pacienteId: t.paciente_id
+        };
+      });
+
+      const { data: recordatorios, error: errorRecordatorios } = await supabaseClient
+        .from('recordatorios')
+        .select('*')
+        .eq('clinica_id', CLINICA_ID);
+
+      SEGUIMIENTO_COMPACTO = {};
+
+      if (!errorRecordatorios) {
+        (recordatorios || []).forEach(r => {
+          SEGUIMIENTO_COMPACTO[String(r.dni || '').replace(/\D/g, '')] = {
+            ultimoRecordatorio: r.ultimo_recordatorio,
+            estado: r.estado || 'Recordado este mes'
+          };
+        });
+      }
+
+      const { data: tratamientos, error: errorTratamientos } = await supabaseClient
+        .from('tratamientos_pendientes')
+        .select('*')
+        .eq('clinica_id', CLINICA_ID);
+
+      TRATAMIENTOS_DB = {};
+
+      if (!errorTratamientos) {
+        (tratamientos || []).forEach(t => {
+          const dni = String(t.dni || '').replace(/\D/g, '');
+          TRATAMIENTOS_DB[dni] = compatPendientesDesdeFila(t);
+        });
+      } else {
+        console.warn('No se pudieron cargar tratamientos pendientes:', errorTratamientos.message);
+      }
+    }
+
+    function normalizarCantidad(valor) {
+      const n = parseInt(valor, 10);
+      return Number.isFinite(n) && n > 0 ? n : 0;
+    }
+
+
+    function clonar(obj) { return JSON.parse(JSON.stringify(obj)); }
+
+    function normalizarConfigClinica(config) {
+      const base = clonar(DEFAULT_CONFIG_CLINICA);
+      const cfg = config && typeof config === 'object' ? config : {};
+      const tratamientos = Array.isArray(cfg.tratamientos) ? cfg.tratamientos : base.tratamientos;
+      base.tratamientos = tratamientos
+        .map(t => ({ key: slugTratamiento(t.key || t.label || ''), label: String(t.label || t.key || '').trim() }))
+        .filter(t => t.key && t.label)
+        .filter((t, idx, arr) => arr.findIndex(x => x.key === t.key) === idx);
+      if (base.tratamientos.length === 0) base.tratamientos = clonar(DEFAULT_CONFIG_CLINICA.tratamientos);
+      base.mensajes = { ...base.mensajes, ...(cfg.mensajes && typeof cfg.mensajes === 'object' ? cfg.mensajes : {}) };
+      base.horarios = normalizarHorariosClinica(cfg.horarios || base.horarios);
+      return base;
+    }
+
+    function aplicarEstadoBotonConfiguracion() {
+      const btn = document.getElementById('btnConfig');
+      if (btn) btn.style.display = ROL_USUARIO === 'admin' ? 'inline-block' : 'none';
+    }
+
+    function obtenerTratamientosConfigurados() {
+      return (CONFIG_CLINICA || DEFAULT_CONFIG_CLINICA).tratamientos || DEFAULT_CONFIG_CLINICA.tratamientos;
+    }
+
+    function normalizarHorarioDia(valor, fallback) {
+      const f = fallback || { activo: false, inicio: '09:00', fin: '13:00', intervalo: 30 };
+      const v = valor && typeof valor === 'object' ? valor : {};
+      let inicio = esHoraValida(v.inicio) ? v.inicio : f.inicio;
+      let fin = esHoraValida(v.fin) ? v.fin : f.fin;
+      let intervalo = Number(v.intervalo || f.intervalo || 30);
+      if (![15, 20, 30, 45, 60].includes(intervalo)) intervalo = 30;
+      if (minutosDesdeHora(fin) < minutosDesdeHora(inicio)) {
+        const tmp = inicio;
+        inicio = fin;
+        fin = tmp;
+      }
+      return { activo: !!v.activo, inicio, fin, intervalo };
+    }
+
+    function normalizarHorariosClinica(horarios) {
+      const base = clonar(DEFAULT_CONFIG_CLINICA.horarios || {});
+      const cfg = horarios && typeof horarios === 'object' ? horarios : {};
+      const resultado = {};
+      DIAS_CONFIG.forEach(dia => {
+        resultado[dia.key] = normalizarHorarioDia(cfg[dia.key], base[dia.key]);
+      });
+      if (!Object.values(resultado).some(d => d.activo)) {
+        ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'].forEach(k => resultado[k].activo = true);
+      }
+      return resultado;
+    }
+
+    function slugTratamiento(valor) {
+      return String(valor || '')
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase().replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '').slice(0, 40);
+    }
+
+    function normalizarPendientes(obj) {
+      const pendientes = {};
+      const fuente = obj && typeof obj === 'object' ? obj : {};
+      Object.keys(fuente).forEach(key => {
+        const limpio = slugTratamiento(key);
+        const cant = normalizarCantidad(fuente[key]);
+        if (limpio && cant > 0) pendientes[limpio] = cant;
+      });
+      return pendientes;
+    }
+
+    function compatPendientesDesdeFila(fila) {
+      const base = normalizarPendientes(fila?.pendientes || {});
+      ['caries', 'conductos', 'extracciones', 'coronas'].forEach(k => {
+        const v = normalizarCantidad(fila?.[k]);
+        if (v > 0 && !base[k]) base[k] = v;
+      });
+      return base;
+    }
+
+    function renderInputsTratamientos(containerId, prefix, valores) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      const pendientes = normalizarPendientes(valores || {});
+      container.innerHTML = obtenerTratamientosConfigurados().map(t => {
+        const id = `${prefix}_${t.key}`;
+        const cant = normalizarCantidad(pendientes[t.key]);
+        return `
+          <div class="treatment-control">
+            <div class="treatment-control-label">${e(t.label)}</div>
+            <button type="button" onclick="ajustarTratamiento('${e(id)}', -1)">−</button>
+            <input type="number" min="0" id="${e(id)}" data-treatment-key="${e(t.key)}" class="form-control treatment-dynamic-input" value="${cant}">
+            <button type="button" onclick="ajustarTratamiento('${e(id)}', 1)">+</button>
+          </div>`;
+      }).join('');
+    }
+
+    function leerInputsTratamientos(containerId) {
+      const container = document.getElementById(containerId);
+      const pendientes = {};
+      if (!container) return pendientes;
+      container.querySelectorAll('[data-treatment-key]').forEach(input => {
+        const key = slugTratamiento(input.dataset.treatmentKey || '');
+        const cant = normalizarCantidad(input.value);
+        if (key && cant > 0) pendientes[key] = cant;
+      });
+      return pendientes;
+    }
+
+    function armarTextoTratamientosPendientes(dni) {
+      const pendientes = TRATAMIENTOS_DB[String(dni || '').replace(/\D/g, '')] || {};
+      const partes = [];
+      obtenerTratamientosConfigurados().forEach(t => {
+        const cant = normalizarCantidad(pendientes[t.key]);
+        if (cant > 0) partes.push(`${cant} ${t.label.toLowerCase()}`);
+      });
+      if (partes.length === 0) return '';
+      if (partes.length === 1) return partes[0];
+      return partes.slice(0, -1).join(', ') + ' y ' + partes[partes.length - 1];
+    }
+
+    function aplicarTemplateMensaje(template, datos) {
+      const vars = {
+        paciente: datos.paciente || '',
+        fecha: datos.fecha || '',
+        hora: datos.hora || '',
+        tratamientos: datos.tratamientos || '',
+        consultorio: CLINICA_ACTUAL?.nombre || 'consultorio'
+      };
+      return String(template || '').replace(/\{(paciente|fecha|hora|tratamientos|consultorio)\}/g, (_, key) => vars[key] || '');
+    }
+
+    function abrirConfiguracion() {
+      if (ROL_USUARIO !== 'admin') { mostrarToast('Solo el administrador puede modificar la configuración.'); return; }
+      CONFIG_CLINICA = normalizarConfigClinica(CONFIG_CLINICA || {});
+      renderListaTratamientosConfiguracion();
+      renderHorariosConfiguracion();
+      document.getElementById('configMensajeTurno').value = CONFIG_CLINICA.mensajes.turno || '';
+      document.getElementById('configMensajePacienteSinPendientes').value = CONFIG_CLINICA.mensajes.paciente_sin_pendientes || '';
+      document.getElementById('configMensajePacienteConPendientes').value = CONFIG_CLINICA.mensajes.paciente_con_pendientes || '';
+      document.getElementById('modalConfiguracion').classList.add('active');
+    }
+
+    function renderListaTratamientosConfiguracion() {
+      const lista = document.getElementById('configTratamientosLista');
+      if (!lista) return;
+      lista.innerHTML = obtenerTratamientosConfigurados().map(t => `
+        <div class="config-treatment-row">
+          <input type="text" class="form-control config-treatment-label" data-treatment-key="${e(t.key)}" value="${e(t.label)}">
+          <button class="btn-table-action btn-delete-ficha" onclick="quitarTratamientoConfiguracion('${e(t.key)}')">Quitar</button>
+        </div>`).join('');
+    }
+
+    function agregarTratamientoConfiguracion() {
+      const input = document.getElementById('configNuevoTratamiento');
+      const label = String(input?.value || '').trim().replace(/\s+/g, ' ');
+      if (!label) { mostrarToast('Escribí el nombre del tratamiento.'); return; }
+      const key = slugTratamiento(label);
+      const tratamientos = obtenerTratamientosConfigurados();
+      if (tratamientos.some(t => t.key === key)) { mostrarToast('Ese tratamiento ya existe.'); return; }
+      tratamientos.push({ key, label });
+      if (input) input.value = '';
+      renderListaTratamientosConfiguracion();
+    }
+
+    function quitarTratamientoConfiguracion(key) {
+      const limpio = slugTratamiento(key);
+      const tratamientos = obtenerTratamientosConfigurados();
+      if (tratamientos.length <= 1) { mostrarToast('Debe quedar al menos un tratamiento disponible.'); return; }
+      CONFIG_CLINICA.tratamientos = tratamientos.filter(t => t.key !== limpio);
+      renderListaTratamientosConfiguracion();
+    }
+
+    function renderHorariosConfiguracion() {
+      const lista = document.getElementById('configHorariosLista');
+      if (!lista) return;
+      const horarios = obtenerHorariosConfigurados();
+      lista.innerHTML = DIAS_CONFIG.map(dia => {
+        const cfg = horarios[dia.key] || DEFAULT_CONFIG_CLINICA.horarios[dia.key];
+        return `
+          <div class="config-day-row ${cfg.activo ? '' : 'disabled'}" id="configDiaRow_${e(dia.key)}">
+            <label class="day-toggle">
+              <input type="checkbox" id="configDiaActivo_${e(dia.key)}" ${cfg.activo ? 'checked' : ''} onchange="actualizarEstadoFilaHorario('${e(dia.key)}')">
+              ${e(dia.nombre)}
+            </label>
+            <div>
+              <span class="config-mini-label">Desde</span>
+              <input type="time" id="configDiaInicio_${e(dia.key)}" class="form-control" value="${e(cfg.inicio)}" step="900">
+            </div>
+            <div>
+              <span class="config-mini-label">Hasta</span>
+              <input type="time" id="configDiaFin_${e(dia.key)}" class="form-control" value="${e(cfg.fin)}" step="900">
+            </div>
+            <div>
+              <span class="config-mini-label">Intervalo</span>
+              <select id="configDiaIntervalo_${e(dia.key)}" class="form-control">
+                <option value="15" ${cfg.intervalo === 15 ? 'selected' : ''}>15 min</option>
+                <option value="20" ${cfg.intervalo === 20 ? 'selected' : ''}>20 min</option>
+                <option value="30" ${cfg.intervalo === 30 ? 'selected' : ''}>30 min</option>
+                <option value="45" ${cfg.intervalo === 45 ? 'selected' : ''}>45 min</option>
+                <option value="60" ${cfg.intervalo === 60 ? 'selected' : ''}>60 min</option>
+              </select>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function actualizarEstadoFilaHorario(key) {
+      const row = document.getElementById('configDiaRow_' + key);
+      const activo = document.getElementById('configDiaActivo_' + key)?.checked;
+      if (row) row.classList.toggle('disabled', !activo);
+    }
+
+    function leerHorariosConfiguracion() {
+      const horarios = {};
+      DIAS_CONFIG.forEach(dia => {
+        horarios[dia.key] = normalizarHorarioDia({
+          activo: !!document.getElementById('configDiaActivo_' + dia.key)?.checked,
+          inicio: document.getElementById('configDiaInicio_' + dia.key)?.value,
+          fin: document.getElementById('configDiaFin_' + dia.key)?.value,
+          intervalo: Number(document.getElementById('configDiaIntervalo_' + dia.key)?.value || 30)
+        }, DEFAULT_CONFIG_CLINICA.horarios[dia.key]);
+      });
+      if (!Object.values(horarios).some(d => d.activo)) {
+        alert('Tiene que quedar al menos un día activo en la agenda.');
+        return null;
+      }
+      return horarios;
+    }
+
+    async function guardarConfiguracionClinica() {
+      if (ROL_USUARIO !== 'admin') { alert('Solo el administrador puede guardar configuración.'); return; }
+      const labels = Array.from(document.querySelectorAll('.config-treatment-label'));
+      const unicos = [];
+      labels.map(input => ({
+        key: slugTratamiento(input.dataset.treatmentKey || input.value),
+        label: String(input.value || '').trim().replace(/\s+/g, ' ')
+      })).filter(t => t.key && t.label).forEach(t => { if (!unicos.some(x => x.key === t.key)) unicos.push(t); });
+      if (unicos.length === 0) { alert('Debe quedar al menos un tratamiento disponible.'); return; }
+      const horariosConfig = leerHorariosConfiguracion();
+      if (!horariosConfig) return;
+
+      const nuevaConfig = normalizarConfigClinica({
+        tratamientos: unicos,
+        horarios: horariosConfig,
+        mensajes: {
+          turno: document.getElementById('configMensajeTurno').value || DEFAULT_CONFIG_CLINICA.mensajes.turno,
+          paciente_sin_pendientes: document.getElementById('configMensajePacienteSinPendientes').value || DEFAULT_CONFIG_CLINICA.mensajes.paciente_sin_pendientes,
+          paciente_con_pendientes: document.getElementById('configMensajePacienteConPendientes').value || DEFAULT_CONFIG_CLINICA.mensajes.paciente_con_pendientes
+        }
+      });
+      const { error } = await supabaseClient.from('clinicas').update({ configuracion: nuevaConfig }).eq('id', CLINICA_ID);
+      if (error) { alert('Error guardando configuración: ' + error.message); return; }
+      CONFIG_CLINICA = nuevaConfig;
+      HORAS_PERMITIDAS = obtenerTodasHorasConfiguradas();
+      cerrarModales();
+      await cargarDatosDesdeSupabase();
+      renderizarCalendarioCompleto();
+      calcularYRenderizarPacientes();
+      mostrarToast('Configuración guardada correctamente.');
+    }
+
+    function e(txt) {
+      return String(txt || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function mostrarToast(texto) {
+      const toast = document.getElementById('toastAviso');
+      toast.innerText = texto;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    function nombreCompletoTurno(t) {
+      const nombre = String(t.nombre || '').trim();
+      const apellido = String(t.apellido || '').trim();
+      return [nombre, apellido].filter(Boolean).join(' ').trim();
+    }
+
+    function dividirNombreCompleto(valor) {
+      const limpio = String(valor || '').trim().replace(/\s+/g, ' ');
+      if (!limpio) return { nombre: '', apellido: '' };
+
+      const partes = limpio.split(' ');
+      if (partes.length === 1) {
+        return { nombre: partes[0], apellido: '' };
+      }
+
+      return {
+        nombre: partes[0],
+        apellido: partes.slice(1).join(' ')
+      };
+    }
+
+    function normalizarTexto(valor) {
+      return String(valor || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+    }
+
+    function cambiarVista(vista) {
+      VISTA_ACTUAL = vista;
+
+      if (vista === 'turnos') {
+        document.getElementById('navTurnos').classList.add('active-view');
+        document.getElementById('navPacientes').classList.remove('active-view');
+        document.getElementById('appSidebar').style.display = 'flex';
+        document.getElementById('appGridTurnos').style.display = 'block';
+        document.getElementById('appGridPacientes').style.display = 'none';
+        document.getElementById('ctrlHoy').style.display = 'inline-block';
+        document.getElementById('ctrlPrev').style.display = 'inline-block';
+        document.getElementById('ctrlNext').style.display = 'inline-block';
+        document.getElementById('currentMonthLabel').style.display = 'inline-block';
+      } else {
+        document.getElementById('navPacientes').classList.add('active-view');
+        document.getElementById('navTurnos').classList.remove('active-view');
+        document.getElementById('appSidebar').style.display = 'none';
+        document.getElementById('appGridTurnos').style.display = 'none';
+        document.getElementById('appGridPacientes').style.display = 'block';
+        document.getElementById('ctrlHoy').style.display = 'none';
+        document.getElementById('ctrlPrev').style.display = 'none';
+        document.getElementById('ctrlNext').style.display = 'none';
+        document.getElementById('currentMonthLabel').style.display = 'none';
+        calcularYRenderizarPacientes();
+      }
+    }
+
+    function buscarPacienteLocalPorDni(dni) {
+      const dniLimpio = String(dni || '').replace(/\D/g, '');
+      return PACIENTES_DB.find(p => String(p.dni || '').replace(/\D/g, '') === dniLimpio) || null;
+    }
+
+    function completarFormularioConPaciente(prefijo, paciente) {
+      if (!paciente) return;
+
+      const nombreInput = document.getElementById(prefijo + 'NombreCompleto');
+      const telInput = document.getElementById(prefijo + 'Telefono');
+
+      if (nombreInput) nombreInput.value = paciente.nombre_completo || '';
+      if (telInput) telInput.value = paciente.telefono || '';
+
+      [prefijo + 'NombreCompleto', prefijo + 'Telefono'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.classList.remove('flash');
+        void el.offsetWidth;
+        el.classList.add('flash');
+      });
+    }
+
+    function procesarEntradaDNI(input) {
+      input.value = input.value.replace(/\D/g, '');
+      const dniIngresado = input.value.trim();
+      const hint = document.getElementById('pacienteHint');
+
+      hint.className = 'patient-hint';
+      hint.innerText = '';
+
+      if (dniIngresado === '') {
+        document.getElementById('formNombreCompleto').value = '';
+        document.getElementById('formTelefono').value = '';
+        return;
+      }
+
+      if (dniIngresado.length < 6) return;
+
+      const paciente = buscarPacienteLocalPorDni(dniIngresado);
+
+      if (paciente) {
+        completarFormularioConPaciente('form', paciente);
+        hint.className = 'patient-hint found';
+        hint.innerText = 'Paciente encontrado. Datos autocompletados.';
+      } else {
+        hint.className = 'patient-hint new';
+        hint.innerText = 'Paciente nuevo. Completá sus datos.';
+      }
+    }
+
+    function procesarEntradaDNIEditar(input) {
+      input.value = input.value.replace(/\D/g, '');
+      const dniIngresado = input.value.trim();
+      const hint = document.getElementById('editPacienteHint');
+
+      hint.className = 'patient-hint';
+      hint.innerText = '';
+
+      if (dniIngresado.length < 6) return;
+
+      const turnoActual = BASE_DATOS.find(t => t.id === document.getElementById('editTurnoId').value);
+      if (turnoActual && String(turnoActual.dni || '').replace(/\D/g, '') === dniIngresado) return;
+
+      const paciente = buscarPacienteLocalPorDni(dniIngresado);
+
+      if (paciente) {
+        completarFormularioConPaciente('edit', paciente);
+        hint.className = 'patient-hint found';
+        hint.innerText = 'Paciente encontrado. Datos autocompletados.';
+      } else {
+        hint.className = 'patient-hint new';
+        hint.innerText = 'Paciente nuevo. Completá sus datos.';
+      }
+    }
+
+    function filtrarPacientesPorDni(valor) {
+      FILTRO_DNI_PACIENTES = String(valor || '').replace(/\D/g, '');
+      const input = document.getElementById('filtroDniPacientes');
+      if (input && input.value !== FILTRO_DNI_PACIENTES) input.value = FILTRO_DNI_PACIENTES;
+      calcularYRenderizarPacientes();
+    }
+
+    function filtrarPacientesPorNombre(valor) {
+      FILTRO_NOMBRE_PACIENTES = String(valor || '');
+      calcularYRenderizarPacientes();
+    }
+
+    function limpiarFiltroPacientes() {
+      FILTRO_DNI_PACIENTES = '';
+      FILTRO_NOMBRE_PACIENTES = '';
+      const inputDni = document.getElementById('filtroDniPacientes');
+      const inputNombre = document.getElementById('filtroNombrePacientes');
+      if (inputDni) inputDni.value = '';
+      if (inputNombre) inputNombre.value = '';
+      calcularYRenderizarPacientes();
+    }
+
+    function copiarTelefono(telefono, event) {
+      if (event) event.stopPropagation();
+
+      const telLimpio = String(telefono || '').trim();
+
+      if (!telLimpio || telLimpio === 'S/T') {
+        mostrarToast('Este paciente no tiene teléfono cargado.');
+        return;
+      }
+
+      navigator.clipboard.writeText(telLimpio).then(() => {
+        mostrarToast('Teléfono copiado al portapapeles.');
+      }).catch(() => {
+        const tmp = document.createElement('textarea');
+        tmp.value = telLimpio;
+        tmp.style.position = 'fixed';
+        tmp.style.opacity = '0';
+        document.body.appendChild(tmp);
+        tmp.focus();
+        tmp.select();
+        try {
+          document.execCommand('copy');
+          mostrarToast('Teléfono copiado al portapapeles.');
+        } catch (err) {
+          mostrarToast('No se pudo copiar el teléfono.');
+        }
+        document.body.removeChild(tmp);
+      });
+    }
+
+    function armarResumenTratamientos(dni) {
+      const pendientes = TRATAMIENTOS_DB[String(dni || '').replace(/\D/g, '')] || {};
+      const items = [];
+      obtenerTratamientosConfigurados().forEach(t => {
+        const cant = normalizarCantidad(pendientes[t.key]);
+        if (cant > 0) items.push([t.label, cant]);
+      });
+      if (items.length === 0) return `<span class="treatment-pill empty">Sin pendientes cargados</span>`;
+      return items.map(([label, cant]) => `<span class="treatment-pill">${e(label)}: ${cant}</span>`).join('');
+    }
+
+    function calcularYRenderizarPacientes() {
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      const hoyStr = formatearFechaISO(hoy);
+
+      const mapaPacientes = {};
+
+      PACIENTES_DB.forEach(p => {
+        const dniLimpio = String(p.dni || '').replace(/\D/g, '');
+        if (!dniLimpio) return;
+
+        const partes = dividirNombreCompleto(p.nombre_completo || '');
+
+        mapaPacientes[dniLimpio] = {
+          dni: dniLimpio,
+          nombre: partes.nombre || '',
+          apellido: partes.apellido || '',
+          telefono: p.telefono || '',
+          ultimaVisita: '',
+          fechasVisita: {},
+          timestampMax: p.created_at ? new Date(p.created_at).getTime() : 0
+        };
+      });
+
+      BASE_DATOS.forEach(turno => {
+        if (!turno.dni) return;
+
+        const dniLimpio = String(turno.dni).replace(/\D/g, '');
+        if (!dniLimpio) return;
+
+        const esPasado = turno.fecha < hoyStr;
+
+        if (!mapaPacientes[dniLimpio]) {
+          mapaPacientes[dniLimpio] = {
+            dni: dniLimpio,
+            nombre: turno.nombre || '',
+            apellido: turno.apellido || '',
+            telefono: turno.telefono || '',
+            ultimaVisita: '',
+            fechasVisita: {},
+            timestampMax: 0
+          };
+        }
+
+        if ((turno.timestamp || 0) > mapaPacientes[dniLimpio].timestampMax) {
+          mapaPacientes[dniLimpio].timestampMax = turno.timestamp || 0;
+          mapaPacientes[dniLimpio].nombre = turno.nombre || '';
+          mapaPacientes[dniLimpio].apellido = turno.apellido || '';
+          if (turno.telefono) mapaPacientes[dniLimpio].telefono = turno.telefono;
+        }
+
+        if (esPasado) {
+          mapaPacientes[dniLimpio].fechasVisita[turno.fecha] = true;
+
+          if (!mapaPacientes[dniLimpio].ultimaVisita || turno.fecha > mapaPacientes[dniLimpio].ultimaVisita) {
+            mapaPacientes[dniLimpio].ultimaVisita = turno.fecha;
+          }
+        }
+      });
+
+      let listaPacientes = Object.values(mapaPacientes).map(p => ({
+        ...p,
+        cantVisitas: Object.keys(p.fechasVisita || {}).length
+      }));
+
+      const totalP = listaPacientes.length;
+      let paraRecordarP = 0;
+
+      const board = document.getElementById('tablaPacientesBody');
+      board.innerHTML = '';
+
+      if (totalP === 0) {
+        board.innerHTML = `
+          <div class="empty-state">
+            No hay pacientes registrados.
+          </div>
+        `;
+        actualizarMetricas(0, 0);
+        return;
+      }
+
+      const renderList = [];
+
+      listaPacientes.forEach(p => {
+        let diasTranscurridos = null;
+        let estadoLabel = 'Al día';
+        let badgeClase = 'badge-al-dia';
+        let cardClase = 'normal';
+
+        const segInfo = SEGUIMIENTO_COMPACTO[p.dni] || { ultimoRecordatorio: '', estado: '' };
+        let ultRecLabel = segInfo.ultimoRecordatorio ? convertirFechaLatina(segInfo.ultimoRecordatorio) : 'Ninguno';
+
+        if (p.ultimaVisita) {
+          const partes = p.ultimaVisita.split('-');
+          const fechaUltVis = new Date(partes[0], partes[1] - 1, partes[2]);
+          const difTiempo = hoy.getTime() - fechaUltVis.getTime();
+          diasTranscurridos = Math.floor(difTiempo / (1000 * 60 * 60 * 24));
+          if (diasTranscurridos < 0) diasTranscurridos = 0;
+        }
+
+        let diasDesdeUltRecordatorio = null;
+
+        if (segInfo.ultimoRecordatorio) {
+          const rPartes = segInfo.ultimoRecordatorio.split('-');
+          const fechaUltRec = new Date(rPartes[0], rPartes[1] - 1, rPartes[2]);
+          diasDesdeUltRecordatorio = Math.floor((hoy.getTime() - fechaUltRec.getTime()) / (1000 * 60 * 60 * 24));
+        }
+
+        if (p.ultimaVisita && diasTranscurridos >= 30) {
+          if (segInfo.ultimoRecordatorio && diasDesdeUltRecordatorio < 30) {
+            estadoLabel = 'Recordado este mes';
+            badgeClase = 'badge-recordado';
+            cardClase = 'ok';
+          } else {
+            estadoLabel = 'Para recordar';
+            badgeClase = 'badge-para-recordar';
+            cardClase = 'critical';
+            paraRecordarP++;
+          }
+        }
+
+        renderList.push({
+          ...p,
+          diasTranscurridos,
+          estadoLabel,
+          badgeClase,
+          cardClase,
+          ultRecLabel
+        });
+      });
+
+      renderList.sort((a, b) => {
+        const prioridad = { critical: 0, ok: 1, normal: 2 };
+        if (prioridad[a.cardClase] !== prioridad[b.cardClase]) {
+          return prioridad[a.cardClase] - prioridad[b.cardClase];
+        }
+        return (b.diasTranscurridos || 0) - (a.diasTranscurridos || 0);
+      });
+
+      const filtroDni = String(FILTRO_DNI_PACIENTES || '').replace(/\D/g, '');
+      const filtroNombre = normalizarTexto(FILTRO_NOMBRE_PACIENTES);
+
+      const listaFiltrada = renderList.filter(p => {
+        const nombreCompleto = [p.nombre, p.apellido].filter(Boolean).join(' ');
+        const coincideDni = filtroDni ? String(p.dni || '').includes(filtroDni) : true;
+        const coincideNombre = filtroNombre ? normalizarTexto(nombreCompleto).includes(filtroNombre) : true;
+        return coincideDni && coincideNombre;
+      });
+
+      const filtroInfo = document.getElementById('filtroPacientesInfo');
+      if (filtroInfo) {
+        const filtrosActivos = [];
+        if (filtroDni) filtrosActivos.push(`DNI: ${filtroDni}`);
+        if (filtroNombre) filtrosActivos.push(`Nombre: ${FILTRO_NOMBRE_PACIENTES}`);
+
+        filtroInfo.innerText = filtrosActivos.length
+          ? `Filtro activo por ${filtrosActivos.join(' · ')}. Resultado: ${listaFiltrada.length} paciente${listaFiltrada.length === 1 ? '' : 's'}.`
+          : 'Mostrando todos los pacientes.';
+      }
+
+      if (listaFiltrada.length === 0) {
+        board.innerHTML = `
+          <div class="empty-state">
+            No se encontró ningún paciente con esos filtros.
+          </div>
+        `;
+        actualizarMetricas(totalP, paraRecordarP);
+        return;
+      }
+
+      listaFiltrada.forEach(p => {
+        const nombreCompleto = [p.nombre, p.apellido].filter(Boolean).join(' ');
+        const fechaVisitaLegible = p.ultimaVisita ? convertirFechaLatina(p.ultimaVisita) : 'Sin visitas';
+        const diasTxt = p.diasTranscurridos === null ? '—' : `${p.diasTranscurridos} días`;
+
+        const card = document.createElement('div');
+        card.className = `patient-card ${p.cardClase}`;
+
+        const nombreJson = JSON.stringify(nombreCompleto || '');
+        const telJson = JSON.stringify(p.telefono || '');
+        const dniJson = JSON.stringify(p.dni || '');
+
+        card.innerHTML = `
+          <div>
+            <div class="patient-name">${e(nombreCompleto || 'Sin nombre')}</div>
+            <div class="patient-small">DNI: ${e(p.dni)} · Última visita: ${e(fechaVisitaLegible)}</div>
+            <div class="patient-small">Visitas registradas: ${e(p.cantVisitas)} ${p.cantVisitas === 1 ? 'día' : 'días'} de atención</div>
+            <div class="treatment-summary">${armarResumenTratamientos(p.dni)}</div>
+          </div>
+
+          <div>
+            <div class="patient-label">Teléfono</div>
+            <div class="patient-value phone-copy-line">
+              <span>${e(p.telefono || 'S/T')}</span>
+              <button class="btn-copy-phone" title="Copiar teléfono" onclick='copiarTelefono(${telJson}, event)'>📞</button>
+            </div>
+          </div>
+
+          <div>
+            <div class="patient-label">Días sin venir</div>
+            <div class="patient-value">${e(diasTxt)}</div>
+          </div>
+
+          <div>
+            <div class="patient-label">Estado</div>
+            <span class="badge-status ${p.badgeClase}">${e(p.estadoLabel)}</span>
+            <div class="patient-small">Últ. recordatorio: ${e(p.ultRecLabel)}</div>
+          </div>
+
+          <div class="patient-actions">
+            <button class="btn-table-action btn-whatsapp-green" onclick='abrirWhatsAppPaciente(${telJson}, ${nombreJson}, ${dniJson}, event)'>
+              WhatsApp
+            </button>
+            <button class="btn-table-action" onclick='copiarWhatsAppSeguimiento(${nombreJson}, ${telJson}, ${dniJson})'>
+              Copiar recordatorio
+            </button>
+            <button class="btn-table-action btn-recordado" onclick='marcarPacienteRecordado(${dniJson})'>
+              Marcar recordado
+            </button>
+            <button class="btn-table-action btn-mini-blue" onclick='abrirTratamientosPaciente(${dniJson})'>
+              Tratamientos pendientes
+            </button>
+            <button class="btn-table-action btn-delete-ficha" onclick='borrarFichaPaciente(${dniJson}, event)'>
+              Borrar ficha
+            </button>
+          </div>
+        `;
+
+        board.appendChild(card);
+      });
+
+      actualizarMetricas(totalP, paraRecordarP);
+    }
+
+    function actualizarMetricas(t, pr) {
+      document.getElementById('mTotalPacientes').innerText = t;
+      document.getElementById('mParaRecordar').innerText = pr;
+    }
+
+    function convertirFechaLatina(fechaISO) {
+      if (!fechaISO) return '';
+      const p = fechaISO.split('-');
+      return `${p[2]}/${p[1]}/${p[0]}`;
+    }
+
+    function isoALatina(fechaISO) {
+      return convertirFechaLatina(fechaISO);
+    }
+
+    function parsearFechaFlexible(valor) {
+      const limpio = String(valor || '').trim();
+
+      if (/^\d{4}-\d{2}-\d{2}$/.test(limpio)) {
+        return limpio;
+      }
+
+      const match = limpio.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+      if (!match) return '';
+
+      const dia = match[1].padStart(2, '0');
+      const mes = match[2].padStart(2, '0');
+      const anio = match[3];
+
+      const fecha = new Date(Number(anio), Number(mes) - 1, Number(dia));
+      if (
+        fecha.getFullYear() !== Number(anio) ||
+        fecha.getMonth() !== Number(mes) - 1 ||
+        fecha.getDate() !== Number(dia)
+      ) {
+        return '';
+      }
+
+      return `${anio}-${mes}-${dia}`;
+    }
+
+    function copiarWhatsAppSeguimiento(nombre, telefono, dni) {
+      const msg = construirMensajeSeguimientoPaciente(nombre, dni);
+
+      navigator.clipboard.writeText(msg).then(() => {
+        mostrarToast('Recordatorio copiado. Pegalo en WhatsApp.');
+      });
+    }
+
+    async function marcarPacienteRecordado(dni) {
+      const dniLimpio = String(dni || '').replace(/\D/g, '');
+      const hoyStr = new Date().toISOString().split('T')[0];
+
+      if (!dniLimpio) {
+        alert('DNI inválido.');
+        return;
+      }
+
+      const { error } = await supabaseClient
+        .from('recordatorios')
+        .upsert({
+          clinica_id: CLINICA_ID,
+          dni: dniLimpio,
+          ultimo_recordatorio: hoyStr,
+          estado: 'Recordado este mes'
+        }, {
+          onConflict: 'clinica_id,dni'
+        });
+
+      if (error) {
+        alert('Error guardando recordatorio: ' + error.message + '\n\nEjecutá el SQL de permisos/RLS que te pasé para la tabla recordatorios.');
+        return;
+      }
+
+      SEGUIMIENTO_COMPACTO[dniLimpio] = {
+        ultimoRecordatorio: hoyStr,
+        estado: 'Recordado este mes'
+      };
+
+      calcularYRenderizarPacientes();
+      mostrarToast('Paciente marcado como recordado.');
+    }
+
+    async function borrarFichaPaciente(dni, event) {
+      if (event) event.stopPropagation();
+
+      const dniLimpio = String(dni || '').replace(/\D/g, '');
+      if (!dniLimpio) {
+        alert('DNI inválido.');
+        return;
+      }
+
+      const paciente = buscarPacienteLocalPorDni(dniLimpio);
+      const nombre = paciente?.nombre_completo || 'este paciente';
+
+      const ok = confirm(
+        `¿Seguro que querés borrar la ficha de ${nombre}?
+
+` +
+        `Se eliminarán también sus turnos, recordatorios y tratamientos pendientes. Esta acción no se puede deshacer.`
+      );
+
+      if (!ok) return;
+
+      const backup = {
+        pacientes: [...PACIENTES_DB],
+        turnos: [...BASE_DATOS],
+        tratamientos: { ...TRATAMIENTOS_DB },
+        seguimiento: { ...SEGUIMIENTO_COMPACTO }
+      };
+
+      PACIENTES_DB = PACIENTES_DB.filter(p => String(p.dni || '').replace(/\D/g, '') !== dniLimpio);
+      BASE_DATOS = BASE_DATOS.filter(t => String(t.dni || '').replace(/\D/g, '') !== dniLimpio);
+      delete TRATAMIENTOS_DB[dniLimpio];
+      delete SEGUIMIENTO_COMPACTO[dniLimpio];
+      renderizarCalendarioCompleto();
+      calcularYRenderizarPacientes();
+
+      const { error: errTrat } = await supabaseClient
+        .from('tratamientos_pendientes')
+        .delete()
+        .eq('clinica_id', CLINICA_ID)
+        .eq('dni', dniLimpio);
+
+      if (errTrat) {
+        PACIENTES_DB = backup.pacientes;
+        BASE_DATOS = backup.turnos;
+        TRATAMIENTOS_DB = backup.tratamientos;
+        SEGUIMIENTO_COMPACTO = backup.seguimiento;
+        renderizarCalendarioCompleto();
+        calcularYRenderizarPacientes();
+        alert('Error borrando tratamientos pendientes: ' + errTrat.message);
+        return;
+      }
+
+      const { error: errRec } = await supabaseClient
+        .from('recordatorios')
+        .delete()
+        .eq('clinica_id', CLINICA_ID)
+        .eq('dni', dniLimpio);
+
+      if (errRec) {
+        PACIENTES_DB = backup.pacientes;
+        BASE_DATOS = backup.turnos;
+        TRATAMIENTOS_DB = backup.tratamientos;
+        SEGUIMIENTO_COMPACTO = backup.seguimiento;
+        renderizarCalendarioCompleto();
+        calcularYRenderizarPacientes();
+        alert('Error borrando recordatorios: ' + errRec.message);
+        return;
+      }
+
+      const { error: errPac } = await supabaseClient
+        .from('pacientes')
+        .delete()
+        .eq('clinica_id', CLINICA_ID)
+        .eq('dni', dniLimpio);
+
+      if (errPac) {
+        PACIENTES_DB = backup.pacientes;
+        BASE_DATOS = backup.turnos;
+        TRATAMIENTOS_DB = backup.tratamientos;
+        SEGUIMIENTO_COMPACTO = backup.seguimiento;
+        renderizarCalendarioCompleto();
+        calcularYRenderizarPacientes();
+        alert('Error borrando ficha: ' + errPac.message);
+        return;
+      }
+
+      await cargarDatosDesdeSupabase();
+      renderizarCalendarioCompleto();
+      calcularYRenderizarPacientes();
+      mostrarToast('Ficha borrada correctamente.');
+    }
+
+    function abrirTratamientosPaciente(dni) {
+      const dniLimpio = String(dni || '').replace(/\D/g, '');
+      const paciente = buscarPacienteLocalPorDni(dniLimpio);
+      const t = TRATAMIENTOS_DB[dniLimpio] || {};
+      document.getElementById('tratDni').value = dniLimpio;
+      renderInputsTratamientos('tratamientosPacienteInputs', 'trat', t);
+      const nombre = paciente?.nombre_completo || dniLimpio;
+      document.getElementById('modalTratamientosInfo').innerText = `Ficha de ${nombre}. Usá + y − para actualizar las cantidades pendientes.`;
+      document.getElementById('modalTratamientos').classList.add('active');
+    }
+
+    function ajustarTratamiento(id, delta) {
+      const input = document.getElementById(id);
+      if (!input) return;
+      const actual = normalizarCantidad(input.value);
+      input.value = Math.max(0, actual + delta);
+    }
+
+    async function guardarTratamientosPaciente() {
+      const dni = String(document.getElementById('tratDni').value || '').replace(/\D/g, '');
+      if (!dni) { alert('DNI inválido.'); return; }
+      const nuevo = leerInputsTratamientos('tratamientosPacienteInputs');
+      const anterior = TRATAMIENTOS_DB[dni] || {};
+      TRATAMIENTOS_DB[dni] = nuevo;
+      calcularYRenderizarPacientes();
+      cerrarModales();
+      const { error } = await supabaseClient.from('tratamientos_pendientes').upsert({
+        clinica_id: CLINICA_ID,
+        dni: dni,
+        pendientes: nuevo,
+        caries: normalizarCantidad(nuevo.caries),
+        conductos: normalizarCantidad(nuevo.conductos),
+        extracciones: normalizarCantidad(nuevo.extracciones),
+        coronas: normalizarCantidad(nuevo.coronas),
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'clinica_id,dni' });
+      if (error) {
+        TRATAMIENTOS_DB[dni] = anterior;
+        calcularYRenderizarPacientes();
+        alert('Error guardando tratamientos pendientes: ' + error.message);
+        return;
+      }
+      mostrarToast('Tratamientos pendientes guardados.');
+    }
+
+
+    function abrirAltaFichaPaciente() {
+      document.getElementById('fichaDni').value = '';
+      document.getElementById('fichaNombreCompleto').value = '';
+      document.getElementById('fichaTelefono').value = '';
+      renderInputsTratamientos('fichaTratamientosInputs', 'ficha', {});
+      const hint = document.getElementById('fichaPacienteHint');
+      hint.className = 'patient-hint';
+      hint.innerText = '';
+      document.getElementById('modalFichaPaciente').classList.add('active');
+      setTimeout(() => document.getElementById('fichaDni').focus(), 100);
+    }
+
+    function procesarEntradaDNIFicha(input) {
+      input.value = input.value.replace(/\D/g, '');
+      const dniIngresado = input.value.trim();
+      const hint = document.getElementById('fichaPacienteHint');
+      hint.className = 'patient-hint';
+      hint.innerText = '';
+      if (dniIngresado === '') {
+        document.getElementById('fichaNombreCompleto').value = '';
+        document.getElementById('fichaTelefono').value = '';
+        renderInputsTratamientos('fichaTratamientosInputs', 'ficha', {});
+        return;
+      }
+      if (dniIngresado.length < 6) return;
+      const paciente = buscarPacienteLocalPorDni(dniIngresado);
+      const tratamientos = TRATAMIENTOS_DB[dniIngresado] || {};
+      if (paciente) {
+        document.getElementById('fichaNombreCompleto').value = paciente.nombre_completo || '';
+        document.getElementById('fichaTelefono').value = paciente.telefono || '';
+        renderInputsTratamientos('fichaTratamientosInputs', 'ficha', tratamientos);
+        ['fichaNombreCompleto', 'fichaTelefono'].forEach(id => {
+          const el = document.getElementById(id);
+          el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+        });
+        hint.className = 'patient-hint found';
+        hint.innerText = 'Ficha existente. Podés corregir datos o actualizar pendientes.';
+      } else {
+        renderInputsTratamientos('fichaTratamientosInputs', 'ficha', {});
+        hint.className = 'patient-hint new';
+        hint.innerText = 'Ficha nueva. Completá los datos del paciente.';
+      }
+    }
+
+    async function guardarFichaPaciente() {
+      const dni = String(document.getElementById('fichaDni').value || '').replace(/\D/g, '');
+      const nombreCompleto = String(document.getElementById('fichaNombreCompleto').value || '').trim().replace(/\s+/g, ' ');
+      const telefono = String(document.getElementById('fichaTelefono').value || '').trim();
+      if (!dni || !nombreCompleto) { alert('DNI y nombre del paciente son obligatorios para crear la ficha.'); return; }
+      const tratamientos = leerInputsTratamientos('fichaTratamientosInputs');
+      const tieneTratamientos = Object.values(tratamientos).some(v => v > 0);
+      const { error: errorPaciente } = await supabaseClient.from('pacientes').upsert({ clinica_id: CLINICA_ID, dni, nombre_completo: nombreCompleto, telefono }, { onConflict: 'clinica_id,dni' }).select().single();
+      if (errorPaciente) { alert('Error guardando ficha: ' + errorPaciente.message); return; }
+      if (tieneTratamientos) {
+        const { error: errorTratamientos } = await supabaseClient.from('tratamientos_pendientes').upsert({
+          clinica_id: CLINICA_ID, dni, pendientes: tratamientos,
+          caries: normalizarCantidad(tratamientos.caries), conductos: normalizarCantidad(tratamientos.conductos),
+          extracciones: normalizarCantidad(tratamientos.extracciones), coronas: normalizarCantidad(tratamientos.coronas),
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'clinica_id,dni' });
+        if (errorTratamientos) alert('La ficha se guardó, pero no se pudieron guardar tratamientos pendientes: ' + errorTratamientos.message);
+      }
+      await cargarDatosDesdeSupabase();
+      calcularYRenderizarPacientes();
+      renderizarCalendarioCompleto();
+      cerrarModales();
+      mostrarToast('Ficha de paciente guardada correctamente.');
+    }
+
+    function obtenerLunesDeSemana(d) {
+      const fecha = new Date(d);
+      const diaNum = fecha.getDay();
+      const dif = fecha.getDate() - diaNum + (diaNum === 0 ? -6 : 1);
+      const lunes = new Date(fecha.setDate(dif));
+      lunes.setHours(0, 0, 0, 0);
+      return lunes;
+    }
+
+    function formatearFechaISO(d) {
+      const mes = '' + (d.getMonth() + 1);
+      const dia = '' + d.getDate();
+      const anio = d.getFullYear();
+      return [anio, mes.padStart(2, '0'), dia.padStart(2, '0')].join('-');
+    }
+
+    function obtenerNombreMesAnio(lunes) {
+      const opciones = { month: 'long', year: 'numeric' };
+      let str = lunes.toLocaleDateString('es-ES', opciones);
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    function irHoy() {
+      const hoy = new Date();
+      FECHA_LUNES_ACTUAL = obtenerLunesDeSemana(hoy);
+      document.getElementById('datepicker').value = formatearFechaISO(hoy);
+      renderizarCalendarioCompleto();
+    }
+
+    function navegarSemana(direccion) {
+      FECHA_LUNES_ACTUAL.setDate(FECHA_LUNES_ACTUAL.getDate() + direccion * 7);
+      renderizarCalendarioCompleto();
+    }
+
+    function seleccionarFechaManual(fechaStr) {
+      if (!fechaStr) return;
+      const partes = fechaStr.split('-');
+      const d = new Date(partes[0], partes[1] - 1, partes[2]);
+      FECHA_LUNES_ACTUAL = obtenerLunesDeSemana(d);
+      renderizarCalendarioCompleto();
+    }
+
+    function permitirDropTurno(event) {
+      event.preventDefault();
+      event.currentTarget.classList.add('drag-over');
+    }
+
+    function salirDropTurno(event) {
+      event.currentTarget.classList.remove('drag-over');
+    }
+
+    function iniciarDragTurno(id, event) {
+      DRAG_TURNO_ID = id;
+      event.dataTransfer.effectAllowed = 'copy';
+      event.dataTransfer.setData('text/plain', id);
+    }
+
+    async function soltarTurno(fechaDestino, horaDestino, event) {
+      event.preventDefault();
+      event.currentTarget.classList.remove('drag-over');
+
+      const idOrigen = event.dataTransfer.getData('text/plain') || DRAG_TURNO_ID;
+      DRAG_TURNO_ID = null;
+
+      if (!idOrigen) return;
+
+      const ocupado = BASE_DATOS.some(t => t.fecha === fechaDestino && t.hora === horaDestino);
+      if (ocupado) {
+        mostrarToast('Ese horario ya está ocupado.');
+        return;
+      }
+
+      if (!generarHorasParaFecha(fechaDestino).includes(horaDestino)) {
+        mostrarToast('Ese horario no está disponible según la configuración del consultorio.');
+        return;
+      }
+
+      const origen = BASE_DATOS.find(t => t.id === idOrigen);
+      if (!origen) return;
+
+      const copiaLocal = {
+        ...origen,
+        id: 'TMP-' + Date.now(),
+        fecha: fechaDestino,
+        hora: horaDestino,
+        timestamp: Date.now(),
+        extension: true,
+        parentId: origen.parentId || origen.id
+      };
+
+      BASE_DATOS.push(copiaLocal);
+      renderizarCalendarioCompleto();
+      calcularYRenderizarPacientes();
+
+      const { error } = await supabaseClient
+        .from('turnos')
+        .insert({
+          clinica_id: CLINICA_ID,
+          paciente_id: origen.pacienteId,
+          fecha: fechaDestino,
+          hora: horaDestino,
+          confirmado: origen.confirmado,
+          extension: true,
+          parent_id: origen.parentId || origen.id
+        });
+
+      if (error) {
+        BASE_DATOS = BASE_DATOS.filter(t => t.id !== copiaLocal.id);
+        renderizarCalendarioCompleto();
+        calcularYRenderizarPacientes();
+
+        if (error.code === '23505') {
+          alert('Ese horario ya está ocupado.');
+        } else {
+          alert('No se pudo alargar el turno: ' + error.message);
+        }
+        return;
+      }
+
+      await cargarDatosDesdeSupabase();
+      renderizarCalendarioCompleto();
+      calcularYRenderizarPacientes();
+      mostrarToast('Turno alargado en otra casilla.');
+    }
+
+    function obtenerDiasVisiblesSemana(lunes) {
+      const fechasConTurnos = new Set();
+      BASE_DATOS.forEach(t => {
+        if (!t.fecha) return;
+        const p = t.fecha.split('-');
+        if (p.length !== 3) return;
+        const d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+        const lunesTurno = obtenerLunesDeSemana(d);
+        if (lunesTurno.getTime() === lunes.getTime()) fechasConTurnos.add(t.fecha);
+      });
+
+      const horarios = obtenerHorariosConfigurados();
+      return DIAS_CONFIG
+        .filter(dia => {
+          const fecha = new Date(lunes);
+          fecha.setDate(fecha.getDate() + offsetDesdeLunes(dia.jsDay));
+          const fechaISO = formatearFechaISO(fecha);
+          return horarios[dia.key]?.activo || fechasConTurnos.has(fechaISO);
+        })
+        .map(dia => {
+          const fecha = new Date(lunes);
+          fecha.setDate(fecha.getDate() + offsetDesdeLunes(dia.jsDay));
+          const fechaISO = formatearFechaISO(fecha);
+          return {
+            ...dia,
+            fecha,
+            fechaISO,
+            activo: !!horarios[dia.key]?.activo,
+            tieneTurnosFueraDeConfig: !horarios[dia.key]?.activo && fechasConTurnos.has(fechaISO)
+          };
+        });
+    }
+
+    function obtenerHorasParaRenderizarFecha(fechaISO) {
+      const horas = new Set(generarHorasParaFecha(fechaISO));
+      BASE_DATOS
+        .filter(t => t.fecha === fechaISO)
+        .forEach(t => {
+          const hora = String(t.hora || '').slice(0, 5);
+          if (hora) horas.add(hora);
+        });
+      return Array.from(horas).sort((a, b) => minutosDesdeHora(a) - minutosDesdeHora(b));
+    }
+
+
+    function ajustarColumnasCalendario(grid, cantidadDias) {
+      const ancho = window.innerWidth || document.documentElement.clientWidth || 1200;
+      const total = Math.max(cantidadDias, 1);
+
+      if (ancho <= 980) {
+        grid.style.gridTemplateColumns = '1fr';
+        return;
+      }
+
+      if (ancho <= 1320) {
+        grid.style.gridTemplateColumns = `repeat(${total}, minmax(185px, 1fr))`;
+        return;
+      }
+
+      grid.style.gridTemplateColumns = `repeat(${total}, minmax(170px, 1fr))`;
+    }
+
+    function renderizarCalendarioCompleto() {
+      document.getElementById('currentMonthLabel').innerText = obtenerNombreMesAnio(FECHA_LUNES_ACTUAL);
+
+      const grid = document.getElementById('calendarGrid');
+      grid.innerHTML = '';
+
+      const diasVisibles = obtenerDiasVisiblesSemana(FECHA_LUNES_ACTUAL);
+      ajustarColumnasCalendario(grid, diasVisibles.length);
+
+      if (diasVisibles.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state" style="grid-column: 1 / -1;">
+            No hay días activos configurados para esta semana. Entrá a Configuración y activá al menos un día de atención.
+          </div>`;
+        renderizarHistorialLateral();
+        return;
+      }
+
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+
+      diasVisibles.forEach(diaInfo => {
+        const tDia = diaInfo.fecha;
+        const tDiaStr = diaInfo.fechaISO;
+        const esHoy = tDia.getTime() === hoy.getTime();
+        const inicioPasadosVisual = new Date(2026, 5, 1);
+        inicioPasadosVisual.setHours(0, 0, 0, 0);
+        const esDiaPasadoVisual = tDia.getTime() >= inicioPasadosVisual.getTime() && tDia.getTime() < hoy.getTime();
+
+        const col = document.createElement('div');
+        col.className = `day-column ${esDiaPasadoVisual ? 'day-past' : ''} ${diaInfo.tieneTurnosFueraDeConfig ? 'day-disabled-with-turns' : ''}`;
+
+        const header = document.createElement('div');
+        header.className = `day-header ${esHoy ? 'is-today' : ''}`;
+
+        header.innerHTML = `
+          <span class="day-name">${diaInfo.abrev}</span>
+          <span class="day-number">${tDia.getDate()}/${String(tDia.getMonth() + 1).padStart(2, '0')}</span>
+          ${diaInfo.tieneTurnosFueraDeConfig ? '<span class="day-disabled-info">Día desactivado con turnos cargados</span>' : ''}
+        `;
+
+        col.appendChild(header);
+
+        const slotsContainer = document.createElement('div');
+        slotsContainer.className = 'day-slots';
+
+        const horasDia = obtenerHorasParaRenderizarFecha(tDiaStr);
+
+        if (horasDia.length === 0) {
+          const empty = document.createElement('div');
+          empty.className = 'empty-state';
+          empty.style.padding = '18px 10px';
+          empty.innerText = 'Sin horarios disponibles';
+          slotsContainer.appendChild(empty);
+        }
+
+        horasDia.forEach(hora => {
+          const turnoAsignado = BASE_DATOS.find(item => item.fecha === tDiaStr && item.hora === hora);
+          const slot = document.createElement('div');
+
+          if (turnoAsignado) {
+            slot.className = `time-slot booked ${!turnoAsignado.confirmado ? 'style-blue' : ''} ${turnoAsignado.extension ? 'extension' : ''}`;
+            slot.draggable = true;
+            slot.ondragstart = (event) => iniciarDragTurno(turnoAsignado.id, event);
+
+            const nombreCompleto = nombreCompletoTurno(turnoAsignado);
+
+            slot.innerHTML = `
+              <div class="booked-header">
+                <span>🕒 ${e(hora)}</span>
+                <span class="booked-tag">${turnoAsignado.extension ? 'Extensión' : 'Turno'}</span>
+              </div>
+
+              <div class="booked-body">${e(nombreCompleto)}</div>
+
+              <div class="booked-footer">
+                <div class="booked-phone-row">
+                  <span class="booked-phone">📞 ${e(turnoAsignado.telefono || 'S/T')}</span>
+                </div>
+
+                <div class="booked-actions-row">
+                  <button class="btn-card-action btn-whatsapp" title="Abrir WhatsApp" onclick="abrirWhatsAppTurno('${e(turnoAsignado.id)}', event)">💬</button>
+                  <button class="btn-card-action" title="Editar turno" onclick="abrirEditarTurno('${e(turnoAsignado.id)}', event)">✏️</button>
+                  <button class="btn-card-action" title="Reprogramar turno" onclick="abrirReprogramarTurno('${e(turnoAsignado.id)}', event)">↪</button>
+                  <button class="btn-card-action" title="Copiar teléfono" onclick='copiarTelefono(${JSON.stringify(turnoAsignado.telefono || '')}, event)'>📋</button>
+                  <button class="btn-card-action" title="Copiar recordatorio de cita" onclick="copiarTextoRecordatorio('${e(turnoAsignado.id)}', event)">
+                    <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                  </button>
+                  <button class="btn-card-action" title="Confirmar / Desconfirmar" onclick="alternarConfirmacionRapida('${e(turnoAsignado.id)}', event)">
+                    <span class="status-dot ${turnoAsignado.confirmado ? 'green' : 'blue'}"></span>
+                  </button>
+                </div>
+              </div>
+            `;
+
+            slot.onclick = () => abrirDetalleTurno(turnoAsignado.id);
+          } else {
+            slot.className = 'time-slot';
+            slot.innerText = hora;
+            slot.ondragover = permitirDropTurno;
+            slot.ondragleave = salirDropTurno;
+            slot.ondrop = (event) => soltarTurno(tDiaStr, hora, event);
+            slot.onclick = () => abrirAltaTurno(tDiaStr, hora);
+          }
+
+          slotsContainer.appendChild(slot);
+        });
+
+        col.appendChild(slotsContainer);
+        grid.appendChild(col);
+      });
+
+      renderizarHistorialLateral();
+    }
+
+    function renderizarHistorialLateral() {
+      const container = document.getElementById('historyList');
+      container.innerHTML = '';
+
+      const copiaOrdenada = [...BASE_DATOS]
+        .filter(t => !t.extension)
+        .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+        .slice(0, 10);
+
+      if (copiaOrdenada.length === 0) {
+        container.innerHTML = '<div style="font-size:12px; color:var(--muted); text-align:center; padding:12px;">No hay turnos registrados</div>';
+        return;
+      }
+
+      copiaOrdenada.forEach(turno => {
+        const fPartes = turno.fecha.split('-');
+        const fechaLegible = `${fPartes[2]}/${fPartes[1]}`;
+        const nombreCompleto = nombreCompletoTurno(turno);
+
+        const item = document.createElement('div');
+        item.className = 'history-item';
+
+        item.innerHTML = `
+          <div class="history-name">${e(nombreCompleto)}</div>
+          <div class="history-meta">📅 ${fechaLegible} — 🕒 ${e(turno.hora)} hs</div>
+          <div class="history-meta">📞 ${e(turno.telefono || 'S/T')}</div>
+        `;
+
+        item.onclick = () => seleccionarFechaManual(turno.fecha);
+        container.appendChild(item);
+      });
+    }
+
+    function abrirAltaTurno(fecha, hora) {
+      document.getElementById('formId').value = '';
+      document.getElementById('formFecha').value = fecha;
+      document.getElementById('formHora').value = hora;
+      document.getElementById('formDni').value = '';
+      document.getElementById('formNombreCompleto').value = '';
+      document.getElementById('formTelefono').value = '';
+
+      const hint = document.getElementById('pacienteHint');
+      hint.className = 'patient-hint';
+      hint.innerText = '';
+
+      document.getElementById('modalTurnoInfo').innerText = `Turno para ${convertirFechaLatina(fecha)} a las ${hora} hs`;
+      document.getElementById('modalAlta').classList.add('active');
+
+      setTimeout(() => document.getElementById('formDni').focus(), 100);
+    }
+
+    function abrirDetalleTurno(id) {
+      const t = BASE_DATOS.find(item => item.id === id);
+      if (!t) return;
+
+      ID_TURNO_SELECCIONADO = id;
+
+      const fPartes = t.fecha.split('-');
+      const nombreCompleto = nombreCompletoTurno(t);
+
+      document.getElementById('lblPaciente').innerText = nombreCompleto;
+      document.getElementById('lblDni').innerText = t.dni || 'No cargado';
+      document.getElementById('lblTelefono').innerText = t.telefono || 'Sin teléfono';
+      document.getElementById('lblHorario').innerText = `${fPartes[2]}/${fPartes[1]}/${fPartes[0]} a las ${t.hora} hs`;
+      document.getElementById('lblEstado').innerText = t.confirmado ? '🟢 Confirmado' : '🔵 Pendiente';
+      document.getElementById('lblTipoTurno').innerText = t.extension ? 'Extensión de turno' : 'Turno principal';
+
+      document.getElementById('modalDetalle').classList.add('active');
+    }
+
+    async function guardarFormularioTurno() {
+      const nombreCompleto = document.getElementById('formNombreCompleto').value.trim();
+      const partesNombre = dividirNombreCompleto(nombreCompleto);
+
+      const data = {
+        fecha: document.getElementById('formFecha').value,
+        hora: document.getElementById('formHora').value,
+        dni: document.getElementById('formDni').value.trim().replace(/\D/g, ''),
+        nombre: partesNombre.nombre,
+        apellido: partesNombre.apellido,
+        telefono: document.getElementById('formTelefono').value.trim(),
+        categoria: 'Consulta',
+        observacion: ''
+      };
+
+      if (!data.dni || !nombreCompleto) {
+        alert('DNI y nombre del paciente son campos obligatorios.');
+        return;
+      }
+
+      cerrarModales();
+
+      const tempId = 'TMP-' + Date.now();
+      const copiaLocal = {
+        id: tempId,
+        fecha: data.fecha,
+        hora: data.hora,
+        nombre: data.nombre,
+        apellido: data.apellido,
+        telefono: data.telefono,
+        dni: data.dni,
+        categoria: 'Consulta',
+        observacion: '',
+        confirmado: false,
+        timestamp: Date.now(),
+        extension: false,
+        parentId: '',
+        pacienteId: null
+      };
+
+      BASE_DATOS.push(copiaLocal);
+      upsertPacienteLocal(data.dni, nombreCompleto, data.telefono, null);
+      renderizarCalendarioCompleto();
+      calcularYRenderizarPacientes();
+
+      const { data: paciente, error: errorPaciente } = await supabaseClient
+        .from('pacientes')
+        .upsert({
+          clinica_id: CLINICA_ID,
+          dni: data.dni,
+          nombre_completo: nombreCompleto,
+          telefono: data.telefono
+        }, {
+          onConflict: 'clinica_id,dni'
+        })
+        .select()
+        .single();
+
+      if (errorPaciente) {
+        BASE_DATOS = BASE_DATOS.filter(t => t.id !== tempId);
+        renderizarCalendarioCompleto();
+        calcularYRenderizarPacientes();
+        alert('Error guardando paciente: ' + errorPaciente.message);
+        return;
+      }
+
+      const { error: errorTurno } = await supabaseClient
+        .from('turnos')
+        .insert({
+          clinica_id: CLINICA_ID,
+          paciente_id: paciente.id,
+          fecha: data.fecha,
+          hora: data.hora,
+          confirmado: false,
+          extension: false,
+          parent_id: null
+        });
+
+      if (errorTurno) {
+        BASE_DATOS = BASE_DATOS.filter(t => t.id !== tempId);
+        renderizarCalendarioCompleto();
+        calcularYRenderizarPacientes();
+
+        if (errorTurno.code === '23505') {
+          alert('Ese horario ya está ocupado.');
+        } else {
+          alert('Error guardando turno: ' + errorTurno.message);
+        }
+        return;
+      }
+
+      await cargarDatosDesdeSupabase();
+      renderizarCalendarioCompleto();
+      calcularYRenderizarPacientes();
+      mostrarToast('Turno guardado correctamente.');
+    }
+
+    function upsertPacienteLocal(dni, nombreCompleto, telefono, id) {
+      const dniLimpio = String(dni || '').replace(/\D/g, '');
+      if (!dniLimpio) return;
+
+      const existente = PACIENTES_DB.find(p => p.dni === dniLimpio);
+      if (existente) {
+        existente.nombre_completo = nombreCompleto;
+        existente.telefono = telefono;
+        if (id) existente.id = id;
+      } else {
+        PACIENTES_DB.push({
+          id: id || '',
+          dni: dniLimpio,
+          nombre_completo: nombreCompleto,
+          telefono: telefono,
+          created_at: new Date().toISOString()
+        });
+      }
+    }
+
+    async function alternarConfirmacionRapida(id, event) {
+      if (event) event.stopPropagation();
+
+      const turno = BASE_DATOS.find(item => item.id === id);
+      if (!turno) return;
+
+      const estadoAnterior = turno.confirmado;
+      turno.confirmado = !turno.confirmado;
+      renderizarCalendarioCompleto();
+
+      const { error } = await supabaseClient
+        .from('turnos')
+        .update({ confirmado: turno.confirmado })
+        .eq('id', id)
+        .eq('clinica_id', CLINICA_ID);
+
+      if (error) {
+        turno.confirmado = estadoAnterior;
+        renderizarCalendarioCompleto();
+        alert('Error actualizando confirmación: ' + error.message);
+      }
+    }
+
+    function abrirEditarTurnoActual() {
+      if (!ID_TURNO_SELECCIONADO) return;
+      abrirEditarTurno(ID_TURNO_SELECCIONADO);
+    }
+
+    function abrirEditarTurno(id, event) {
+      if (event) event.stopPropagation();
+
+      const t = BASE_DATOS.find(item => item.id === id);
+      if (!t) return;
+
+      cerrarModales();
+
+      document.getElementById('editTurnoId').value = t.id;
+      document.getElementById('editDni').value = t.dni || '';
+      document.getElementById('editNombreCompleto').value = nombreCompletoTurno(t);
+      document.getElementById('editTelefono').value = t.telefono || '';
+
+      const hint = document.getElementById('editPacienteHint');
+      hint.className = 'patient-hint';
+      hint.innerText = '';
+
+      document.getElementById('modalEditarTurnoInfo').innerText =
+        `Editando turno del ${convertirFechaLatina(t.fecha)} a las ${t.hora} hs.`;
+
+      document.getElementById('modalEditarTurno').classList.add('active');
+    }
+
+    async function guardarEdicionTurno() {
+      const id = document.getElementById('editTurnoId').value;
+      const t = BASE_DATOS.find(item => item.id === id);
+
+      if (!t) {
+        alert('No se encontró el turno a editar.');
+        return;
+      }
+
+      const dni = document.getElementById('editDni').value.trim().replace(/\D/g, '');
+      const nombreCompleto = document.getElementById('editNombreCompleto').value.trim();
+      const telefono = document.getElementById('editTelefono').value.trim();
+      const partes = dividirNombreCompleto(nombreCompleto);
+
+      if (!dni || !nombreCompleto) {
+        alert('DNI y nombre del paciente son obligatorios.');
+        return;
+      }
+
+      const backupTurno = { ...t };
+      const backupPacientes = JSON.parse(JSON.stringify(PACIENTES_DB));
+
+      t.dni = dni;
+      t.nombre = partes.nombre;
+      t.apellido = partes.apellido;
+      t.telefono = telefono;
+      upsertPacienteLocal(dni, nombreCompleto, telefono, t.pacienteId);
+
+      cerrarModales();
+      renderizarCalendarioCompleto();
+      calcularYRenderizarPacientes();
+
+      const { data: paciente, error: errorPaciente } = await supabaseClient
+        .from('pacientes')
+        .upsert({
+          clinica_id: CLINICA_ID,
+          dni: dni,
+          nombre_completo: nombreCompleto,
+          telefono: telefono
+        }, {
+          onConflict: 'clinica_id,dni'
+        })
+        .select()
+        .single();
+
+      if (errorPaciente) {
+        Object.assign(t, backupTurno);
+        PACIENTES_DB = backupPacientes;
+        renderizarCalendarioCompleto();
+        calcularYRenderizarPacientes();
+        alert('Error guardando paciente: ' + errorPaciente.message);
+        return;
+      }
+
+      const { error: errorTurno } = await supabaseClient
+        .from('turnos')
+        .update({ paciente_id: paciente.id })
+        .eq('id', id)
+        .eq('clinica_id', CLINICA_ID);
+
+      if (errorTurno) {
+        Object.assign(t, backupTurno);
+        PACIENTES_DB = backupPacientes;
+        renderizarCalendarioCompleto();
+        calcularYRenderizarPacientes();
+        alert('Error actualizando turno: ' + errorTurno.message);
+        return;
+      }
+
+      t.pacienteId = paciente.id;
+      upsertPacienteLocal(dni, nombreCompleto, telefono, paciente.id);
+      mostrarToast('Turno editado correctamente.');
+    }
+
+    function abrirReprogramarTurnoActual() {
+      if (!ID_TURNO_SELECCIONADO) return;
+      abrirReprogramarTurno(ID_TURNO_SELECCIONADO);
+    }
+
+    function abrirReprogramarTurno(id, event) {
+      if (event) event.stopPropagation();
+
+      const t = BASE_DATOS.find(item => item.id === id);
+      if (!t) return;
+
+      cerrarModales();
+
+      document.getElementById('reprogTurnoId').value = t.id;
+      document.getElementById('reprogFechaTexto').value = isoALatina(t.fecha);
+      document.getElementById('reprogFechaCalendario').value = t.fecha;
+
+      llenarSelectHorasDisponibles('reprogHora', t.fecha, t.id, t.hora);
+
+      document.getElementById('modalReprogramarInfo').innerText =
+        `Reprogramando a ${nombreCompletoTurno(t)}. Fecha actual: ${convertirFechaLatina(t.fecha)} ${t.hora} hs.`;
+
+      document.getElementById('modalReprogramarTurno').classList.add('active');
+    }
+
+    function abrirCalendarioReprogramacion(event) {
+      if (event) event.stopPropagation();
+      const picker = document.getElementById('reprogFechaCalendario');
+      if (!picker) return;
+
+      try {
+        if (typeof picker.showPicker === 'function') {
+          picker.showPicker();
+        }
+      } catch (err) {
+        // Chrome puede bloquear showPicker si no lo considera una acción directa.
+        // El input invisible igual queda clickeable sobre el botón del calendario.
+      }
+    }
+
+    function sincronizarFechaReprogramacionDesdeCalendario() {
+      const fechaISO = document.getElementById('reprogFechaCalendario').value;
+      if (!fechaISO) return;
+
+      document.getElementById('reprogFechaTexto').value = convertirFechaLatina(fechaISO);
+      actualizarHorariosReprogramacion();
+    }
+
+    function normalizarCampoFechaReprogramacion() {
+      const input = document.getElementById('reprogFechaTexto');
+      const fechaISO = parsearFechaFlexible(input.value);
+
+      if (!fechaISO) {
+        actualizarHorariosReprogramacion();
+        return;
+      }
+
+      input.value = convertirFechaLatina(fechaISO);
+      document.getElementById('reprogFechaCalendario').value = fechaISO;
+      actualizarHorariosReprogramacion();
+    }
+
+    function actualizarHorariosReprogramacion() {
+      const id = document.getElementById('reprogTurnoId').value;
+      const t = BASE_DATOS.find(item => item.id === id);
+      const fechaTexto = document.getElementById('reprogFechaTexto').value;
+      const fechaISO = parsearFechaFlexible(fechaTexto);
+      const horaPreferida = t ? t.hora : '';
+
+      if (fechaISO) {
+        document.getElementById('reprogFechaCalendario').value = fechaISO;
+      }
+
+      llenarSelectHorasDisponibles('reprogHora', fechaISO, id, horaPreferida);
+    }
+
+    async function guardarReprogramacionTurno() {
+      const id = document.getElementById('reprogTurnoId').value;
+      const t = BASE_DATOS.find(item => item.id === id);
+
+      if (!t) {
+        alert('No se encontró el turno a reprogramar.');
+        return;
+      }
+
+      const fechaTexto = document.getElementById('reprogFechaTexto').value;
+      const fechaNueva = parsearFechaFlexible(fechaTexto);
+      const horaNueva = document.getElementById('reprogHora').value;
+
+      if (!fechaNueva) {
+        alert('Fecha inválida. Usá el formato 07/12/2026 o elegí una fecha del calendario.');
+        return;
+      }
+
+      if (!horaNueva) {
+        alert('Seleccioná un horario.');
+        return;
+      }
+
+      const ocupado = BASE_DATOS.some(item =>
+        item.id !== id &&
+        item.fecha === fechaNueva &&
+        item.hora === horaNueva
+      );
+
+      if (ocupado) {
+        alert('Ese horario ya está ocupado.');
+        return;
+      }
+
+      const fechaAnterior = t.fecha;
+      const horaAnterior = t.hora;
+
+      t.fecha = fechaNueva;
+      t.hora = horaNueva;
+
+      cerrarModales();
+      renderizarCalendarioCompleto();
+      calcularYRenderizarPacientes();
+
+      const { error } = await supabaseClient
+        .from('turnos')
+        .update({
+          fecha: fechaNueva,
+          hora: horaNueva
+        })
+        .eq('id', id)
+        .eq('clinica_id', CLINICA_ID);
+
+      if (error) {
+        t.fecha = fechaAnterior;
+        t.hora = horaAnterior;
+        renderizarCalendarioCompleto();
+        calcularYRenderizarPacientes();
+
+        if (error.code === '23505') {
+          alert('Ese horario ya está ocupado.');
+        } else {
+          alert('Error reprogramando turno: ' + error.message);
+        }
+        return;
+      }
+
+      FECHA_LUNES_ACTUAL = obtenerLunesDeSemana(new Date(Number(fechaNueva.slice(0,4)), Number(fechaNueva.slice(5,7)) - 1, Number(fechaNueva.slice(8,10))));
+      document.getElementById('datepicker').value = fechaNueva;
+      renderizarCalendarioCompleto();
+      mostrarToast('Turno reprogramado correctamente.');
+    }
+
+    function eliminarTurnoActual() {
+      document.getElementById('modalDetalle').classList.remove('active');
+      document.getElementById('modalConfirmarCancelacion').classList.add('active');
+    }
+
+    function cerrarConfirmacion() {
+      document.getElementById('modalConfirmarCancelacion').classList.remove('active');
+      ID_TURNO_SELECCIONADO = null;
+    }
+
+    async function ejecutarEliminacionConfirmada() {
+      if (!ID_TURNO_SELECCIONADO) return;
+
+      const idABorrar = ID_TURNO_SELECCIONADO;
+
+      document.getElementById('modalConfirmarCancelacion').classList.remove('active');
+      ID_TURNO_SELECCIONADO = null;
+
+      const backup = [...BASE_DATOS];
+      BASE_DATOS = BASE_DATOS.filter(item => item.id !== idABorrar);
+      renderizarCalendarioCompleto();
+      calcularYRenderizarPacientes();
+
+      const { error } = await supabaseClient
+        .from('turnos')
+        .delete()
+        .eq('id', idABorrar)
+        .eq('clinica_id', CLINICA_ID);
+
+      if (error) {
+        BASE_DATOS = backup;
+        renderizarCalendarioCompleto();
+        calcularYRenderizarPacientes();
+        alert('Error cancelando turno: ' + error.message);
+        return;
+      }
+
+      mostrarToast('Turno cancelado.');
+    }
+
+    function normalizarTelefonoWhatsAppArgentina(telefono) {
+      let digitos = String(telefono || '').replace(/\D/g, '');
+
+      if (!digitos) return '';
+
+      // Limpieza común de celulares argentinos cargados localmente.
+      // Ejemplos válidos esperados: 1133066651, 1152556631, 5491133066651.
+      digitos = digitos.replace(/^00/, '');
+      digitos = digitos.replace(/^0+/, '');
+
+      if (digitos.startsWith('549') && digitos.length >= 12) return digitos;
+
+      if (digitos.startsWith('54')) {
+        const resto = digitos.slice(2);
+        if (resto.startsWith('9')) return digitos;
+        return '549' + resto.replace(/^0+/, '').replace(/^15/, '');
+      }
+
+      if (digitos.startsWith('15') && digitos.length >= 10) {
+        digitos = digitos.slice(2);
+      }
+
+      if (digitos.length < 8) return '';
+
+      return '549' + digitos;
+    }
+
+    function armarUrlWhatsApp(telefono, mensaje) {
+      const numero = normalizarTelefonoWhatsAppArgentina(telefono);
+      if (!numero) return '';
+
+      const texto = String(mensaje || '').trim();
+      const params = new URLSearchParams();
+      params.set('phone', numero);
+      if (texto) params.set('text', texto);
+
+      // Usamos el protocolo nativo de WhatsApp para evitar abrir una pestaña intermedia
+      // del navegador con api.whatsapp.com / web.whatsapp.com.
+      return `whatsapp://send?${params.toString()}`;
+    }
+
+    function abrirWhatsAppTelefono(telefono, mensaje, event) {
+      if (event) event.stopPropagation();
+
+      const url = armarUrlWhatsApp(telefono, mensaje);
+      if (!url) {
+        mostrarToast('No hay un teléfono válido para abrir WhatsApp.');
+        return;
+      }
+
+      try {
+        let launcher = document.getElementById('whatsappProtocolLauncher');
+
+        if (!launcher) {
+          launcher = document.createElement('a');
+          launcher.id = 'whatsappProtocolLauncher';
+          launcher.style.display = 'none';
+          document.body.appendChild(launcher);
+        }
+
+        launcher.href = url;
+        launcher.removeAttribute('target');
+        launcher.click();
+
+        mostrarToast('Abriendo WhatsApp. Si el navegador pregunta, elegí abrir la aplicación.');
+      } catch (err) {
+        mostrarToast('No se pudo abrir WhatsApp.');
+      }
+    }
+
+    function construirMensajeRecordatorioTurno(t) {
+      if (!t) return '';
+      const fPartes = String(t.fecha || '').split('-');
+      const fechaTxt = fPartes.length === 3 ? `${fPartes[2]}/${fPartes[1]}` : String(t.fecha || '');
+      const nombrePaciente = t.nombre || nombreCompletoTurno(t) || '';
+      const template = (CONFIG_CLINICA || DEFAULT_CONFIG_CLINICA).mensajes?.turno || DEFAULT_CONFIG_CLINICA.mensajes.turno;
+      return aplicarTemplateMensaje(template, { paciente: nombrePaciente, fecha: fechaTxt, hora: t.hora || '', tratamientos: '' });
+    }
+
+    function construirMensajeSeguimientoPaciente(nombre, dni) {
+      const nombrePaciente = String(nombre || '').trim();
+      const pendientesTxt = armarTextoTratamientosPendientes(dni);
+      const mensajes = (CONFIG_CLINICA || DEFAULT_CONFIG_CLINICA).mensajes || DEFAULT_CONFIG_CLINICA.mensajes;
+      const template = pendientesTxt ? (mensajes.paciente_con_pendientes || DEFAULT_CONFIG_CLINICA.mensajes.paciente_con_pendientes) : (mensajes.paciente_sin_pendientes || DEFAULT_CONFIG_CLINICA.mensajes.paciente_sin_pendientes);
+      return aplicarTemplateMensaje(template, { paciente: nombrePaciente, tratamientos: pendientesTxt });
+    }
+
+    function abrirSoporteWhatsApp(event) {
+      if (event) event.stopPropagation();
+      abrirWhatsAppTelefono(SUPPORT_PHONE, 'Hola Brian, necesito soporte con la agenda del consultorio.', event);
+    }
+
+    function abrirWhatsAppTurno(id, event) {
+      if (event) event.stopPropagation();
+      const t = BASE_DATOS.find(item => item.id === id);
+      if (!t) return;
+      const mensaje = construirMensajeRecordatorioTurno(t);
+      abrirWhatsAppTelefono(t.telefono, mensaje, event);
+    }
+
+    function abrirWhatsAppTurnoActual() {
+      if (!ID_TURNO_SELECCIONADO) return;
+      abrirWhatsAppTurno(ID_TURNO_SELECCIONADO);
+    }
+
+    function abrirWhatsAppPaciente(telefono, nombre, dni, event) {
+      if (event) event.stopPropagation();
+      const mensaje = construirMensajeSeguimientoPaciente(nombre, dni);
+      abrirWhatsAppTelefono(telefono, mensaje, event);
+    }
+
+    function copiarTextoRecordatorio(id, event) {
+      if (event) event.stopPropagation();
+
+      const t = BASE_DATOS.find(item => item.id === id);
+      if (!t) return;
+
+      const msg = construirMensajeRecordatorioTurno(t);
+
+      navigator.clipboard.writeText(msg).then(() => {
+        mostrarToast('Recordatorio de turno copiado. Pegalo en WhatsApp.');
+      });
+    }
+
+    function cerrarModales() {
+      document.getElementById('modalAlta').classList.remove('active');
+      document.getElementById('modalDetalle').classList.remove('active');
+      document.getElementById('modalConfirmarCancelacion').classList.remove('active');
+
+      const modalEditar = document.getElementById('modalEditarTurno');
+      const modalReprogramar = document.getElementById('modalReprogramarTurno');
+      const modalTratamientos = document.getElementById('modalTratamientos');
+      const modalFicha = document.getElementById('modalFichaPaciente');
+      const modalConfiguracion = document.getElementById('modalConfiguracion');
+
+      if (modalEditar) modalEditar.classList.remove('active');
+      if (modalReprogramar) modalReprogramar.classList.remove('active');
+      if (modalTratamientos) modalTratamientos.classList.remove('active');
+      if (modalFicha) modalFicha.classList.remove('active');
+      if (modalConfiguracion) modalConfiguracion.classList.remove('active');
+
+      ID_TURNO_SELECCIONADO = null;
+    }
+
+  </script>
+</body>
+</html>
