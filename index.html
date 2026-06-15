@@ -1823,6 +1823,118 @@
       }
     }
 
+
+
+    /* =====================================================
+       Correcciones v22: modales usables en celular y PC
+       - Evita que el fondo se mueva cuando hay modal abierto.
+       - Hace que Configuración sea scrolleable en pantallas chicas.
+       - Mantiene los botones del modal visibles al final.
+       ===================================================== */
+    body.modal-open {
+      overflow: hidden !important;
+    }
+
+    .modal-overlay {
+      height: 100vh;
+      height: 100dvh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+    }
+
+    .modal-card {
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    #modalConfiguracion.active {
+      align-items: center;
+    }
+
+    #modalConfiguracion .config-modal-card {
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - 36px);
+      max-height: calc(100dvh - 36px);
+      overflow-y: auto;
+    }
+
+    #modalConfiguracion .modal-actions {
+      position: sticky;
+      bottom: -1px;
+      z-index: 8;
+      background: #fff;
+      border-top: 1px solid var(--border);
+      padding-top: 14px;
+      margin-top: 16px;
+      box-shadow: 0 -8px 18px rgba(255,255,255,0.92);
+    }
+
+    @media (max-width: 980px) {
+      .modal-overlay {
+        align-items: flex-start !important;
+        justify-content: center !important;
+        height: 100vh;
+        height: 100dvh;
+        max-height: 100vh;
+        max-height: 100dvh;
+        padding: 8px;
+        overflow-y: auto !important;
+        touch-action: pan-y;
+      }
+
+      .modal-card,
+      .modal-card.config-modal-card,
+      #modalFichaPaciente .modal-card,
+      #modalConfiguracion .config-modal-card {
+        width: 100% !important;
+        max-width: 680px !important;
+        max-height: calc(100vh - 16px) !important;
+        max-height: calc(100dvh - 16px) !important;
+        overflow-y: auto !important;
+        margin: 0 auto 10px !important;
+        padding: 16px !important;
+      }
+
+      #modalConfiguracion .config-modal-card {
+        display: flex !important;
+        flex-direction: column !important;
+      }
+
+      #modalConfiguracion .config-grid {
+        flex: 0 0 auto;
+      }
+
+      #modalConfiguracion .modal-actions {
+        position: sticky;
+        bottom: -1px;
+        background: #fff;
+        border-top: 1px solid var(--border);
+        padding-top: 12px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .modal-overlay {
+        padding: 6px;
+      }
+
+      .modal-card,
+      .modal-card.config-modal-card,
+      #modalFichaPaciente .modal-card,
+      #modalConfiguracion .config-modal-card {
+        max-height: calc(100vh - 12px) !important;
+        max-height: calc(100dvh - 12px) !important;
+        padding: 14px !important;
+        border-radius: 15px !important;
+      }
+
+      #modalConfiguracion .modal-actions .btn-action {
+        flex: 1 1 100%;
+      }
+    }
+
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -2914,7 +3026,7 @@
       document.getElementById('configMensajeTurno').value = CONFIG_CLINICA.mensajes.turno || '';
       document.getElementById('configMensajePacienteSinPendientes').value = CONFIG_CLINICA.mensajes.paciente_sin_pendientes || '';
       document.getElementById('configMensajePacienteConPendientes').value = CONFIG_CLINICA.mensajes.paciente_con_pendientes || '';
-      document.getElementById('modalConfiguracion').classList.add('active');
+      abrirModal('modalConfiguracion');
     }
 
     function renderListaTratamientosConfiguracion() {
@@ -3050,6 +3162,30 @@
       toast.innerText = texto;
       toast.classList.add('show');
       setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+
+
+    function abrirModal(id) {
+      const modal = document.getElementById(id);
+      if (!modal) return;
+      document.body.classList.add('modal-open');
+      modal.classList.add('active');
+      setTimeout(() => {
+        try {
+          modal.scrollTop = 0;
+          const card = modal.querySelector('.modal-card');
+          if (card) card.scrollTop = 0;
+        } catch (e) {}
+      }, 0);
+    }
+
+    function hayModalActivo() {
+      return Array.from(document.querySelectorAll('.modal-overlay')).some(m => m.classList.contains('active'));
+    }
+
+    function liberarScrollSiNoHayModal() {
+      if (!hayModalActivo()) document.body.classList.remove('modal-open');
     }
 
     function nombreCompletoTurno(t) {
@@ -3672,7 +3808,7 @@
       renderInputsTratamientos('tratamientosPacienteInputs', 'trat', t);
       const nombre = paciente?.nombre_completo || dniLimpio;
       document.getElementById('modalTratamientosInfo').innerText = `Ficha de ${nombre}. Usá + y − para actualizar las cantidades pendientes.`;
-      document.getElementById('modalTratamientos').classList.add('active');
+      abrirModal('modalTratamientos');
     }
 
     function ajustarTratamiento(id, delta) {
@@ -3718,7 +3854,7 @@
       const hint = document.getElementById('fichaPacienteHint');
       hint.className = 'patient-hint';
       hint.innerText = '';
-      document.getElementById('modalFichaPaciente').classList.add('active');
+      abrirModal('modalFichaPaciente');
       setTimeout(() => document.getElementById('fichaDni').focus(), 100);
     }
 
@@ -4206,7 +4342,7 @@
       hint.innerText = '';
 
       document.getElementById('modalTurnoInfo').innerText = `Turno para ${convertirFechaLatina(fecha)} a las ${hora} hs`;
-      document.getElementById('modalAlta').classList.add('active');
+      abrirModal('modalAlta');
 
       setTimeout(() => document.getElementById('formDni').focus(), 100);
     }
@@ -4227,7 +4363,7 @@
       document.getElementById('lblEstado').innerText = t.confirmado ? '🟢 Confirmado' : '🔵 Pendiente';
       document.getElementById('lblTipoTurno').innerText = t.extension ? 'Extensión de turno' : 'Turno principal';
 
-      document.getElementById('modalDetalle').classList.add('active');
+      abrirModal('modalDetalle');
     }
 
     async function guardarFormularioTurno() {
@@ -4395,7 +4531,7 @@
       document.getElementById('modalEditarTurnoInfo').innerText =
         `Editando turno del ${convertirFechaLatina(t.fecha)} a las ${t.hora} hs.`;
 
-      document.getElementById('modalEditarTurno').classList.add('active');
+      abrirModal('modalEditarTurno');
     }
 
     async function guardarEdicionTurno() {
@@ -4494,7 +4630,7 @@
       document.getElementById('modalReprogramarInfo').innerText =
         `Reprogramando a ${nombreCompletoTurno(t)}. Fecha actual: ${convertirFechaLatina(t.fecha)} ${t.hora} hs.`;
 
-      document.getElementById('modalReprogramarTurno').classList.add('active');
+      abrirModal('modalReprogramarTurno');
     }
 
     function abrirCalendarioReprogramacion(event) {
@@ -4626,12 +4762,14 @@
 
     function eliminarTurnoActual() {
       document.getElementById('modalDetalle').classList.remove('active');
-      document.getElementById('modalConfirmarCancelacion').classList.add('active');
+      liberarScrollSiNoHayModal();
+      abrirModal('modalConfirmarCancelacion');
     }
 
     function cerrarConfirmacion() {
       document.getElementById('modalConfirmarCancelacion').classList.remove('active');
       ID_TURNO_SELECCIONADO = null;
+      liberarScrollSiNoHayModal();
     }
 
     async function ejecutarEliminacionConfirmada() {
@@ -4641,6 +4779,7 @@
 
       document.getElementById('modalConfirmarCancelacion').classList.remove('active');
       ID_TURNO_SELECCIONADO = null;
+      liberarScrollSiNoHayModal();
 
       const backup = [...BASE_DATOS];
       BASE_DATOS = BASE_DATOS.filter(item => item.id !== idABorrar);
@@ -4806,6 +4945,7 @@
       if (modalConfiguracion) modalConfiguracion.classList.remove('active');
 
       ID_TURNO_SELECCIONADO = null;
+      document.body.classList.remove('modal-open');
     }
 
   </script>
