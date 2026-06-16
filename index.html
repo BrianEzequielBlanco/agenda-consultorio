@@ -3075,6 +3075,189 @@
       }
     }
 
+
+    function clonar(obj) {
+      return JSON.parse(JSON.stringify(obj));
+    }
+
+    function normalizarConfigClinica(config) {
+      const base = clonar(DEFAULT_CONFIG_CLINICA);
+      const cfg = config && typeof config === 'object' ? config : {};
+
+      const tratamientos = Array.isArray(cfg.tratamientos)
+        ? cfg.tratamientos
+        : (Array.isArray(cfg.motivos_seguimiento) ? cfg.motivos_seguimiento : base.tratamientos);
+
+      base.tratamientos = tratamientos
+        .map(t => {
+          if (typeof t === 'string') return { key: slugTratamiento(t), label: String(t).trim() };
+          return { key: slugTratamiento(t?.key || t?.label || ''), label: String(t?.label || t?.key || '').trim().replace(/\s+/g, ' ') };
+        })
+        .filter(t => t.key && t.label)
+        .filter((t, idx, arr) => arr.findIndex(x => x.key === t.key) === idx);
+      if (base.tratamientos.length === 0) base.tratamientos = clonar(DEFAULT_CONFIG_CLINICA.tratamientos);
+
+      const campos = Array.isArray(cfg.campos_paciente)
+        ? cfg.campos_paciente
+        : (Array.isArray(cfg.camposPaciente) ? cfg.camposPaciente : base.campos_paciente);
+      base.campos_paciente = normalizarCamposPacienteConfiguracion(campos);
+
+      base.mensajes = { ...base.mensajes, ...(cfg.mensajes && typeof cfg.mensajes === 'object' ? cfg.mensajes : {}) };
+      base.horarios = normalizarHorariosClinica(cfg.horarios || base.horarios);
+      return base;
+    }
+
+    function aplicarEstadoBotonConfiguracion() {
+      const btn = document.getElementById('btnConfig');
+      if (btn) btn.style.display = ROL_USUARIO === 'admin' ? 'inline-block' : 'none';
+    }
+
+    function obtenerTratamientosConfigurados() {
+      const lista = (CONFIG_CLINICA || DEFAULT_CONFIG_CLINICA).tratamientos || DEFAULT_CONFIG_CLINICA.tratamientos;
+      const normalizados = (Array.isArray(lista) ? lista : [])
+        .map(t => {
+          if (typeof t === 'string') return { key: slugTratamiento(t), label: String(t).trim() };
+          return { key: slugTratamiento(t?.key || t?.label || ''), label: String(t?.label || t?.key || '').trim().replace(/\s+/g, ' ') };
+        })
+        .filter(t => t.key && t.label)
+        .filter((t, idx, arr) => arr.findIndex(x => x.key === t.key) === idx);
+      return normalizados.length ? normalizados : clonar(DEFAULT_CONFIG_CLINICA.tratamientos);
+    }
+
+    function slugCampoPaciente(valor) {
+      return String(valor || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        .slice(0, 42);
+    }
+
+    function normalizarCamposPacienteConfiguracion(campos) {
+      const reservados = ['id', 'dni', 'documento', 'nombre', 'apellido', 'nombre_completo', 'telefono', 'celular', 'created_at', 'clinica_id', 'paciente_id'];
+      const arr = Array.isArray(campos) ? campos : [];
+      const unicos = [];
+      arr.forEach(c => {
+        const label = String(c?.label || c?.key || '').trim().replace(/\s+/g, ' ');
+        const key = slugCampoPaciente(c?.key || label);
+        const tipo = ['texto', 'numero', 'fecha'].includes(c?.tipo) ? c.tipo : 'texto';
+        if (!key || !label || reservados.includes(key)) return;
+        if (!unicos.some(x => x.key === key)) unicos.push({ key, label, tipo });
+      });
+      return unicos;
+    }
+
+    function obtenerCamposPacienteConfigurados() {
+      return normalizarCamposPacienteConfiguracion((CONFIG_CLINICA || DEFAULT_CONFIG_CLINICA).campos_paciente || []);
+    }
+
+    function normalizarDatosExtraPaciente(datos) {
+      const obj = datos && typeof datos === 'object' && !Array.isArray(datos) ? datos : {};
+      const limpio = {};
+      Object.keys(obj).forEach(k => {
+        const key = slugCampoPaciente(k);
+        const val = obj[k];
+        if (!key) return;
+        if (val === null || val === undefined) return;
+        limpio[key] = String(val).trim();
+      });
+      return limpio;
+    }
+
+    function renderCamposPacienteFormulario(containerId, prefix, valores) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      const campos = obtenerCamposPacienteConfigurados();
+      const datos = normalizarDatosExtraPaciente(valores || {});
+      if (campos.length === 0) {
+        container.innerHTML = '';
+        return;
+      }
+      container.innerHTML = campos.map(c => {
+        const id = `${prefix}_${c.key}`;
+        const tipoHtml = c.tipo === 'numero' ? 'number' : (c.tipo === 'fecha' ? 'date' : 'text');
+        const value = datos[c.key] || '';
+        return `
+          <div class="form-group extra-field-group">
+            <label>${e(c.label)}</label>
+            <input type="${e(tipoHtml)}" id="${e(id)}" data-patient-extra-key="${e(c.key)}" class="form-control" value="${e(value)}" placeholder="${e(c.label)}">
+          </div>`;
+      }).join('');
+    }
+
+    function leerCamposPacienteFormulario(containerId) {
+      const container = document.getElementById(containerId);
+      const datos = {};
+      if (!container) return datos;
+      container.querySelectorAll('[data-patient-extra-key]').forEach(input => {
+        const key = slugCampoPaciente(input.dataset.patientExtraKey || '');
+        const valor = String(input.value || '').trim();
+        if (key && valor) datos[key] = valor;
+      });
+      return datos;
+    }
+
+    function renderCamposExtraDetalle(containerId, datos) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      const campos = obtenerCamposPacienteConfigurados();
+      const extra = normalizarDatosExtraPaciente(datos || {});
+      container.innerHTML = campos
+        .filter(c => extra[c.key])
+        .map(c => `<div class="detail-row"><span class="detail-label">${e(c.label)}:</span><span class="detail-value">${e(extra[c.key])}</span></div>`)
+        .join('');
+    }
+
+    function renderCamposExtraPacienteResumen(datos) {
+      const campos = obtenerCamposPacienteConfigurados();
+      const extra = normalizarDatosExtraPaciente(datos || {});
+      const visibles = campos.filter(c => extra[c.key]);
+      if (visibles.length === 0) return '';
+      return `<div class="extra-data-list">${visibles.map(c => `<div class="extra-data-row"><strong>${e(c.label)}:</strong> ${e(extra[c.key])}</div>`).join('')}</div>`;
+    }
+
+    function normalizarHorarioDia(valor, fallback) {
+      const f = fallback || { activo: false, inicio: '09:00', fin: '13:00', intervalo: 30 };
+      const v = valor && typeof valor === 'object' ? valor : {};
+      let inicio = esHoraValida(v.inicio) ? v.inicio : f.inicio;
+      let fin = esHoraValida(v.fin) ? v.fin : f.fin;
+      let intervalo = Number(v.intervalo || f.intervalo || 30);
+      if (![15, 20, 30, 45, 60].includes(intervalo)) intervalo = 30;
+      if (minutosDesdeHora(fin) < minutosDesdeHora(inicio)) {
+        const tmp = inicio;
+        inicio = fin;
+        fin = tmp;
+      }
+      return { activo: !!v.activo, inicio, fin, intervalo };
+    }
+
+    function normalizarHorariosClinica(horarios) {
+      const base = clonar(DEFAULT_CONFIG_CLINICA.horarios || {});
+      const cfg = horarios && typeof horarios === 'object' ? horarios : {};
+      const resultado = {};
+      DIAS_CONFIG.forEach(dia => {
+        resultado[dia.key] = normalizarHorarioDia(cfg[dia.key], base[dia.key]);
+      });
+      if (!Object.values(resultado).some(d => d.activo)) {
+        ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'].forEach(k => {
+          if (resultado[k]) resultado[k].activo = true;
+        });
+      }
+      return resultado;
+    }
+
+    function slugTratamiento(valor) {
+      return String(valor || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        .slice(0, 40);
+    }
+
     function normalizarCantidad(valor) {
       const n = parseInt(valor, 10);
       return Number.isFinite(n) && n > 0 ? n : 0;
@@ -3206,7 +3389,7 @@
     }
 
     function renderListaTratamientosConfiguracion() {
-      const lista = document.getElementById('configTratamientosLista') || document.getElementById('configMotivosLista');
+      const lista = document.getElementById('configMotivosLista');
       if (!lista) return;
       lista.innerHTML = obtenerTratamientosConfigurados().map(t => `
         <div class="config-treatment-row">
@@ -4807,28 +4990,9 @@
       abrirModal('modalEditarTurno');
     }
 
-    function abrirEditarTurno(id, event) {
-      if (event) event.stopPropagation();
-
-      const t = BASE_DATOS.find(item => item.id === id);
-      if (!t) return;
-
-      cerrarModales();
-
-      document.getElementById('editTurnoId').value = t.id;
-      document.getElementById('editDni').value = t.dni || '';
-      document.getElementById('editNombreCompleto').value = nombreCompletoTurno(t);
-      document.getElementById('editTelefono').value = t.telefono || '';
-      renderCamposPacienteFormulario('editCamposExtraPaciente', 'editExtra', t.datosExtra || {});
-
-      const hint = document.getElementById('editPacienteHint');
-      hint.className = 'patient-hint';
-      hint.innerText = '';
-
-      document.getElementById('modalEditarTurnoInfo').innerText =
-        `Editando turno del ${convertirFechaLatina(t.fecha)} a las ${t.hora} hs.`;
-
-      abrirModal('modalEditarTurno');
+    function abrirEditarTurnoActual() {
+      if (!ID_TURNO_SELECCIONADO) return;
+      abrirEditarTurno(ID_TURNO_SELECCIONADO);
     }
 
     async function guardarEdicionTurno() {
@@ -5222,7 +5386,7 @@
       cont.innerHTML = turnosHoy.map(t => {
         const pacienteId = String(t.pacienteId || '');
         const motivosHtml = armarResumenTratamientos(pacienteId);
-        const nombre = normalizarNombrePaciente(t.nombre, t.apellido, t.nombre_completo || '').nombre_completo || 'Paciente';
+        const nombre = nombreCompletoTurno(t) || 'Paciente';
         const estado = t.confirmado ? 'Confirmado' : 'Sin confirmar';
         return `
           <div class="hoy-card">
