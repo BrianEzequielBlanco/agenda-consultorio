@@ -2010,6 +2010,10 @@
     .hoy-name { font-size: 16px; font-weight: 900; color: var(--text); margin-bottom: 4px; }
     .hoy-meta { color: var(--muted); font-size: 12px; line-height: 1.4; }
     .hoy-actions { display: flex; gap: 7px; flex-wrap: wrap; justify-content: flex-end; }
+    .hoy-date-controls { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; justify-content: flex-end; }
+    .hoy-date-controls .btn-nav-circle { width: 34px; height: 34px; min-width: 34px; }
+    .hoy-date-controls .input-date { width: 165px; height: 34px; padding: 7px 10px; font-size: 13px; font-weight: 800; }
+    .hoy-date-controls .btn-table-action { height: 34px; }
     .motivos-inline { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 7px; }
 
     .motivo-toggle-grid {
@@ -2044,6 +2048,8 @@
       .hoy-time { text-align: left; width: fit-content; }
       .hoy-actions { justify-content: stretch; }
       .hoy-actions .btn-table-action { flex: 1; }
+      .hoy-date-controls { justify-content: stretch; }
+      .hoy-date-controls .input-date { flex: 1; min-width: 160px; }
       .motivo-toggle-grid { grid-template-columns: 1fr; }
     }
 
@@ -2141,11 +2147,14 @@
     <main class="hoy-container" id="appGridHoy">
       <div class="page-title-row">
         <div>
-          <div class="page-title">Turnos de hoy</div>
+          <div id="hoyTitulo" class="page-title">Turnos de hoy</div>
           <div id="hoySubtitulo" class="page-subtitle">Lista simple del día para actualizar motivos de seguimiento al cierre de cada atención.</div>
         </div>
-        <div class="page-title-actions">
-          <button class="btn-table-action" onclick="renderizarHoy()">Actualizar lista</button>
+        <div class="page-title-actions hoy-date-controls" aria-label="Selector de fecha para turnos del día">
+          <button class="btn-nav-circle" title="Día anterior" onclick="moverFechaHoy(-1)">◀</button>
+          <input type="date" id="hoyDateInput" class="input-date" title="Seleccionar fecha" onchange="seleccionarFechaHoy(this.value)">
+          <button class="btn-nav-circle" title="Día siguiente" onclick="moverFechaHoy(1)">▶</button>
+          <button class="btn-table-action" title="Volver a hoy" onclick="resetearHoyAFechaActual()">Hoy</button>
         </div>
       </div>
       <div class="hoy-help-card">
@@ -2463,7 +2472,7 @@
         <div class="config-section">
           <div class="config-section-title">Motivos de seguimiento disponibles</div>
           <div class="config-help">Estos motivos aparecen como etiquetas rápidas. La secretaria solo los activa o desactiva; no se cargan cantidades.</div>
-          <div id="configTratamientosLista"></div>
+          <div id="configMotivosLista"></div>
           <div class="config-add-row">
             <input type="text" id="configNuevoTratamiento" class="form-control" placeholder="Ej. Caries, Conducto, Corona, Control, Presupuesto pendiente">
             <button class="btn-table-action" onclick="agregarTratamientoConfiguracion()">Agregar</button>
@@ -2553,6 +2562,7 @@
     let ROL_USUARIO = 'secretaria';
     let FECHA_LUNES_ACTUAL = new Date();
     let FECHA_MOVIL_ACTUAL = new Date();
+    let FECHA_HOY_SELECCIONADA = '';
     let ID_TURNO_SELECCIONADO = null;
     let VISTA_ACTUAL = 'turnos';
     let DRAG_TURNO_ID = null;
@@ -3095,7 +3105,6 @@
         })
         .filter(t => t.key && t.label)
         .filter((t, idx, arr) => arr.findIndex(x => x.key === t.key) === idx);
-      if (base.tratamientos.length === 0) base.tratamientos = clonar(DEFAULT_CONFIG_CLINICA.tratamientos);
 
       const campos = Array.isArray(cfg.campos_paciente)
         ? cfg.campos_paciente
@@ -3121,7 +3130,7 @@
         })
         .filter(t => t.key && t.label)
         .filter((t, idx, arr) => arr.findIndex(x => x.key === t.key) === idx);
-      return normalizados.length ? normalizados : clonar(DEFAULT_CONFIG_CLINICA.tratamientos);
+      return normalizados;
     }
 
     function slugCampoPaciente(valor) {
@@ -3391,7 +3400,12 @@
     function renderListaTratamientosConfiguracion() {
       const lista = document.getElementById('configMotivosLista');
       if (!lista) return;
-      lista.innerHTML = obtenerTratamientosConfigurados().map(t => `
+      const motivos = obtenerTratamientosConfigurados();
+      if (motivos.length === 0) {
+        lista.innerHTML = '<div class="config-help" style="margin-bottom:8px;">No hay motivos configurados. Podés agregar los que use este consultorio.</div>';
+        return;
+      }
+      lista.innerHTML = motivos.map(t => `
         <div class="config-treatment-row">
           <input type="text" class="form-control config-treatment-label" data-treatment-key="${e(t.key)}" value="${e(t.label)}">
           <button class="btn-table-action btn-delete-ficha" onclick="quitarTratamientoConfiguracion('${e(t.key)}')">Quitar</button>
@@ -3401,11 +3415,12 @@
     function agregarTratamientoConfiguracion() {
       const input = document.getElementById('configNuevoTratamiento');
       const label = String(input?.value || '').trim().replace(/\s+/g, ' ');
-      if (!label) { mostrarToast('Escribí el nombre del tratamiento.'); return; }
+      if (!label) { mostrarToast('Escribí el nombre del motivo.'); return; }
       const key = slugTratamiento(label);
       const tratamientos = obtenerTratamientosConfigurados();
-      if (tratamientos.some(t => t.key === key)) { mostrarToast('Ese tratamiento ya existe.'); return; }
+      if (tratamientos.some(t => t.key === key)) { mostrarToast('Ese motivo ya existe.'); return; }
       tratamientos.push({ key, label });
+      CONFIG_CLINICA.tratamientos = tratamientos;
       if (input) input.value = '';
       renderListaTratamientosConfiguracion();
     }
@@ -3413,7 +3428,6 @@
     function quitarTratamientoConfiguracion(key) {
       const limpio = slugTratamiento(key);
       const tratamientos = obtenerTratamientosConfigurados();
-      if (tratamientos.length <= 1) { mostrarToast('Debe quedar al menos un tratamiento disponible.'); return; }
       CONFIG_CLINICA.tratamientos = tratamientos.filter(t => t.key !== limpio);
       renderListaTratamientosConfiguracion();
     }
@@ -3543,7 +3557,6 @@
         key: slugTratamiento(input.dataset.treatmentKey || input.value),
         label: String(input.value || '').trim().replace(/\s+/g, ' ')
       })).filter(t => t.key && t.label).forEach(t => { if (!unicos.some(x => x.key === t.key)) unicos.push(t); });
-      if (unicos.length === 0) { alert('Debe quedar al menos un tratamiento disponible.'); return; }
       const horariosConfig = leerHorariosConfiguracion();
       if (!horariosConfig) return;
 
@@ -4743,6 +4756,7 @@
       });
 
       renderizarHistorialLateral();
+      if (VISTA_ACTUAL === 'hoy') renderizarHoy();
     }
 
     function renderizarHistorialLateral() {
@@ -4990,9 +5004,28 @@
       abrirModal('modalEditarTurno');
     }
 
-    function abrirEditarTurnoActual() {
-      if (!ID_TURNO_SELECCIONADO) return;
-      abrirEditarTurno(ID_TURNO_SELECCIONADO);
+    function abrirEditarTurno(id, event) {
+      if (event) event.stopPropagation();
+
+      const t = BASE_DATOS.find(item => item.id === id);
+      if (!t) return;
+
+      cerrarModales();
+
+      document.getElementById('editTurnoId').value = t.id;
+      document.getElementById('editDni').value = t.dni || '';
+      document.getElementById('editNombreCompleto').value = nombreCompletoTurno(t);
+      document.getElementById('editTelefono').value = t.telefono || '';
+      renderCamposPacienteFormulario('editCamposExtraPaciente', 'editExtra', t.datosExtra || {});
+
+      const hint = document.getElementById('editPacienteHint');
+      hint.className = 'patient-hint';
+      hint.innerText = '';
+
+      document.getElementById('modalEditarTurnoInfo').innerText =
+        `Editando turno del ${convertirFechaLatina(t.fecha)} a las ${t.hora} hs.`;
+
+      abrirModal('modalEditarTurno');
     }
 
     async function guardarEdicionTurno() {
@@ -5364,29 +5397,72 @@
       }
     }
 
+    function fechaLocalDesdeISO(iso) {
+      const partes = String(iso || '').split('-').map(Number);
+      if (partes.length !== 3 || !partes[0] || !partes[1] || !partes[2]) return new Date();
+      const fecha = new Date(partes[0], partes[1] - 1, partes[2]);
+      fecha.setHours(0, 0, 0, 0);
+      return fecha;
+    }
+
+    function obtenerFechaHoySeleccionada() {
+      if (!FECHA_HOY_SELECCIONADA) FECHA_HOY_SELECCIONADA = formatearFechaISO(new Date());
+      return FECHA_HOY_SELECCIONADA;
+    }
+
+    function seleccionarFechaHoy(valor) {
+      const iso = parsearFechaFlexible(valor);
+      if (!iso) { mostrarToast('Fecha inválida.'); return; }
+      FECHA_HOY_SELECCIONADA = iso;
+      renderizarHoy();
+    }
+
+    function moverFechaHoy(delta) {
+      const fecha = fechaLocalDesdeISO(obtenerFechaHoySeleccionada());
+      fecha.setDate(fecha.getDate() + Number(delta || 0));
+      FECHA_HOY_SELECCIONADA = formatearFechaISO(fecha);
+      renderizarHoy();
+    }
+
+    function resetearHoyAFechaActual() {
+      FECHA_HOY_SELECCIONADA = formatearFechaISO(new Date());
+      renderizarHoy();
+    }
+
     function renderizarHoy() {
       const cont = document.getElementById('listaTurnosHoy');
       if (!cont) return;
+      const fechaISO = obtenerFechaHoySeleccionada();
       const hoyISO = formatearFechaISO(new Date());
-      const turnosHoy = (BASE_DATOS || [])
-        .filter(t => t.fecha === hoyISO && !t.extension)
+      const esHoyReal = fechaISO === hoyISO;
+      const fechaObj = fechaLocalDesdeISO(fechaISO);
+      const fechaLarga = fechaObj.toLocaleDateString('es-AR', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+      const fechaCorta = convertirFechaLatina(fechaISO);
+
+      const inputFecha = document.getElementById('hoyDateInput');
+      if (inputFecha && inputFecha.value !== fechaISO) inputFecha.value = fechaISO;
+
+      const titulo = document.getElementById('hoyTitulo');
+      if (titulo) titulo.innerText = esHoyReal ? 'Turnos de hoy' : `Turnos del ${fechaCorta}`;
+
+      const turnosDia = (BASE_DATOS || [])
+        .filter(t => t.fecha === fechaISO && !t.extension)
         .sort((a, b) => String(a.hora || '').localeCompare(String(b.hora || '')));
 
       const subtitulo = document.getElementById('hoySubtitulo');
       if (subtitulo) {
-        const [y, m, d] = hoyISO.split('-');
-        subtitulo.innerText = `Turnos del ${d}/${m}/${y}. Actualizá motivos solo si el doctor indica algo al cierre de la atención.`;
+        subtitulo.innerText = `${esHoyReal ? 'Hoy' : 'Fecha seleccionada'}: ${fechaLarga}. Actualizá motivos solo si el doctor indica algo al cierre de la atención.`;
       }
 
-      if (turnosHoy.length === 0) {
-        cont.innerHTML = '<div class="empty-state">No hay turnos cargados para hoy.</div>';
+      if (turnosDia.length === 0) {
+        cont.innerHTML = `<div class="empty-state">No hay turnos cargados para ${esHoyReal ? 'hoy' : 'esta fecha'}.</div>`;
         return;
       }
 
-      cont.innerHTML = turnosHoy.map(t => {
+      cont.innerHTML = turnosDia.map(t => {
         const pacienteId = String(t.pacienteId || '');
         const motivosHtml = armarResumenTratamientos(pacienteId);
-        const nombre = nombreCompletoTurno(t) || 'Paciente';
+        const nombre = nombreCompletoDesdePartes(t.nombre, t.apellido, t.nombre_completo || '') || 'Paciente';
         const estado = t.confirmado ? 'Confirmado' : 'Sin confirmar';
         return `
           <div class="hoy-card">
