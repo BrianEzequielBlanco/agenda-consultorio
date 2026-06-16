@@ -5478,11 +5478,27 @@
     }
 
     function fechaLocalDesdeISO(iso) {
-      const partes = String(iso || '').split('-').map(Number);
+      const fechaISO = parsearFechaFlexible(iso) || formatearFechaISO(new Date());
+      const partes = String(fechaISO || '').split('-').map(Number);
       if (partes.length !== 3 || !partes[0] || !partes[1] || !partes[2]) return new Date();
       const fecha = new Date(partes[0], partes[1] - 1, partes[2]);
       fecha.setHours(0, 0, 0, 0);
       return fecha;
+    }
+
+    function normalizarFechaParaVistaHoy(valor) {
+      if (!valor) return '';
+      if (valor instanceof Date && !Number.isNaN(valor.getTime())) return formatearFechaISO(valor);
+      const texto = String(valor || '').trim();
+      const iso = parsearFechaFlexible(texto);
+      if (iso) return iso;
+
+      // Supabase suele devolver date como YYYY-MM-DD, pero esta limpieza cubre valores
+      // con hora accidental: 2026-06-16T00:00:00.000Z.
+      const matchISOConHora = texto.match(/^(\d{4}-\d{2}-\d{2})/);
+      if (matchISOConHora) return matchISOConHora[1];
+
+      return '';
     }
 
     function obtenerFechaHoySeleccionada() {
@@ -5542,9 +5558,23 @@
       const titulo = document.getElementById('hoyTitulo');
       if (titulo) titulo.innerText = esHoyReal ? 'Turnos de hoy' : `Turnos del ${fechaCorta}`;
 
-      const turnosDia = (BASE_DATOS || [])
-        .filter(t => t.fecha === fechaISO && !t.extension)
+      const turnosDeLaFecha = (BASE_DATOS || [])
+        .filter(t => normalizarFechaParaVistaHoy(t.fecha) === fechaISO)
         .sort((a, b) => String(a.hora || '').localeCompare(String(b.hora || '')));
+
+      // La agenda puede guardar extensiones de turno como filas separadas. En la vista Hoy
+      // mostramos el turno principal para no duplicarle trabajo a la secretaria. Si por
+      // algún motivo existe solo una extensión sin padre, igual la mostramos.
+      const idsDeLaFecha = new Set(turnosDeLaFecha.map(t => String(t.id || '')));
+      let turnosDia = turnosDeLaFecha.filter(t => {
+        const esExtension = t.extension === true;
+        const padreExiste = t.parentId && idsDeLaFecha.has(String(t.parentId));
+        return !esExtension || !padreExiste;
+      });
+
+      if (turnosDia.length === 0 && turnosDeLaFecha.length > 0) {
+        turnosDia = turnosDeLaFecha;
+      }
 
       const subtitulo = document.getElementById('hoySubtitulo');
       if (subtitulo) {
