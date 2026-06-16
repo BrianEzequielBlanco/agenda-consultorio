@@ -1962,6 +1962,91 @@
       }
     }
 
+
+    /* V28: solapa Hoy y motivos de seguimiento como etiquetas */
+    .hoy-container {
+      display: none;
+      flex: 1;
+      padding: 22px;
+      overflow-y: auto;
+      background: #f8fafc;
+    }
+
+    .hoy-help-card {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      color: #9a3412;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 13px;
+      line-height: 1.45;
+      margin-bottom: 14px;
+    }
+
+    .hoy-board { display: flex; flex-direction: column; gap: 12px; }
+
+    .hoy-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+      padding: 14px;
+      display: grid;
+      grid-template-columns: 82px 1fr auto;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .hoy-time {
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--blue-hover);
+      text-align: center;
+      background: var(--blue-light);
+      border-radius: 12px;
+      padding: 10px 8px;
+    }
+
+    .hoy-name { font-size: 16px; font-weight: 900; color: var(--text); margin-bottom: 4px; }
+    .hoy-meta { color: var(--muted); font-size: 12px; line-height: 1.4; }
+    .hoy-actions { display: flex; gap: 7px; flex-wrap: wrap; justify-content: flex-end; }
+    .motivos-inline { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 7px; }
+
+    .motivo-toggle-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .motivo-toggle {
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      border-radius: 999px;
+      padding: 9px 11px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all .15s ease;
+      text-align: center;
+      user-select: none;
+    }
+
+    .motivo-toggle:hover { border-color: var(--blue); background: var(--blue-light); }
+    .motivo-toggle.active { background: var(--blue); color: #fff; border-color: var(--blue); box-shadow: 0 6px 16px rgba(26, 115, 232, .25); }
+
+    .motivo-toolbar { display:flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 2px; }
+
+    @media (max-width: 760px) {
+      .hoy-container { padding: 12px; }
+      .hoy-card { grid-template-columns: 1fr; align-items: stretch; }
+      .hoy-time { text-align: left; width: fit-content; }
+      .hoy-actions { justify-content: stretch; }
+      .hoy-actions .btn-table-action { flex: 1; }
+      .motivo-toggle-grid { grid-template-columns: 1fr; }
+    }
+
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -2007,12 +2092,13 @@
 
       <div class="navigation-controls">
         <button id="navTurnos" class="btn-nav active-view" onclick="cambiarVista('turnos')">Agenda</button>
+        <button id="navHoy" class="btn-nav" onclick="cambiarVista('hoy')">Hoy</button>
         <button id="navPacientes" class="btn-nav" onclick="cambiarVista('pacientes')">Pacientes para recordar</button>
         <span id="sessionClinicLabel" class="user-session-pill" title="Clínica activa">Cargando clínica...</span>
 
         <span style="border-left: 1px solid var(--border); height: 24px; margin: 0 8px;"></span>
 
-        <button class="btn-nav" id="ctrlHoy" onclick="irHoy()">Hoy</button>
+        <button class="btn-nav" id="ctrlHoy" onclick="irHoy()">Ir a hoy</button>
         <button class="btn-nav btn-arrow" id="ctrlPrev" onclick="navegarSemana(-1)">◀</button>
         <button class="btn-nav btn-arrow" id="ctrlNext" onclick="navegarSemana(1)">▶</button>
         <span id="currentMonthLabel" class="current-month-label">Junio 2026</span>
@@ -2050,6 +2136,22 @@
 
     <main class="grid-container" id="appGridTurnos">
       <div id="calendarGrid" class="calendar-grid"></div>
+    </main>
+
+    <main class="hoy-container" id="appGridHoy">
+      <div class="page-title-row">
+        <div>
+          <div class="page-title">Turnos de hoy</div>
+          <div id="hoySubtitulo" class="page-subtitle">Lista simple del día para actualizar motivos de seguimiento al cierre de cada atención.</div>
+        </div>
+        <div class="page-title-actions">
+          <button class="btn-table-action" onclick="renderizarHoy()">Actualizar lista</button>
+        </div>
+      </div>
+      <div class="hoy-help-card">
+        Esta solapa no reemplaza la agenda ni la ficha clínica. Sirve para que la secretaria marque, con un clic, qué motivo quedó para que el paciente vuelva. Si el doctor no indica nada, no se toca nada.
+      </div>
+      <div id="listaTurnosHoy" class="hoy-board"></div>
     </main>
 
     <main class="pacientes-container" id="appGridPacientes">
@@ -2284,8 +2386,8 @@
 
   <div id="modalTratamientos" class="modal-overlay">
     <div class="modal-card">
-      <h2 class="modal-title">Tratamientos pendientes</h2>
-      <div id="modalTratamientosInfo" class="modal-subtitle">Actualizá lo que queda pendiente para esta ficha.</div>
+      <h2 class="modal-title">Motivos de seguimiento</h2>
+      <div id="modalTratamientosInfo" class="modal-subtitle">Marcá los motivos comerciales por los que el paciente debería volver. No es historia clínica.</div>
 
       <input type="hidden" id="tratPacienteId">
 
@@ -2293,7 +2395,7 @@
 
       <div class="modal-actions">
         <button class="btn-action btn-secondary" onclick="cerrarModales()">Cancelar</button>
-        <button id="btnGuardarTratamientosPaciente" class="btn-action btn-primary" onclick="guardarTratamientosPaciente()">Guardar pendientes</button>
+        <button id="btnGuardarTratamientosPaciente" class="btn-action btn-primary" onclick="guardarTratamientosPaciente()">Guardar motivos</button>
       </div>
     </div>
   </div>
@@ -2305,7 +2407,7 @@
       <div class="modal-subtitle">Creá la ficha antes de darle turno. Después, al cargar un turno con ese DNI, se autocompletan los datos.</div>
 
       <div class="manual-ficha-note">
-        Campos necesarios: DNI y nombre. El apellido queda separado para búsquedas y listados; teléfono, datos extra y tratamientos pendientes son opcionales, pero ayudan para WhatsApp y seguimiento.
+        Campos necesarios: DNI y nombre. El apellido queda separado para búsquedas y listados; teléfono, datos extra y motivos de seguimiento son opcionales, pero ayudan para WhatsApp y recuperación de pacientes.
       </div>
 
       <div class="form-group">
@@ -2338,8 +2440,8 @@
       <div id="fichaCamposExtraPaciente" class="extra-fields-grid"></div>
 
       <div class="form-group">
-        <label>Tratamientos pendientes iniciales</label>
-        <div class="helper-text">Opcional. Si no tiene pendientes, dejá todo en 0.</div>
+        <label>Motivos de seguimiento iniciales</label>
+        <div class="helper-text">Opcional. Marcá solo los motivos por los que debería volver. No cargues cantidades ni historia clínica.</div>
       </div>
 
       <div id="fichaTratamientosInputs" class="treatment-grid"></div>
@@ -2356,14 +2458,14 @@
   <div id="modalConfiguracion" class="modal-overlay">
     <div class="modal-card config-modal-card">
       <h2 class="modal-title">Configuración del consultorio</h2>
-      <div class="modal-subtitle">Personalizá tratamientos pendientes y mensajes. Esto queda guardado para la clínica activa.</div>
+      <div class="modal-subtitle">Personalizá motivos de seguimiento y mensajes. Esto queda guardado para la clínica activa.</div>
       <div class="config-grid">
         <div class="config-section">
-          <div class="config-section-title">Tratamientos disponibles</div>
-          <div class="config-help">Estos tratamientos aparecen en fichas y mensajes. Podés agregar o quitar según lo que maneje cada consultorio.</div>
+          <div class="config-section-title">Motivos de seguimiento disponibles</div>
+          <div class="config-help">Estos motivos aparecen como etiquetas rápidas. La secretaria solo los activa o desactiva; no se cargan cantidades.</div>
           <div id="configTratamientosLista"></div>
           <div class="config-add-row">
-            <input type="text" id="configNuevoTratamiento" class="form-control" placeholder="Ej. Limpieza, implante, perno, ortodoncia">
+            <input type="text" id="configNuevoTratamiento" class="form-control" placeholder="Ej. Caries, Conducto, Corona, Control, Presupuesto pendiente">
             <button class="btn-table-action" onclick="agregarTratamientoConfiguracion()">Agregar</button>
           </div>
         </div>
@@ -2395,37 +2497,37 @@
           <div class="variables-helper-box">
             <div class="variables-helper-title">Cómo usar las variables</div>
             <div class="variables-helper-main">
-              Para que el WhatsApp suene humano, usá <strong>{primer_nombre}</strong>. Ejemplo: si la ficha dice <strong>Juan Carlos Pérez</strong>, el mensaje sale <strong>“Hola Juan”</strong>.
-              Usá <strong>{nombre}</strong> si querés todos los nombres cargados, y <strong>{nombre_completo}</strong> solo cuando quieras nombre y apellido juntos.
+              Para que el WhatsApp suene humano, usá <strong>{nombre}</strong>. Ejemplo: si la ficha dice <strong>Juan Pérez</strong>, el mensaje sale <strong>“Hola Juan”</strong>.
+              Usá <strong>{nombre_completo}</strong> solo cuando quieras escribir nombre y apellido juntos.
             </div>
             <div class="variables-grid">
-              <div class="variable-card recommended"><code>{primer_nombre}</code><p>Primera palabra del nombre. Recomendado para saludar. Ej: Juan.</p></div>
-              <div class="variable-card"><code>{nombre}</code><p>Todos los nombres cargados. Ej: Juan Carlos.</p></div>
+              <div class="variable-card recommended"><code>{nombre}</code><p>Nombre de pila. Recomendado para saludar. Ej: Juan.</p></div>
               <div class="variable-card"><code>{apellido}</code><p>Apellido del paciente. Ej: Pérez.</p></div>
-              <div class="variable-card"><code>{nombre_completo}</code><p>Nombre + apellido. Ej: Juan Carlos Pérez.</p></div>
+              <div class="variable-card"><code>{nombre_completo}</code><p>Nombre + apellido. Ej: Juan Pérez.</p></div>
               <div class="variable-card"><code>{fecha}</code><p>Fecha del turno. Ej: 08/06.</p></div>
               <div class="variable-card"><code>{hora}</code><p>Hora del turno. Ej: 12:00.</p></div>
-              <div class="variable-card"><code>{tratamientos}</code><p>Lista de pendientes. Solo para mensajes con tratamientos.</p></div>
+              <div class="variable-card recommended"><code>{motivos}</code><p>Lista de motivos activos. Ej: caries y corona.</p></div>
+              <div class="variable-card legacy"><code>{tratamientos}</code><p>Compatibilidad: hace lo mismo que {motivos}.</p></div>
               <div class="variable-card"><code>{consultorio}</code><p>Nombre del consultorio configurado.</p></div>
-              <div class="variable-card legacy"><code>{paciente}</code><p>Compatibilidad: hace lo mismo que {primer_nombre}. Mejor usá {primer_nombre}.</p></div>
+              <div class="variable-card legacy"><code>{paciente}</code><p>Compatibilidad: hace lo mismo que {nombre}. Mejor usá {nombre}.</p></div>
             </div>
           </div>
           <div class="form-group">
             <label>Agenda: recordatorio de turno</label>
             <textarea id="configMensajeTurno" class="form-control config-textarea"></textarea>
             <div class="helper-text">Lo usan WhatsApp y Copiar recordatorio dentro de la agenda.</div>
-            <div class="message-tip"><strong>Ejemplo recomendado:</strong> Hola {primer_nombre}, te recordamos tu turno el día {fecha} a las {hora} hs.</div>
+            <div class="message-tip"><strong>Ejemplo recomendado:</strong> Hola {nombre}, te recordamos tu turno el día {fecha} a las {hora} hs.</div>
           </div>
           <div class="form-group">
-            <label>Pacientes: seguimiento sin tratamientos pendientes</label>
+            <label>Pacientes: seguimiento sin motivos activos</label>
             <textarea id="configMensajePacienteSinPendientes" class="form-control config-textarea"></textarea>
-            <div class="message-tip"><strong>Ejemplo recomendado:</strong> Hola {primer_nombre}, ¿cómo estás?</div>
+            <div class="message-tip"><strong>Ejemplo recomendado:</strong> Hola {nombre}, ¿cómo estás?</div>
           </div>
           <div class="form-group">
-            <label>Pacientes: seguimiento con tratamientos pendientes</label>
+            <label>Pacientes: seguimiento con motivos activos</label>
             <textarea id="configMensajePacienteConPendientes" class="form-control config-textarea"></textarea>
-            <div class="helper-text">Usá {tratamientos} para insertar la lista con cantidades.</div>
-            <div class="message-tip"><strong>Ejemplo recomendado:</strong> Hola {primer_nombre}, tenemos registrado que te quedó pendiente: {tratamientos}.</div>
+            <div class="helper-text">Usá {motivos} para insertar la lista de motivos. No uses cantidades.</div>
+            <div class="message-tip"><strong>Ejemplo recomendado:</strong> Hola {nombre}, tenemos registrado un seguimiento pendiente relacionado con {motivos}.</div>
           </div>
         </div>
       </div>
@@ -2459,15 +2561,18 @@
     const DEFAULT_CONFIG_CLINICA = {
       tratamientos: [
         { key: 'caries', label: 'Caries' },
-        { key: 'conductos', label: 'Conductos' },
-        { key: 'extracciones', label: 'Extracciones' },
-        { key: 'coronas', label: 'Coronas' }
+        { key: 'conductos', label: 'Conducto' },
+        { key: 'coronas', label: 'Corona' },
+        { key: 'extracciones', label: 'Extracción' },
+        { key: 'limpieza', label: 'Limpieza' },
+        { key: 'control', label: 'Control' },
+        { key: 'presupuesto_pendiente', label: 'Presupuesto pendiente' }
       ],
       campos_paciente: [],
       mensajes: {
-        turno: 'Hola {primer_nombre}, te recordamos tu turno en el consultorio el día {fecha} a las {hora} hs.\n¡Te esperamos!',
-        paciente_sin_pendientes: 'Hola {primer_nombre}, ¿cómo estás?\nTe escribimos desde el consultorio para recordarte que hace un tiempo no realizás un control.\nSi querés coordinar un turno, estamos disponibles para ayudarte.',
-        paciente_con_pendientes: 'Hola {primer_nombre}, ¿cómo estás?\nTe escribimos desde el consultorio porque tenemos registrado que te quedó pendiente: {tratamientos}.\nSi querés, podemos coordinar un turno para ir resolviéndolo. Estamos disponibles para ayudarte.'
+        turno: 'Hola {nombre}, te recordamos tu turno en el consultorio el día {fecha} a las {hora} hs.\n¡Te esperamos!',
+        paciente_sin_pendientes: 'Hola {nombre}, ¿cómo estás?\nTe escribimos desde el consultorio para recordarte que hace un tiempo no realizás un control.\nSi querés coordinar un turno, estamos disponibles para ayudarte.',
+        paciente_con_pendientes: 'Hola {nombre}, ¿cómo estás?\nTe escribimos desde el consultorio porque tenemos registrado un seguimiento pendiente relacionado con {motivos}.\nSi querés, podemos coordinar un turno para revisarlo. Estamos disponibles para ayudarte.'
       },
       horarios: {
         lunes: { activo: true, inicio: '09:00', fin: '16:30', intervalo: 30 },
@@ -2667,6 +2772,7 @@
       await cargarDatosDesdeSupabase();
       renderizarCalendarioCompleto();
       calcularYRenderizarPacientes();
+      renderizarHoy();
     }
 
     async function cerrarSesion() {
@@ -2958,7 +3064,7 @@
           TRATAMIENTOS_DB[String(t.paciente_id)] = compatPendientesDesdeFila(t);
         });
       } else {
-        console.warn('No se pudieron cargar tratamientos pendientes:', errorTratamientos.message);
+        console.warn('No se pudieron cargar motivos de seguimiento:', errorTratamientos.message);
       }
     }
 
@@ -2978,7 +3084,7 @@
         .map(t => ({ key: slugTratamiento(t.key || t.label || ''), label: String(t.label || t.key || '').trim() }))
         .filter(t => t.key && t.label)
         .filter((t, idx, arr) => arr.findIndex(x => x.key === t.key) === idx);
-      if (base.tratamientos.length === 0) base.tratamientos = clonar(DEFAULT_CONFIG_CLINICA.tratamientos);
+      if (base.motivos.length === 0) base.tratamientos = clonar(DEFAULT_CONFIG_CLINICA.tratamientos);
 
       const campos = Array.isArray(cfg.campos_paciente)
         ? cfg.campos_paciente
@@ -3129,61 +3235,110 @@
     }
 
     function normalizarPendientes(obj) {
-      const pendientes = {};
+      // V28: representación interna por etiquetas activas.
+      // Acepta formato nuevo { tags: ['caries'] }, arrays directos o formato viejo { caries: 2 }.
+      const motivos = {};
+      const agregar = (valor) => {
+        const limpio = slugTratamiento(valor);
+        if (limpio) motivos[limpio] = true;
+      };
+
+      if (Array.isArray(obj)) {
+        obj.forEach(agregar);
+        return motivos;
+      }
+
       const fuente = obj && typeof obj === 'object' ? obj : {};
+
+      if (Array.isArray(fuente.tags)) {
+        fuente.tags.forEach(agregar);
+      }
+
       Object.keys(fuente).forEach(key => {
-        const limpio = slugTratamiento(key);
-        const cant = normalizarCantidad(fuente[key]);
-        if (limpio && cant > 0) pendientes[limpio] = cant;
+        if (key === 'tags') return;
+        const val = fuente[key];
+        const activo = val === true || val === 'true' || val === '1' || normalizarCantidad(val) > 0;
+        if (activo) agregar(key);
       });
-      return pendientes;
+
+      return motivos;
     }
 
     function compatPendientesDesdeFila(fila) {
       const base = normalizarPendientes(fila?.pendientes || {});
-      ['caries', 'conductos', 'extracciones', 'coronas'].forEach(k => {
+      // Compatibilidad con columnas viejas si existieron antes de V28.
+      ['caries', 'conductos', 'conducto', 'extracciones', 'extraccion', 'coronas', 'corona'].forEach(k => {
         const v = normalizarCantidad(fila?.[k]);
-        if (v > 0 && !base[k]) base[k] = v;
+        if (v > 0) base[slugTratamiento(k)] = true;
       });
       return base;
+    }
+
+    function motivosAArray(motivos) {
+      const obj = normalizarPendientes(motivos || {});
+      return Object.keys(obj).filter(k => obj[k]).sort();
+    }
+
+    function tieneMotivosActivos(motivos) {
+      return motivosAArray(motivos).length > 0;
+    }
+
+    function payloadMotivosSeguimiento(motivos) {
+      return { tags: motivosAArray(motivos) };
     }
 
     function renderInputsTratamientos(containerId, prefix, valores) {
       const container = document.getElementById(containerId);
       if (!container) return;
-      const pendientes = normalizarPendientes(valores || {});
-      container.innerHTML = obtenerTratamientosConfigurados().map(t => {
-        const id = `${prefix}_${t.key}`;
-        const cant = normalizarCantidad(pendientes[t.key]);
-        return `
-          <div class="treatment-control">
-            <div class="treatment-control-label">${e(t.label)}</div>
-            <button type="button" onclick="ajustarTratamiento('${e(id)}', -1)">−</button>
-            <input type="number" min="0" id="${e(id)}" data-treatment-key="${e(t.key)}" class="form-control treatment-dynamic-input" value="${cant}">
-            <button type="button" onclick="ajustarTratamiento('${e(id)}', 1)">+</button>
-          </div>`;
-      }).join('');
+      const activos = normalizarPendientes(valores || {});
+      container.innerHTML = `
+        <div class="motivo-toolbar">
+          <button type="button" class="btn-table-action" onclick="limpiarMotivosEnContenedor('${e(containerId)}')">Limpiar motivos</button>
+        </div>
+        <div class="motivo-toggle-grid">
+          ${obtenerTratamientosConfigurados().map(t => {
+            const id = `${prefix}_${t.key}`;
+            const activo = !!activos[t.key];
+            return `<button type="button" id="${e(id)}" data-treatment-key="${e(t.key)}" class="motivo-toggle ${activo ? 'active' : ''}" onclick="toggleMotivoSeguimiento(this)">${activo ? '✓ ' : ''}${e(t.label)}</button>`;
+          }).join('')}
+        </div>`;
+    }
+
+    function toggleMotivoSeguimiento(btn) {
+      if (!btn) return;
+      btn.classList.toggle('active');
+      const label = btn.textContent.replace(/^✓\s*/, '').trim();
+      btn.innerHTML = (btn.classList.contains('active') ? '✓ ' : '') + e(label);
+    }
+
+    function limpiarMotivosEnContenedor(containerId) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      container.querySelectorAll('.motivo-toggle.active').forEach(btn => toggleMotivoSeguimiento(btn));
     }
 
     function leerInputsTratamientos(containerId) {
       const container = document.getElementById(containerId);
-      const pendientes = {};
-      if (!container) return pendientes;
-      container.querySelectorAll('[data-treatment-key]').forEach(input => {
-        const key = slugTratamiento(input.dataset.treatmentKey || '');
-        const cant = normalizarCantidad(input.value);
-        if (key && cant > 0) pendientes[key] = cant;
+      const motivos = {};
+      if (!container) return motivos;
+      container.querySelectorAll('.motivo-toggle.active[data-treatment-key]').forEach(btn => {
+        const key = slugTratamiento(btn.dataset.treatmentKey || '');
+        if (key) motivos[key] = true;
       });
-      return pendientes;
+      return motivos;
     }
 
     function armarTextoTratamientosPendientes(pacienteId) {
-      const pendientes = TRATAMIENTOS_DB[String(pacienteId || '')] || {};
-      const partes = [];
+      const pendientes = normalizarPendientes(TRATAMIENTOS_DB[String(pacienteId || '')] || {});
+      const labels = [];
       obtenerTratamientosConfigurados().forEach(t => {
-        const cant = normalizarCantidad(pendientes[t.key]);
-        if (cant > 0) partes.push(`${cant} ${t.label.toLowerCase()}`);
+        if (pendientes[t.key]) labels.push(t.label.toLowerCase());
       });
+      return formatearListaHumana(labels);
+    }
+
+    function formatearListaHumana(items) {
+      const partes = (Array.isArray(items) ? items : []).map(x => String(x || '').trim()).filter(Boolean);
       if (partes.length === 0) return '';
       if (partes.length === 1) return partes[0];
       return partes.slice(0, -1).join(', ') + ' y ' + partes[partes.length - 1];
@@ -3191,21 +3346,23 @@
 
     function aplicarTemplateMensaje(template, datos) {
       const nombres = normalizarNombrePaciente(datos.nombre, datos.apellido, datos.nombre_completo || datos.paciente);
-      const nombreTexto = datos.nombre || nombres.nombre || nombres.nombre_completo || datos.paciente || '';
-      const primerNombre = datos.primer_nombre || obtenerPrimerNombre(nombreTexto) || nombreTexto;
-      const nombreCompleto = datos.nombre_completo || nombres.nombre_completo || nombreTexto;
+      const nombreCompleto = datos.nombre_completo || nombres.nombre_completo || datos.paciente || '';
+      const primerNombre = String(datos.primer_nombre || nombres.nombre || nombreCompleto || datos.paciente || '').trim().split(/\s+/)[0] || '';
+      const nombreTexto = nombres.nombre || primerNombre || nombreCompleto;
+      const motivosTxt = datos.motivos || datos.tratamientos || '';
       const vars = {
-        paciente: primerNombre,
-        primer_nombre: primerNombre,
-        nombre: nombreTexto,
+        paciente: primerNombre || nombreTexto || nombreCompleto,
+        primer_nombre: primerNombre || nombreTexto || nombreCompleto,
+        nombre: nombreTexto || primerNombre || nombreCompleto,
         apellido: datos.apellido || nombres.apellido || '',
-        nombre_completo: nombreCompleto,
+        nombre_completo: nombreCompleto || construirNombreCompleto(nombreTexto, datos.apellido || nombres.apellido),
         fecha: datos.fecha || '',
         hora: datos.hora || '',
-        tratamientos: datos.tratamientos || '',
+        motivos: motivosTxt,
+        tratamientos: motivosTxt,
         consultorio: datos.consultorio || CLINICA_ACTUAL?.nombre || 'consultorio'
       };
-      return String(template || '').replace(/\{(paciente|primer_nombre|nombre|apellido|nombre_completo|fecha|hora|tratamientos|consultorio)\}/g, (_, key) => vars[key] || '');
+      return String(template || '').replace(/\{(paciente|primer_nombre|nombre|apellido|nombre_completo|fecha|hora|motivos|tratamientos|consultorio)\}/g, (_, key) => vars[key] || '');
     }
 
     function abrirConfiguracion() {
@@ -3233,11 +3390,11 @@
     function agregarTratamientoConfiguracion() {
       const input = document.getElementById('configNuevoTratamiento');
       const label = String(input?.value || '').trim().replace(/\s+/g, ' ');
-      if (!label) { mostrarToast('Escribí el nombre del tratamiento.'); return; }
+      if (!label) { mostrarToast('Escribí el nombre del motivo.'); return; }
       const key = slugTratamiento(label);
       const tratamientos = obtenerTratamientosConfigurados();
-      if (tratamientos.some(t => t.key === key)) { mostrarToast('Ese tratamiento ya existe.'); return; }
-      tratamientos.push({ key, label });
+      if (motivos.some(t => t.key === key)) { mostrarToast('Ese motivo ya existe.'); return; }
+      motivos.push({ key, label });
       if (input) input.value = '';
       renderListaTratamientosConfiguracion();
     }
@@ -3245,8 +3402,8 @@
     function quitarTratamientoConfiguracion(key) {
       const limpio = slugTratamiento(key);
       const tratamientos = obtenerTratamientosConfigurados();
-      if (tratamientos.length <= 1) { mostrarToast('Debe quedar al menos un tratamiento disponible.'); return; }
-      CONFIG_CLINICA.tratamientos = tratamientos.filter(t => t.key !== limpio);
+      if (motivos.length <= 1) { mostrarToast('Debe quedar al menos un motivo disponible.'); return; }
+      CONFIG_CLINICA.tratamientos = motivos.filter(t => t.key !== limpio);
       renderListaTratamientosConfiguracion();
     }
 
@@ -3375,7 +3532,7 @@
         key: slugTratamiento(input.dataset.treatmentKey || input.value),
         label: String(input.value || '').trim().replace(/\s+/g, ' ')
       })).filter(t => t.key && t.label).forEach(t => { if (!unicos.some(x => x.key === t.key)) unicos.push(t); });
-      if (unicos.length === 0) { alert('Debe quedar al menos un tratamiento disponible.'); return; }
+      if (unicos.length === 0) { alert('Debe quedar al menos un motivo disponible.'); return; }
       const horariosConfig = leerHorariosConfiguracion();
       if (!horariosConfig) return;
 
@@ -3397,6 +3554,7 @@
       await cargarDatosDesdeSupabase();
       renderizarCalendarioCompleto();
       calcularYRenderizarPacientes();
+      renderizarHoy();
       mostrarToast('Configuración guardada correctamente.');
     }
 
@@ -3470,10 +3628,6 @@
       return { nombre: n, apellido: a, nombre_completo: construirNombreCompleto(n, a) };
     }
 
-    function obtenerPrimerNombre(nombre) {
-      return String(nombre || '').trim().replace(/\s+/g, ' ').split(' ')[0] || '';
-    }
-
     function normalizarPacienteDesdeSupabase(p) {
       const nombres = normalizarNombrePaciente(p?.nombre, p?.apellido, p?.nombre_completo);
       return {
@@ -3504,8 +3658,7 @@
     function obtenerDatosMensajePaciente(nombre, apellido, nombreCompleto) {
       const n = normalizarNombrePaciente(nombre, apellido, nombreCompleto);
       return {
-        paciente: obtenerPrimerNombre(n.nombre) || n.nombre || n.nombre_completo,
-        primer_nombre: obtenerPrimerNombre(n.nombre) || n.nombre || n.nombre_completo,
+        paciente: n.nombre || n.nombre_completo,
         nombre: n.nombre || n.nombre_completo,
         apellido: n.apellido,
         nombre_completo: n.nombre_completo
@@ -3565,36 +3718,31 @@
     function cambiarVista(vista) {
       VISTA_ACTUAL = vista;
 
-      if (vista === 'turnos') {
-        document.getElementById('navTurnos').classList.add('active-view');
-        document.getElementById('navPacientes').classList.remove('active-view');
-        document.getElementById('appSidebar').style.display = 'flex';
-        document.getElementById('appGridTurnos').style.display = 'block';
-        document.getElementById('appGridPacientes').style.display = 'none';
-        document.getElementById('ctrlHoy').style.display = 'inline-block';
-        document.getElementById('ctrlPrev').style.display = 'inline-block';
-        document.getElementById('ctrlNext').style.display = 'inline-block';
-        document.getElementById('currentMonthLabel').style.display = 'inline-block';
-        const mobileMonth = document.getElementById('mobileCurrentMonthLabel');
-        const mobileCalendarBtn = document.getElementById('mobileCalendarBtn');
-        if (mobileMonth) mobileMonth.style.display = '';
-        if (mobileCalendarBtn) mobileCalendarBtn.style.display = '';
-      } else {
-        document.getElementById('navPacientes').classList.add('active-view');
-        document.getElementById('navTurnos').classList.remove('active-view');
-        document.getElementById('appSidebar').style.display = 'none';
-        document.getElementById('appGridTurnos').style.display = 'none';
-        document.getElementById('appGridPacientes').style.display = 'block';
-        document.getElementById('ctrlHoy').style.display = 'none';
-        document.getElementById('ctrlPrev').style.display = 'none';
-        document.getElementById('ctrlNext').style.display = 'none';
-        document.getElementById('currentMonthLabel').style.display = 'none';
-        const mobileMonth = document.getElementById('mobileCurrentMonthLabel');
-        const mobileCalendarBtn = document.getElementById('mobileCalendarBtn');
-        if (mobileMonth) mobileMonth.style.display = 'none';
-        if (mobileCalendarBtn) mobileCalendarBtn.style.display = 'none';
-        calcularYRenderizarPacientes();
-      }
+      const esAgenda = vista === 'turnos';
+      const esHoy = vista === 'hoy';
+      const esPacientes = vista === 'pacientes';
+
+      document.getElementById('navTurnos')?.classList.toggle('active-view', esAgenda);
+      document.getElementById('navHoy')?.classList.toggle('active-view', esHoy);
+      document.getElementById('navPacientes')?.classList.toggle('active-view', esPacientes);
+
+      document.getElementById('appSidebar').style.display = esAgenda ? 'flex' : 'none';
+      document.getElementById('appGridTurnos').style.display = esAgenda ? 'block' : 'none';
+      document.getElementById('appGridHoy').style.display = esHoy ? 'block' : 'none';
+      document.getElementById('appGridPacientes').style.display = esPacientes ? 'block' : 'none';
+
+      ['ctrlHoy', 'ctrlPrev', 'ctrlNext', 'currentMonthLabel'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = esAgenda ? 'inline-block' : 'none';
+      });
+
+      const mobileMonth = document.getElementById('mobileCurrentMonthLabel');
+      const mobileCalendarBtn = document.getElementById('mobileCalendarBtn');
+      if (mobileMonth) mobileMonth.style.display = esAgenda ? '' : 'none';
+      if (mobileCalendarBtn) mobileCalendarBtn.style.display = esAgenda ? '' : 'none';
+
+      if (esPacientes) calcularYRenderizarPacientes();
+      if (esHoy) renderizarHoy();
     }
 
     function buscarPacienteLocalPorDni(dni) {
@@ -3736,14 +3884,13 @@
     }
 
     function armarResumenTratamientos(pacienteId) {
-      const pendientes = TRATAMIENTOS_DB[String(pacienteId || '')] || {};
+      const pendientes = normalizarPendientes(TRATAMIENTOS_DB[String(pacienteId || '')] || {});
       const items = [];
       obtenerTratamientosConfigurados().forEach(t => {
-        const cant = normalizarCantidad(pendientes[t.key]);
-        if (cant > 0) items.push([t.label, cant]);
+        if (pendientes[t.key]) items.push(t.label);
       });
-      if (items.length === 0) return `<span class="treatment-pill empty">Sin pendientes cargados</span>`;
-      return items.map(([label, cant]) => `<span class="treatment-pill">${e(label)}: ${cant}</span>`).join('');
+      if (items.length === 0) return `<span class="treatment-pill empty">Sin motivos activos</span>`;
+      return items.map(label => `<span class="treatment-pill">${e(label)}</span>`).join('');
     }
 
     function calcularYRenderizarPacientes() {
@@ -3942,7 +4089,7 @@
             <button class="btn-table-action btn-whatsapp-green" onclick='abrirWhatsAppPaciente(${telJson}, ${nombreJson}, ${pacienteIdJson}, event)'>WhatsApp</button>
             <button class="btn-table-action" onclick='copiarWhatsAppSeguimiento(${nombreJson}, ${telJson}, ${pacienteIdJson})'>Copiar recordatorio</button>
             <button class="btn-table-action btn-recordado" onclick='marcarPacienteRecordado(${pacienteIdJson})'>Marcar recordado</button>
-            <button class="btn-table-action btn-mini-blue" onclick='abrirTratamientosPaciente(${pacienteIdJson})'>Tratamientos pendientes</button>
+            <button class="btn-table-action btn-mini-blue" onclick='abrirTratamientosPaciente(${pacienteIdJson})'>Motivos</button>
             <button class="btn-table-action btn-delete-ficha" onclick='borrarFichaPaciente(${pacienteIdJson}, event)'>Borrar ficha</button>
           </div>
         `;
@@ -3951,6 +4098,49 @@
       });
 
       actualizarMetricas(totalP, paraRecordarP);
+    }
+
+    function renderizarHoy() {
+      const cont = document.getElementById('listaTurnosHoy');
+      if (!cont) return;
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      const hoyStr = formatearFechaISO(hoy);
+      const subt = document.getElementById('hoySubtitulo');
+      if (subt) subt.innerText = `Turnos de hoy ${convertirFechaLatina(hoyStr)}. Actualizá motivos solo si el doctor indicó algo al finalizar la atención.`;
+
+      const turnos = BASE_DATOS
+        .filter(t => t.fecha === hoyStr && !t.extension)
+        .sort((a, b) => String(a.hora || '').localeCompare(String(b.hora || '')));
+
+      if (turnos.length === 0) {
+        cont.innerHTML = `<div class="empty-state">No hay turnos cargados para hoy.</div>`;
+        return;
+      }
+
+      cont.innerHTML = turnos.map(t => {
+        const nombre = nombreCompletoTurno(t) || 'Sin nombre';
+        const telJson = JSON.stringify(t.telefono || '');
+        const nombreJson = JSON.stringify(nombre || '');
+        const pacienteIdJson = JSON.stringify(t.pacienteId || '');
+        const turnoIdJson = JSON.stringify(t.id || '');
+        const estado = t.confirmado ? 'Confirmado' : 'Sin confirmar';
+        return `
+          <div class="hoy-card">
+            <div class="hoy-time">${e(t.hora || '')}</div>
+            <div>
+              <div class="hoy-name">${e(nombre)}</div>
+              <div class="hoy-meta">DNI: ${e(t.dni || 'S/D')} · Tel: ${e(t.telefono || 'S/T')} · ${e(estado)}</div>
+              ${renderCamposExtraPacienteResumen(t.datosExtra || {})}
+              <div class="motivos-inline">${armarResumenTratamientos(t.pacienteId)}</div>
+            </div>
+            <div class="hoy-actions">
+              <button class="btn-table-action btn-whatsapp-green" onclick='abrirWhatsAppTurno(${turnoIdJson}, event)'>WhatsApp</button>
+              <button class="btn-table-action" onclick='copiarTelefono(${telJson}, event)'>Copiar tel.</button>
+              <button class="btn-table-action btn-mini-blue" onclick='abrirTratamientosPaciente(${pacienteIdJson})'>Actualizar motivos</button>
+            </div>
+          </div>`;
+      }).join('');
     }
 
     function actualizarMetricas(t, pr) {
@@ -3998,7 +4188,7 @@
       const msg = construirMensajeSeguimientoPaciente(nombre, pacienteId);
 
       navigator.clipboard.writeText(msg).then(() => {
-        mostrarToast('Recordatorio copiado. Pegalo en WhatsApp.');
+        mostrarToast('Mensaje copiado. Pegalo en WhatsApp.');
       });
     }
 
@@ -4043,7 +4233,7 @@
 
       const ok = confirm(
         `¿Seguro que querés borrar la ficha de ${nombre}?\n\n` +
-        `Se eliminarán también sus turnos, recordatorios y tratamientos pendientes. Esta acción no se puede deshacer.`
+        `Se eliminarán también sus turnos, recordatorios y motivos de seguimiento. Esta acción no se puede deshacer.`
       );
       if (!ok) return;
 
@@ -4060,6 +4250,7 @@
       delete SEGUIMIENTO_COMPACTO[id];
       renderizarCalendarioCompleto();
       calcularYRenderizarPacientes();
+      renderizarHoy();
 
       const { error: errPac } = await supabaseClient
         .from('pacientes')
@@ -4074,6 +4265,7 @@
         SEGUIMIENTO_COMPACTO = backup.seguimiento;
         renderizarCalendarioCompleto();
         calcularYRenderizarPacientes();
+        renderizarHoy();
         alert('Error borrando ficha: ' + errPac.message);
         return;
       }
@@ -4081,6 +4273,7 @@
       await cargarDatosDesdeSupabase();
       renderizarCalendarioCompleto();
       calcularYRenderizarPacientes();
+      renderizarHoy();
       mostrarToast('Ficha borrada correctamente.');
     }
 
@@ -4092,11 +4285,12 @@
       document.getElementById('tratPacienteId').value = id;
       renderInputsTratamientos('tratamientosPacienteInputs', 'trat', t);
       const nombre = paciente?.nombre_completo || paciente?.dni || 'paciente';
-      document.getElementById('modalTratamientosInfo').innerText = `Ficha de ${nombre}. Usá + y − para actualizar las cantidades pendientes.`;
+      document.getElementById('modalTratamientosInfo').innerText = `Ficha de ${nombre}. Marcá solo los motivos por los que debería volver. No es historia clínica ni lleva cantidades.`;
       abrirModal('modalTratamientos');
     }
 
     function ajustarTratamiento(id, delta) {
+      // Compatibilidad con versiones viejas. V28 ya usa etiquetas, no cantidades.
       const input = document.getElementById(id);
       if (!input) return;
       const actual = normalizarCantidad(input.value);
@@ -4110,24 +4304,22 @@
       const anterior = TRATAMIENTOS_DB[pacienteId] || {};
       TRATAMIENTOS_DB[pacienteId] = nuevo;
       calcularYRenderizarPacientes();
+      renderizarHoy();
       cerrarModales();
       const { error } = await supabaseClient.from('tratamientos_pendientes').upsert({
         clinica_id: CLINICA_ID,
         paciente_id: pacienteId,
-        pendientes: nuevo,
-        caries: normalizarCantidad(nuevo.caries),
-        conductos: normalizarCantidad(nuevo.conductos),
-        extracciones: normalizarCantidad(nuevo.extracciones),
-        coronas: normalizarCantidad(nuevo.coronas),
+        pendientes: payloadMotivosSeguimiento(nuevo),
         updated_at: new Date().toISOString()
       }, { onConflict: 'clinica_id,paciente_id' });
       if (error) {
         TRATAMIENTOS_DB[pacienteId] = anterior;
         calcularYRenderizarPacientes();
-        alert('Error guardando tratamientos pendientes: ' + error.message);
+        renderizarHoy();
+        alert('Error guardando motivos de seguimiento: ' + error.message);
         return;
       }
-      mostrarToast('Tratamientos pendientes guardados.');
+      mostrarToast('Motivos de seguimiento guardados.');
     }
 
     function abrirAltaFichaPaciente() {
@@ -4163,7 +4355,7 @@
         completarFormularioConPaciente('ficha', paciente);
         renderInputsTratamientos('fichaTratamientosInputs', 'ficha', tratamientos);
         hint.className = 'patient-hint found';
-        hint.innerText = 'Ficha existente. Podés corregir datos o actualizar pendientes.';
+        hint.innerText = 'Ficha existente. Podés corregir datos o actualizar motivos de seguimiento.';
       } else {
         escribirNombrePacienteFormulario('ficha', { nombre: '', apellido: '' });
         document.getElementById('fichaTelefono').value = '';
@@ -4186,7 +4378,7 @@
         const datosExtra = leerCamposPacienteFormulario('fichaCamposExtraPaciente');
         if (!dni || !nombres.nombre) { alert('DNI y nombre del paciente son obligatorios para crear la ficha.'); return; }
         const tratamientos = leerInputsTratamientos('fichaTratamientosInputs');
-        const tieneTratamientos = Object.values(tratamientos).some(v => v > 0);
+        const tieneTratamientos = tieneMotivosActivos(tratamientos);
         const { data: paciente, error: errorPaciente } = await supabaseClient.from('pacientes').upsert(
           payloadPacienteSupabase({ dni, nombre: nombres.nombre, apellido: nombres.apellido, telefono, datosExtra }),
           { onConflict: 'clinica_id,dni' }
@@ -4194,16 +4386,17 @@
         if (errorPaciente) { alert('Error guardando ficha: ' + errorPaciente.message); return; }
         if (tieneTratamientos) {
           const { error: errorTratamientos } = await supabaseClient.from('tratamientos_pendientes').upsert({
-            clinica_id: CLINICA_ID, paciente_id: paciente.id, pendientes: tratamientos,
-            caries: normalizarCantidad(tratamientos.caries), conductos: normalizarCantidad(tratamientos.conductos),
-            extracciones: normalizarCantidad(tratamientos.extracciones), coronas: normalizarCantidad(tratamientos.coronas),
+            clinica_id: CLINICA_ID,
+            paciente_id: paciente.id,
+            pendientes: payloadMotivosSeguimiento(tratamientos),
             updated_at: new Date().toISOString()
           }, { onConflict: 'clinica_id,paciente_id' });
-          if (errorTratamientos) alert('La ficha se guardó, pero no se pudieron guardar tratamientos pendientes: ' + errorTratamientos.message);
+          if (errorTratamientos) alert('La ficha se guardó, pero no se pudieron guardar motivos de seguimiento: ' + errorTratamientos.message);
         }
         await cargarDatosDesdeSupabase();
         calcularYRenderizarPacientes();
         renderizarCalendarioCompleto();
+        renderizarHoy();
         cerrarModales();
         mostrarToast('Ficha de paciente guardada correctamente.');
       } finally {
@@ -4362,6 +4555,7 @@
       BASE_DATOS.push(copiaLocal);
       renderizarCalendarioCompleto();
       calcularYRenderizarPacientes();
+      renderizarHoy();
 
       const { error } = await supabaseClient
         .from('turnos')
@@ -4379,6 +4573,7 @@
         BASE_DATOS = BASE_DATOS.filter(t => t.id !== copiaLocal.id);
         renderizarCalendarioCompleto();
         calcularYRenderizarPacientes();
+        renderizarHoy();
 
         if (error.code === '23505') {
           alert('Ese horario ya está ocupado.');
@@ -4391,6 +4586,7 @@
       await cargarDatosDesdeSupabase();
       renderizarCalendarioCompleto();
       calcularYRenderizarPacientes();
+      renderizarHoy();
       mostrarToast('Turno alargado en otra casilla.');
     }
 
@@ -4713,6 +4909,7 @@
         upsertPacienteLocal(data.dni, data.nombre, data.apellido, data.telefono, null, data.datosExtra);
         renderizarCalendarioCompleto();
         calcularYRenderizarPacientes();
+        renderizarHoy();
 
         const { data: paciente, error: errorPaciente } = await supabaseClient
           .from('pacientes')
@@ -4753,6 +4950,7 @@
         await cargarDatosDesdeSupabase();
         renderizarCalendarioCompleto();
         calcularYRenderizarPacientes();
+        renderizarHoy();
         mostrarToast('Turno guardado correctamente.');
       } finally {
         if (botonGuardar) botonGuardar.disabled = false;
@@ -4799,6 +4997,7 @@
       const estadoAnterior = turno.confirmado;
       turno.confirmado = !turno.confirmado;
       renderizarCalendarioCompleto();
+      renderizarHoy();
 
       const { error } = await supabaseClient
         .from('turnos')
@@ -4809,6 +5008,7 @@
       if (error) {
         turno.confirmado = estadoAnterior;
         renderizarCalendarioCompleto();
+        renderizarHoy();
         alert('Error actualizando confirmación: ' + error.message);
       }
     }
@@ -4824,30 +5024,6 @@
       document.getElementById('editTurnoId').value = t.id;
       document.getElementById('editDni').value = t.dni || '';
       escribirNombrePacienteFormulario('edit', t);
-      document.getElementById('editTelefono').value = t.telefono || '';
-      renderCamposPacienteFormulario('editCamposExtraPaciente', 'editExtra', t.datosExtra || {});
-
-      const hint = document.getElementById('editPacienteHint');
-      hint.className = 'patient-hint';
-      hint.innerText = '';
-
-      document.getElementById('modalEditarTurnoInfo').innerText =
-        `Editando turno del ${convertirFechaLatina(t.fecha)} a las ${t.hora} hs.`;
-
-      abrirModal('modalEditarTurno');
-    }
-
-    function abrirEditarTurno(id, event) {
-      if (event) event.stopPropagation();
-
-      const t = BASE_DATOS.find(item => item.id === id);
-      if (!t) return;
-
-      cerrarModales();
-
-      document.getElementById('editTurnoId').value = t.id;
-      document.getElementById('editDni').value = t.dni || '';
-      document.getElementById('editNombreCompleto').value = nombreCompletoTurno(t);
       document.getElementById('editTelefono').value = t.telefono || '';
       renderCamposPacienteFormulario('editCamposExtraPaciente', 'editExtra', t.datosExtra || {});
 
@@ -4892,6 +5068,7 @@
         cerrarModales();
         renderizarCalendarioCompleto();
         calcularYRenderizarPacientes();
+        renderizarHoy();
 
         const pacienteExistentePorDni = buscarPacienteLocalPorDni(dni);
         let paciente = null;
@@ -4957,6 +5134,7 @@
         await cargarDatosDesdeSupabase();
         renderizarCalendarioCompleto();
         calcularYRenderizarPacientes();
+        renderizarHoy();
         mostrarToast('Turno editado correctamente.');
       } finally {
         if (botonGuardar) botonGuardar.disabled = false;
@@ -5082,6 +5260,7 @@
       cerrarModales();
       renderizarCalendarioCompleto();
       calcularYRenderizarPacientes();
+      renderizarHoy();
 
       const { error } = await supabaseClient
         .from('turnos')
@@ -5097,6 +5276,7 @@
         t.hora = horaAnterior;
         renderizarCalendarioCompleto();
         calcularYRenderizarPacientes();
+        renderizarHoy();
 
         if (error.code === '23505') {
           alert('Ese horario ya está ocupado.');
@@ -5142,6 +5322,7 @@
       BASE_DATOS = BASE_DATOS.filter(item => item.id !== idABorrar);
       renderizarCalendarioCompleto();
       calcularYRenderizarPacientes();
+      renderizarHoy();
 
       const { error } = await supabaseClient
         .from('turnos')
@@ -5153,6 +5334,7 @@
         BASE_DATOS = backup;
         renderizarCalendarioCompleto();
         calcularYRenderizarPacientes();
+        renderizarHoy();
         alert('Error cancelando turno: ' + error.message);
         return;
       }
@@ -5264,6 +5446,7 @@
         nombre: nombres.nombre,
         apellido: nombres.apellido,
         nombre_completo: nombres.nombre_completo,
+        motivos: pendientesTxt,
         tratamientos: pendientesTxt,
         consultorio: CLINICA_ACTUAL?.nombre || 'consultorio'
       });
