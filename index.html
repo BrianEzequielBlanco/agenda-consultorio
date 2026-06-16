@@ -2128,6 +2128,102 @@
       .motivo-toggle-grid { grid-template-columns: 1fr; }
     }
 
+
+    /* V37: Agenda compacta para que la secretaria vea más horarios sin scrollear */
+    .app-header {
+      padding: 6px 16px;
+      min-height: 44px;
+    }
+
+    .app-logo { font-size: 20px; }
+
+    .btn-nav {
+      padding: 6px 12px;
+      font-size: 13px;
+    }
+
+    .grid-container {
+      padding: 8px 10px;
+    }
+
+    .calendar-grid {
+      gap: 8px;
+    }
+
+    .day-header {
+      padding: 7px 6px;
+    }
+
+    .day-name {
+      font-size: 10px;
+      letter-spacing: 0.6px;
+    }
+
+    .day-number {
+      margin-top: 2px;
+      min-width: 36px;
+      height: 24px;
+      padding: 0 8px;
+      font-size: 13px;
+    }
+
+    .day-slots {
+      padding: 6px;
+      gap: 4px;
+    }
+
+    .time-slot {
+      min-height: 32px;
+      border-radius: 8px;
+      font-size: 12px;
+    }
+
+    .time-slot.booked {
+      min-height: 58px;
+      padding: 5px 7px;
+      border-left-width: 4px;
+    }
+
+    .booked-header {
+      font-size: 10.5px;
+      gap: 4px;
+    }
+
+    .booked-tag {
+      padding: 1px 5px;
+      font-size: 9.5px;
+    }
+
+    .booked-body {
+      font-size: 13px;
+      margin-top: 3px;
+    }
+
+    .booked-footer {
+      margin-top: 3px;
+      gap: 2px;
+    }
+
+    .booked-phone-row {
+      gap: 4px;
+    }
+
+    .booked-phone {
+      font-size: 10.5px;
+      line-height: 1.25;
+    }
+
+    @media (max-height: 760px) {
+      .app-header { padding-top: 4px; padding-bottom: 4px; min-height: 40px; }
+      .grid-container { padding-top: 6px; padding-bottom: 6px; }
+      .day-header { padding-top: 5px; padding-bottom: 5px; }
+      .day-slots { padding: 5px; gap: 3px; }
+      .time-slot { min-height: 28px; }
+      .time-slot.booked { min-height: 52px; padding-top: 4px; padding-bottom: 4px; }
+      .booked-body { font-size: 12.5px; margin-top: 2px; }
+      .booked-phone { font-size: 10px; }
+    }
+
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -2362,8 +2458,11 @@
 
       <div class="modal-actions detail-actions">
         <button class="btn-action btn-whatsapp-action" onclick="abrirWhatsAppTurnoActual()">WhatsApp</button>
+        <button class="btn-action btn-secondary" onclick="copiarTelefonoTurnoActual()">Copiar teléfono</button>
+        <button class="btn-action btn-secondary" onclick="copiarRecordatorioTurnoActual()">Copiar recordatorio</button>
         <button class="btn-action btn-secondary" onclick="abrirEditarTurnoActual()">Editar turno</button>
         <button class="btn-action btn-secondary" onclick="abrirReprogramarTurnoActual()">Reprogramar</button>
+        <button class="btn-action btn-secondary" onclick="alternarConfirmacionTurnoActual()">Confirmar / Desconfirmar</button>
         <button class="btn-action btn-danger" onclick="eliminarTurnoActual()">Cancelar cita</button>
         <button class="btn-action btn-secondary" onclick="cerrarModales()">Cerrar</button>
       </div>
@@ -4790,31 +4889,21 @@
             slot.ondragstart = (event) => iniciarDragTurno(turnoAsignado.id, event);
 
             const nombreCompleto = nombreCompletoTurno(turnoAsignado);
+            const estadoTurno = turnoAsignado.extension ? 'Extensión' : (turnoAsignado.confirmado ? 'Confirmado' : 'Pendiente');
+            const dniTurno = turnoAsignado.dni ? `DNI ${turnoAsignado.dni}` : 'DNI S/D';
 
+            slot.title = 'Click para ver acciones del turno';
             slot.innerHTML = `
               <div class="booked-header">
                 <span>🕒 ${e(hora)}</span>
-                <span class="booked-tag">${turnoAsignado.extension ? 'Extensión' : 'Turno'}</span>
+                <span class="booked-tag">${estadoTurno}</span>
               </div>
 
               <div class="booked-body">${e(nombreCompleto)}</div>
 
               <div class="booked-footer">
                 <div class="booked-phone-row">
-                  <span class="booked-phone">📞 ${e(turnoAsignado.telefono || 'S/T')}</span>
-                </div>
-
-                <div class="booked-actions-row">
-                  <button class="btn-card-action btn-whatsapp" title="Abrir WhatsApp" onclick="abrirWhatsAppTurno('${e(turnoAsignado.id)}', event)">💬</button>
-                  <button class="btn-card-action" title="Editar turno" onclick="abrirEditarTurno('${e(turnoAsignado.id)}', event)">✏️</button>
-                  <button class="btn-card-action" title="Reprogramar turno" onclick="abrirReprogramarTurno('${e(turnoAsignado.id)}', event)">↪</button>
-                  <button class="btn-card-action" title="Copiar teléfono" onclick='copiarTelefono(${JSON.stringify(turnoAsignado.telefono || '')}, event)'>📋</button>
-                  <button class="btn-card-action" title="Copiar recordatorio de cita" onclick="copiarTextoRecordatorio('${e(turnoAsignado.id)}', event)">
-                    <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
-                  </button>
-                  <button class="btn-card-action" title="Confirmar / Desconfirmar" onclick="alternarConfirmacionRapida('${e(turnoAsignado.id)}', event)">
-                    <span class="status-dot ${turnoAsignado.confirmado ? 'green' : 'blue'}"></span>
-                  </button>
+                  <span class="booked-phone">📞 ${e(turnoAsignado.telefono || 'S/T')} · ${e(dniTurno)}</span>
                 </div>
               </div>
             `;
@@ -5059,6 +5148,19 @@
         renderizarCalendarioCompleto();
         alert('Error actualizando confirmación: ' + error.message);
       }
+    }
+
+
+    async function alternarConfirmacionTurnoActual() {
+      if (!ID_TURNO_SELECCIONADO) return;
+
+      await alternarConfirmacionRapida(ID_TURNO_SELECCIONADO);
+
+      const turno = BASE_DATOS.find(item => item.id === ID_TURNO_SELECCIONADO);
+      if (!turno) return;
+
+      document.getElementById('lblEstado').innerText = turno.confirmado ? '🟢 Confirmado' : '🔵 Pendiente';
+      mostrarToast(turno.confirmado ? 'Turno confirmado.' : 'Turno marcado como pendiente.');
     }
 
     function abrirEditarTurno(id, event) {
@@ -5688,6 +5790,21 @@
     function abrirWhatsAppTurnoActual() {
       if (!ID_TURNO_SELECCIONADO) return;
       abrirWhatsAppTurno(ID_TURNO_SELECCIONADO);
+    }
+
+
+    function copiarTelefonoTurnoActual() {
+      if (!ID_TURNO_SELECCIONADO) return;
+
+      const turno = BASE_DATOS.find(item => item.id === ID_TURNO_SELECCIONADO);
+      if (!turno) return;
+
+      copiarTelefono(turno.telefono);
+    }
+
+    function copiarRecordatorioTurnoActual() {
+      if (!ID_TURNO_SELECCIONADO) return;
+      copiarTextoRecordatorio(ID_TURNO_SELECCIONADO);
     }
 
     function abrirWhatsAppPaciente(telefono, nombre, pacienteId, event) {
