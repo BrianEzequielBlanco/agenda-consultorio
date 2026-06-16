@@ -3339,22 +3339,13 @@
     }
 
     function slugTratamiento(valor) {
-      const limpio = String(valor || '')
+      return String(valor || '')
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '_')
         .replace(/^_+|_+$/g, '')
         .slice(0, 40);
-
-      // Compatibilidad con versiones anteriores que guardaban claves en plural.
-      // El producto actual usa motivos como etiquetas simples, sin cantidades.
-      const aliasLegacy = {
-        conductos: 'conducto',
-        extracciones: 'extraccion',
-        coronas: 'corona'
-      };
-      return aliasLegacy[limpio] || limpio;
     }
 
     function normalizarCantidad(valor) {
@@ -3463,7 +3454,6 @@
       const nombreCompleto = datos.nombre_completo || nombres.nombre_completo || nombrePila;
       const vars = {
         paciente: nombrePila,
-        primer_nombre: nombrePila,
         nombre: nombrePila,
         apellido: datos.apellido || nombres.apellido || '',
         nombre_completo: nombreCompleto,
@@ -3473,7 +3463,7 @@
         tratamientos: datos.motivos || datos.tratamientos || '',
         consultorio: datos.consultorio || CLINICA_ACTUAL?.nombre || 'consultorio'
       };
-      return String(template || '').replace(/\{(paciente|primer_nombre|nombre|apellido|nombre_completo|fecha|hora|motivos|tratamientos|consultorio)\}/g, (_, key) => vars[key] || '');
+      return String(template || '').replace(/\{(paciente|nombre|apellido|nombre_completo|fecha|hora|motivos|tratamientos|consultorio)\}/g, (_, key) => vars[key] || '');
     }
 
     function abrirConfiguracion() {
@@ -3803,6 +3793,21 @@
         nombre_completo: nombres.nombre_completo,
         telefono: String(telefono || '').trim(),
         datos_extra: normalizarDatosExtraPaciente(datosExtra || {})
+      };
+    }
+
+    function dividirNombreCompleto(valor) {
+      const limpio = String(valor || '').trim().replace(/\s+/g, ' ');
+      if (!limpio) return { nombre: '', apellido: '' };
+
+      const partes = limpio.split(' ');
+      if (partes.length === 1) {
+        return { nombre: partes[0], apellido: '' };
+      }
+
+      return {
+        nombre: partes[0],
+        apellido: partes.slice(1).join(' ')
       };
     }
 
@@ -4405,7 +4410,7 @@
         completarFormularioConPaciente('ficha', paciente);
         renderInputsTratamientos('fichaTratamientosInputs', 'ficha', tratamientos);
         hint.className = 'patient-hint found';
-        hint.innerText = 'Ficha existente. Podés corregir datos o actualizar motivos de seguimiento.';
+        hint.innerText = 'Ficha existente. Podés corregir datos o actualizar pendientes.';
       } else {
         escribirNombrePacienteFormulario('ficha', { nombre: '', apellido: '' });
         document.getElementById('fichaTelefono').value = '';
@@ -5080,6 +5085,30 @@
       abrirModal('modalEditarTurno');
     }
 
+    function abrirEditarTurno(id, event) {
+      if (event) event.stopPropagation();
+
+      const t = BASE_DATOS.find(item => item.id === id);
+      if (!t) return;
+
+      cerrarModales();
+
+      document.getElementById('editTurnoId').value = t.id;
+      document.getElementById('editDni').value = t.dni || '';
+      document.getElementById('editNombreCompleto').value = nombreCompletoTurno(t);
+      document.getElementById('editTelefono').value = t.telefono || '';
+      renderCamposPacienteFormulario('editCamposExtraPaciente', 'editExtra', t.datosExtra || {});
+
+      const hint = document.getElementById('editPacienteHint');
+      hint.className = 'patient-hint';
+      hint.innerText = '';
+
+      document.getElementById('modalEditarTurnoInfo').innerText =
+        `Editando turno del ${convertirFechaLatina(t.fecha)} a las ${t.hora} hs.`;
+
+      abrirModal('modalEditarTurno');
+    }
+
     async function guardarEdicionTurno() {
       const botonGuardar = document.getElementById('btnGuardarEdicionTurno');
       if (botonGuardar?.disabled) return;
@@ -5537,96 +5566,18 @@
       }
 
       const token = ++HOY_RENDER_TOKEN;
-      cont.innerHTML = `
-        <div class="empty-state hoy-empty-state">
-          <div class="hoy-empty-icon">⏳</div>
-          <div class="hoy-empty-title">Cargando turnos...</div>
-          <div class="hoy-empty-text">Buscando los turnos de ${fechaCorta}.</div>
-        </div>`;
 
-      const normalizarTurnoHoyDesdeSupabase = (t) => {
-        const paciente = normalizarPacienteDesdeSupabase(t?.pacientes || {});
-        return {
-          id: t.id,
-          fecha: normalizarFechaParaVistaHoy(t.fecha) || fechaISO,
-          hora: String(t.hora || '').slice(0, 5),
-          nombre: paciente.nombre || '',
-          apellido: paciente.apellido || '',
-          nombre_completo: paciente.nombre_completo || '',
-          telefono: paciente.telefono || '',
-          dni: paciente.dni || '',
-          confirmado: t.confirmado === true,
-          timestamp: new Date(t.created_at || Date.now()).getTime(),
-          extension: t.extension === true,
-          parentId: t.parent_id || '',
-          pacienteId: t.paciente_id,
-          datosExtra: paciente.datosExtra || {}
-        };
-      };
-
+      // V36: la solapa Hoy no vuelve a consultar Supabase.
+      // Usa la misma memoria local que ya cargó la Agenda al iniciar sesión.
+      // Esto evita que la vista quede clavada en "Cargando turnos..." si una consulta directa queda pendiente.
       const obtenerTurnosHoyDesdeCache = () => {
         return (BASE_DATOS || [])
           .filter(t => normalizarFechaParaVistaHoy(t.fecha) === fechaISO)
           .sort((a, b) => String(a.hora || '').localeCompare(String(b.hora || '')));
       };
 
-      let turnosDeLaFecha = [];
-
-      try {
-        if (!CLINICA_ID) throw new Error('No hay clínica activa.');
-
-        const { data, error } = await supabaseClient
-          .from('turnos')
-          .select(`
-            *,
-            pacientes (
-              id,
-              dni,
-              nombre,
-              apellido,
-              nombre_completo,
-              telefono,
-              datos_extra
-            )
-          `)
-          .eq('clinica_id', CLINICA_ID)
-          .eq('fecha', fechaISO)
-          .order('hora', { ascending: true });
-
-        if (token !== HOY_RENDER_TOKEN) return;
-        if (error) throw error;
-
-        turnosDeLaFecha = (data || []).map(normalizarTurnoHoyDesdeSupabase);
-
-        // Sincroniza la memoria local de ese día. Así Agenda y Hoy no se pisan entre sí.
-        BASE_DATOS = (BASE_DATOS || [])
-          .filter(t => normalizarFechaParaVistaHoy(t.fecha) !== fechaISO)
-          .concat(turnosDeLaFecha)
-          .sort((a, b) => {
-            const fechaCmp = String(a.fecha || '').localeCompare(String(b.fecha || ''));
-            if (fechaCmp !== 0) return fechaCmp;
-            return String(a.hora || '').localeCompare(String(b.hora || ''));
-          });
-
-        // Fallback defensivo: si la consulta directa no devuelve nada pero la memoria local sí,
-        // usamos la memoria local para no dejar la solapa vacía por un descalce de fecha.
-        if (turnosDeLaFecha.length === 0) {
-          turnosDeLaFecha = obtenerTurnosHoyDesdeCache();
-        }
-      } catch (error) {
-        console.error('Error cargando turnos de la solapa Hoy:', error);
-        turnosDeLaFecha = obtenerTurnosHoyDesdeCache();
-
-        if (turnosDeLaFecha.length === 0) {
-          cont.innerHTML = `
-            <div class="empty-state hoy-empty-state">
-              <div class="hoy-empty-icon">⚠️</div>
-              <div class="hoy-empty-title">No se pudieron cargar los turnos de esta fecha.</div>
-              <div class="hoy-empty-text">${e(error?.message || 'Revisá la conexión o volvé a iniciar sesión.')}</div>
-            </div>`;
-          return;
-        }
-      }
+      const turnosDeLaFecha = obtenerTurnosHoyDesdeCache();
+      if (token !== HOY_RENDER_TOKEN) return;
 
       // La agenda puede guardar extensiones de turno como filas separadas. En la vista Hoy
       // mostramos el turno principal para no duplicarle trabajo a la secretaria. Si por
@@ -5654,20 +5605,27 @@
 
       cont.innerHTML = turnosDia.map(t => {
         const pacienteId = String(t.pacienteId || '');
+        const pacienteLocal = buscarPacienteLocalPorId(pacienteId) || {};
         const motivosHtml = armarResumenTratamientos(pacienteId);
-        const nombre = normalizarNombrePaciente(t.nombre, t.apellido, t.nombre_completo || '').nombre_completo || 'Paciente';
+        const nombre = normalizarNombrePaciente(
+          t.nombre || pacienteLocal.nombre || '',
+          t.apellido || pacienteLocal.apellido || '',
+          t.nombre_completo || pacienteLocal.nombre_completo || ''
+        ).nombre_completo || 'Paciente';
+        const dni = t.dni || pacienteLocal.dni || 'S/D';
+        const telefono = t.telefono || pacienteLocal.telefono || '';
         const estado = t.confirmado ? 'Confirmado' : 'Sin confirmar';
         return `
           <div class="hoy-card">
             <div class="hoy-time">${e(t.hora || '')}</div>
             <div>
               <div class="hoy-name">${e(nombre)}</div>
-              <div class="hoy-meta">DNI: ${e(t.dni || 'S/D')} · Tel: ${e(t.telefono || 'S/T')} · ${e(estado)}</div>
+              <div class="hoy-meta">DNI: ${e(dni)} · Tel: ${e(telefono || 'S/T')} · ${e(estado)}</div>
               <div class="motivos-inline">${motivosHtml}</div>
             </div>
             <div class="hoy-actions">
               <button class="btn-table-action btn-whatsapp" onclick="abrirWhatsAppTurno('${e(t.id)}', event)">WhatsApp</button>
-              <button class="btn-table-action" onclick="copiarTelefono('${e(t.telefono || '')}', event)">Copiar tel.</button>
+              <button class="btn-table-action" onclick="copiarTelefono('${e(telefono || '')}', event)">Copiar tel.</button>
               <button class="btn-table-action" onclick="abrirTratamientosPaciente('${e(pacienteId)}')">Actualizar motivos</button>
             </div>
           </div>`;
