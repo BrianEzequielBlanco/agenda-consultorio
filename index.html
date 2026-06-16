@@ -2010,11 +2010,86 @@
     .hoy-name { font-size: 16px; font-weight: 900; color: var(--text); margin-bottom: 4px; }
     .hoy-meta { color: var(--muted); font-size: 12px; line-height: 1.4; }
     .hoy-actions { display: flex; gap: 7px; flex-wrap: wrap; justify-content: flex-end; }
-    .hoy-date-controls { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; justify-content: flex-end; }
-    .hoy-date-controls .btn-nav-circle { width: 34px; height: 34px; min-width: 34px; }
-    .hoy-date-controls .input-date { width: 165px; height: 34px; padding: 7px 10px; font-size: 13px; font-weight: 800; }
-    .hoy-date-controls .btn-table-action { height: 34px; }
+    .hoy-date-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .hoy-shift-btn {
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
+      border-radius: 10px;
+      background: #fff;
+      border: 1px solid var(--border);
+      box-shadow: 0 3px 10px rgba(15, 23, 42, 0.06);
+    }
+    .hoy-date-pill {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 40px;
+      padding: 4px 10px 4px 12px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid var(--border);
+      box-shadow: 0 3px 10px rgba(15, 23, 42, 0.06);
+    }
+    .hoy-date-display {
+      border: none;
+      outline: none;
+      background: transparent;
+      width: 118px;
+      min-width: 118px;
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: 0.02em;
+    }
+    .hoy-date-display::placeholder { color: var(--muted); }
+    .hoy-date-calendar-btn {
+      width: 28px;
+      height: 28px;
+      border: none;
+      border-radius: 999px;
+      background: var(--blue-light);
+      color: var(--blue-hover);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    .hoy-date-calendar-btn:hover { background: #dbeafe; }
+    .hoy-date-native {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      pointer-events: none;
+      width: 100%;
+      height: 100%;
+    }
+    .hoy-today-btn {
+      height: 40px;
+      border-radius: 999px;
+      padding-inline: 16px;
+      font-weight: 800;
+      box-shadow: 0 3px 10px rgba(15, 23, 42, 0.06);
+    }
     .motivos-inline { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 7px; }
+    .hoy-empty-state {
+      max-width: 520px;
+      margin: 10px auto 0;
+      background: linear-gradient(180deg, #ffffff 0%, #fffaf5 100%);
+      border-color: #f3d3b1;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+    }
+    .hoy-empty-icon { font-size: 24px; margin-bottom: 8px; }
+    .hoy-empty-title { font-weight: 800; color: var(--text); margin-bottom: 4px; }
+    .hoy-empty-text { font-size: 13px; color: var(--muted); }
 
     .motivo-toggle-grid {
       display: grid;
@@ -2151,10 +2226,14 @@
           <div id="hoySubtitulo" class="page-subtitle">Lista simple del día para actualizar motivos de seguimiento al cierre de cada atención.</div>
         </div>
         <div class="page-title-actions hoy-date-controls" aria-label="Selector de fecha para turnos del día">
-          <button class="btn-nav-circle" title="Día anterior" onclick="moverFechaHoy(-1)">◀</button>
-          <input type="date" id="hoyDateInput" class="input-date" title="Seleccionar fecha" onchange="seleccionarFechaHoy(this.value)">
-          <button class="btn-nav-circle" title="Día siguiente" onclick="moverFechaHoy(1)">▶</button>
-          <button class="btn-table-action" title="Volver a hoy" onclick="resetearHoyAFechaActual()">Hoy</button>
+          <button class="btn-nav-circle hoy-shift-btn" title="Día anterior" onclick="moverFechaHoy(-1)">◀</button>
+          <div class="hoy-date-pill" title="Fecha seleccionada para la vista Hoy">
+            <input type="text" id="hoyDateDisplay" class="hoy-date-display" inputmode="numeric" placeholder="dd/mm/aaaa" aria-label="Fecha vista hoy" onchange="seleccionarFechaHoy(this.value)" onkeydown="if(event.key==='Enter'){seleccionarFechaHoy(this.value);}">
+            <button class="hoy-date-calendar-btn" type="button" title="Elegir fecha" onclick="abrirDatepickerHoy()">📅</button>
+            <input type="date" id="hoyDateInput" class="hoy-date-native" title="Seleccionar fecha" onchange="seleccionarFechaHoy(this.value)">
+          </div>
+          <button class="btn-nav-circle hoy-shift-btn" title="Día siguiente" onclick="moverFechaHoy(1)">▶</button>
+          <button class="btn-table-action hoy-today-btn" title="Volver a hoy" onclick="resetearHoyAFechaActual()">Hoy</button>
         </div>
       </div>
       <div class="hoy-help-card">
@@ -2790,6 +2869,7 @@
       await cargarDatosDesdeSupabase();
       renderizarCalendarioCompleto();
       calcularYRenderizarPacientes();
+      renderizarHoy();
     }
 
     async function cerrarSesion() {
@@ -5410,6 +5490,24 @@
       return FECHA_HOY_SELECCIONADA;
     }
 
+    function actualizarControlesFechaHoy(fechaISO) {
+      const inputNativo = document.getElementById('hoyDateInput');
+      const inputVisible = document.getElementById('hoyDateDisplay');
+      if (inputNativo && inputNativo.value !== fechaISO) inputNativo.value = fechaISO;
+      const latina = convertirFechaLatina(fechaISO);
+      if (inputVisible && inputVisible.value !== latina) inputVisible.value = latina;
+    }
+
+    function abrirDatepickerHoy() {
+      const inputNativo = document.getElementById('hoyDateInput');
+      if (!inputNativo) return;
+      if (typeof inputNativo.showPicker === 'function') {
+        inputNativo.showPicker();
+      } else {
+        inputNativo.click();
+      }
+    }
+
     function seleccionarFechaHoy(valor) {
       const iso = parsearFechaFlexible(valor);
       if (!iso) { mostrarToast('Fecha inválida.'); return; }
@@ -5439,8 +5537,7 @@
       const fechaLarga = fechaObj.toLocaleDateString('es-AR', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
       const fechaCorta = convertirFechaLatina(fechaISO);
 
-      const inputFecha = document.getElementById('hoyDateInput');
-      if (inputFecha && inputFecha.value !== fechaISO) inputFecha.value = fechaISO;
+      actualizarControlesFechaHoy(fechaISO);
 
       const titulo = document.getElementById('hoyTitulo');
       if (titulo) titulo.innerText = esHoyReal ? 'Turnos de hoy' : `Turnos del ${fechaCorta}`;
@@ -5455,7 +5552,12 @@
       }
 
       if (turnosDia.length === 0) {
-        cont.innerHTML = `<div class="empty-state">No hay turnos cargados para ${esHoyReal ? 'hoy' : 'esta fecha'}.</div>`;
+        cont.innerHTML = `
+          <div class="empty-state hoy-empty-state">
+            <div class="hoy-empty-icon">📭</div>
+            <div class="hoy-empty-title">No hay turnos cargados para ${esHoyReal ? 'hoy' : 'esta fecha'}.</div>
+            <div class="hoy-empty-text">Probá con otra fecha desde el selector de arriba o cargá un turno desde la agenda semanal.</div>
+          </div>`;
         return;
       }
 
