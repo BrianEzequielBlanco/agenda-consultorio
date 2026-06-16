@@ -2081,7 +2081,7 @@
                 type="text"
                 id="filtroNombrePacientes"
                 class="filter-input"
-                placeholder="Ej. Juan Pérez u obra social"
+                placeholder="Ej. Juan, Pérez u obra social"
                 oninput="filtrarPacientesPorNombre(this.value)"
               >
             </div>
@@ -2120,8 +2120,13 @@
       </div>
 
       <div class="form-group">
-        <label>Nombre y apellido</label>
-        <input type="text" id="formNombreCompleto" class="form-control" placeholder="Ej. Juan Pérez">
+        <label>Nombre</label>
+        <input type="text" id="formNombre" class="form-control" placeholder="Ej. Juan">
+      </div>
+
+      <div class="form-group">
+        <label>Apellido</label>
+        <input type="text" id="formApellido" class="form-control" placeholder="Ej. Pérez">
       </div>
 
       <div class="form-group">
@@ -2195,8 +2200,13 @@
       </div>
 
       <div class="form-group">
-        <label>Nombre y apellido</label>
-        <input type="text" id="editNombreCompleto" class="form-control" placeholder="Ej. Juan Pérez">
+        <label>Nombre</label>
+        <input type="text" id="editNombre" class="form-control" placeholder="Ej. Juan">
+      </div>
+
+      <div class="form-group">
+        <label>Apellido</label>
+        <input type="text" id="editApellido" class="form-control" placeholder="Ej. Pérez">
       </div>
 
       <div class="form-group">
@@ -2281,7 +2291,7 @@
       <div class="modal-subtitle">Creá la ficha antes de darle turno. Después, al cargar un turno con ese DNI, se autocompletan los datos.</div>
 
       <div class="manual-ficha-note">
-        Campos necesarios: DNI, nombre y apellido. El teléfono ayuda para WhatsApp y recordatorios. Los tratamientos pendientes son opcionales.
+        Campos necesarios: DNI y nombre. El apellido, teléfono, datos extra y tratamientos pendientes son opcionales, pero ayudan para búsqueda, WhatsApp y seguimiento.
       </div>
 
       <div class="form-group">
@@ -2297,8 +2307,13 @@
       </div>
 
       <div class="form-group">
-        <label>Nombre y apellido</label>
-        <input type="text" id="fichaNombreCompleto" class="form-control" placeholder="Ej. Juan Pérez">
+        <label>Nombre</label>
+        <input type="text" id="fichaNombre" class="form-control" placeholder="Ej. Juan">
+      </div>
+
+      <div class="form-group">
+        <label>Apellido</label>
+        <input type="text" id="fichaApellido" class="form-control" placeholder="Ej. Pérez">
       </div>
 
       <div class="form-group">
@@ -2340,9 +2355,9 @@
         </div>
         <div class="config-section">
           <div class="config-section-title">Campos adicionales del paciente</div>
-          <div class="config-help">DNI, nombre y teléfono son campos fijos del sistema y no se pueden quitar. Acá agregás datos propios del consultorio, por ejemplo obra social, número de afiliado, email, dirección o derivado por.</div>
+          <div class="config-help">DNI, nombre, apellido y teléfono son campos fijos del sistema y no se pueden quitar. Acá agregás datos propios del consultorio, por ejemplo obra social, número de afiliado, email, dirección o derivado por.</div>
           <div class="fixed-fields-box">
-            Campos fijos: <span class="fixed-field-pill">DNI / Documento</span><span class="fixed-field-pill">Nombre y apellido</span><span class="fixed-field-pill">Teléfono celular</span>
+            Campos fijos: <span class="fixed-field-pill">DNI / Documento</span><span class="fixed-field-pill">Nombre</span><span class="fixed-field-pill">Apellido</span><span class="fixed-field-pill">Teléfono celular</span>
           </div>
           <div id="configCamposPacienteLista"></div>
           <div class="config-add-row">
@@ -2364,7 +2379,7 @@
         <div class="config-section">
           <div class="config-section-title">Mensajes automáticos</div>
           <div class="config-help">Variables disponibles:
-            <span class="config-variable-pill">{paciente}</span><span class="config-variable-pill">{fecha}</span><span class="config-variable-pill">{hora}</span><span class="config-variable-pill">{tratamientos}</span><span class="config-variable-pill">{consultorio}</span>
+            <span class="config-variable-pill">{paciente}</span><span class="config-variable-pill">{nombre}</span><span class="config-variable-pill">{apellido}</span><span class="config-variable-pill">{nombre_completo}</span><span class="config-variable-pill">{fecha}</span><span class="config-variable-pill">{hora}</span><span class="config-variable-pill">{tratamientos}</span><span class="config-variable-pill">{consultorio}</span>
           </div>
           <div class="form-group">
             <label>Agenda: recordatorio de turno</label>
@@ -2418,9 +2433,9 @@
       ],
       campos_paciente: [],
       mensajes: {
-        turno: 'Hola {paciente}, te recordamos tu turno en el consultorio el día {fecha} a las {hora} hs.\n¡Te esperamos!',
-        paciente_sin_pendientes: 'Hola {paciente}, ¿cómo estás?\nTe escribimos desde el consultorio para recordarte que hace un tiempo no realizás un control.\nSi querés coordinar un turno, estamos disponibles para ayudarte.',
-        paciente_con_pendientes: 'Hola {paciente}, ¿cómo estás?\nTe escribimos desde el consultorio porque tenemos registrado que te quedó pendiente: {tratamientos}.\nSi querés, podemos coordinar un turno para ir resolviéndolo. Estamos disponibles para ayudarte.'
+        turno: 'Hola {nombre}, te recordamos tu turno en el consultorio el día {fecha} a las {hora} hs.\n¡Te esperamos!',
+        paciente_sin_pendientes: 'Hola {nombre}, ¿cómo estás?\nTe escribimos desde el consultorio para recordarte que hace un tiempo no realizás un control.\nSi querés coordinar un turno, estamos disponibles para ayudarte.',
+        paciente_con_pendientes: 'Hola {nombre}, ¿cómo estás?\nTe escribimos desde el consultorio porque tenemos registrado que te quedó pendiente: {tratamientos}.\nSi querés, podemos coordinar un turno para ir resolviéndolo. Estamos disponibles para ayudarte.'
       },
       horarios: {
         lunes: { activo: true, inicio: '09:00', fin: '16:30', intervalo: 30 },
@@ -2820,9 +2835,10 @@
       if (!CLINICA_ID) return;
       const { data: pacientes, error: errorPacientes } = await supabaseClient
         .from('pacientes')
-        .select('id, clinica_id, dni, nombre_completo, telefono, datos_extra, created_at')
+        .select('id, clinica_id, dni, nombre, apellido, nombre_completo, telefono, datos_extra, created_at')
         .eq('clinica_id', CLINICA_ID)
-        .order('nombre_completo', { ascending: true });
+        .order('nombre', { ascending: true })
+        .order('apellido', { ascending: true });
 
       if (errorPacientes) {
         console.error(errorPacientes);
@@ -2830,14 +2846,7 @@
         return;
       }
 
-      PACIENTES_DB = (pacientes || []).map(p => ({
-        id: p.id,
-        dni: String(p.dni || '').replace(/\D/g, ''),
-        nombre_completo: p.nombre_completo || '',
-        telefono: p.telefono || '',
-        datosExtra: normalizarDatosExtraPaciente(p.datos_extra || {}),
-        created_at: p.created_at
-      }));
+      PACIENTES_DB = (pacientes || []).map(p => normalizarPacienteDesdeSupabase(p));
 
       const { data: turnos, error: errorTurnos } = await supabaseClient
         .from('turnos')
@@ -2846,6 +2855,8 @@
           pacientes (
             id,
             dni,
+            nombre,
+            apellido,
             nombre_completo,
             telefono,
             datos_extra
@@ -2862,17 +2873,16 @@
       }
 
       BASE_DATOS = (turnos || []).map(t => {
-        const nombreCompleto = t.pacientes?.nombre_completo || '';
-        const partes = dividirNombreCompleto(nombreCompleto);
+        const paciente = normalizarPacienteDesdeSupabase(t.pacientes || {});
 
         return {
           id: t.id,
           fecha: t.fecha,
           hora: String(t.hora).slice(0, 5),
-          nombre: partes.nombre || '',
-          apellido: partes.apellido || '',
-          telefono: t.pacientes?.telefono || '',
-          dni: String(t.pacientes?.dni || '').replace(/\D/g, ''),
+          nombre: paciente.nombre || '',
+          apellido: paciente.apellido || '',
+          telefono: paciente.telefono || '',
+          dni: paciente.dni || '',
           categoria: 'Consulta',
           observacion: '',
           confirmado: t.confirmado === true,
@@ -2880,7 +2890,7 @@
           extension: t.extension === true,
           parentId: t.parent_id || '',
           pacienteId: t.paciente_id,
-          datosExtra: normalizarDatosExtraPaciente(t.pacientes?.datos_extra || {})
+          datosExtra: paciente.datosExtra || {}
         };
       });
 
@@ -2969,7 +2979,7 @@
     }
 
     function normalizarCamposPacienteConfiguracion(campos) {
-      const reservados = ['id', 'dni', 'documento', 'nombre', 'nombre_completo', 'telefono', 'celular', 'created_at', 'clinica_id'];
+      const reservados = ['id', 'dni', 'documento', 'nombre', 'apellido', 'nombre_completo', 'telefono', 'celular', 'created_at', 'clinica_id'];
       const arr = Array.isArray(campos) ? campos : [];
       const unicos = [];
       arr.forEach(c => {
@@ -3148,14 +3158,18 @@
     }
 
     function aplicarTemplateMensaje(template, datos) {
+      const datosNombre = obtenerDatosMensajePaciente(datos.nombre || datos.paciente || '', datos.apellido || '', datos.nombre_completo || '');
       const vars = {
-        paciente: datos.paciente || '',
+        paciente: datosNombre.nombre || datosNombre.paciente || '',
+        nombre: datosNombre.nombre || datosNombre.paciente || '',
+        apellido: datosNombre.apellido || '',
+        nombre_completo: datosNombre.nombre_completo || datosNombre.paciente || '',
         fecha: datos.fecha || '',
         hora: datos.hora || '',
         tratamientos: datos.tratamientos || '',
         consultorio: CLINICA_ACTUAL?.nombre || 'consultorio'
       };
-      return String(template || '').replace(/\{(paciente|fecha|hora|tratamientos|consultorio)\}/g, (_, key) => vars[key] || '');
+      return String(template || '').replace(/\{(paciente|nombre|apellido|nombre_completo|fecha|hora|tratamientos|consultorio)\}/g, (_, key) => vars[key] || '');
     }
 
     function abrirConfiguracion() {
@@ -3227,7 +3241,7 @@
       if (!label) { mostrarToast('Escribí el nombre del campo.'); return; }
       const key = slugCampoPaciente(label);
       if (!key) { mostrarToast('Ese nombre de campo no es válido.'); return; }
-      const reservados = ['dni', 'documento', 'nombre', 'nombre_completo', 'telefono', 'celular'];
+      const reservados = ['dni', 'documento', 'nombre', 'apellido', 'nombre_completo', 'telefono', 'celular'];
       if (reservados.includes(key)) { mostrarToast('DNI, nombre y teléfono son campos fijos. No los agregues acá.'); return; }
       const campos = obtenerCamposPacienteConfigurados();
       if (campos.some(c => c.key === key)) { mostrarToast('Ese campo ya existe.'); return; }
@@ -3390,10 +3404,8 @@
       if (!hayModalActivo()) document.body.classList.remove('modal-open');
     }
 
-    function nombreCompletoTurno(t) {
-      const nombre = String(t.nombre || '').trim();
-      const apellido = String(t.apellido || '').trim();
-      return [nombre, apellido].filter(Boolean).join(' ').trim();
+    function construirNombreCompleto(nombre, apellido) {
+      return [String(nombre || '').trim(), String(apellido || '').trim()].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
     }
 
     function dividirNombreCompleto(valor) {
@@ -3408,6 +3420,81 @@
       return {
         nombre: partes[0],
         apellido: partes.slice(1).join(' ')
+      };
+    }
+
+    function normalizarNombrePaciente(nombre, apellido, nombreCompletoLegacy) {
+      let n = String(nombre || '').trim().replace(/\s+/g, ' ');
+      let a = String(apellido || '').trim().replace(/\s+/g, ' ');
+      if (!n && nombreCompletoLegacy) {
+        const partes = dividirNombreCompleto(nombreCompletoLegacy);
+        n = partes.nombre;
+        if (!a) a = partes.apellido;
+      }
+      return { nombre: n, apellido: a, nombre_completo: construirNombreCompleto(n, a) };
+    }
+
+    function normalizarPacienteDesdeSupabase(p) {
+      const nombres = normalizarNombrePaciente(p?.nombre, p?.apellido, p?.nombre_completo);
+      return {
+        id: p?.id || '',
+        dni: String(p?.dni || '').replace(/\D/g, ''),
+        nombre: nombres.nombre,
+        apellido: nombres.apellido,
+        nombre_completo: nombres.nombre_completo,
+        telefono: p?.telefono || '',
+        datosExtra: normalizarDatosExtraPaciente(p?.datos_extra || p?.datosExtra || {}),
+        created_at: p?.created_at
+      };
+    }
+
+    function nombreCompletoTurno(t) {
+      const nombres = normalizarNombrePaciente(t?.nombre, t?.apellido, t?.nombre_completo);
+      return nombres.nombre_completo;
+    }
+
+    function nombreCortoTurno(t) {
+      return normalizarNombrePaciente(t?.nombre, t?.apellido, t?.nombre_completo).nombre || nombreCompletoTurno(t);
+    }
+
+    function nombreCortoPaciente(p) {
+      return normalizarNombrePaciente(p?.nombre, p?.apellido, p?.nombre_completo).nombre || normalizarNombrePaciente(p?.nombre, p?.apellido, p?.nombre_completo).nombre_completo;
+    }
+
+    function obtenerDatosMensajePaciente(nombre, apellido, nombreCompleto) {
+      const n = normalizarNombrePaciente(nombre, apellido, nombreCompleto);
+      return {
+        paciente: n.nombre || n.nombre_completo,
+        nombre: n.nombre || n.nombre_completo,
+        apellido: n.apellido,
+        nombre_completo: n.nombre_completo
+      };
+    }
+
+    function leerNombrePacienteFormulario(prefijo) {
+      const nombre = String(document.getElementById(prefijo + 'Nombre')?.value || '').trim().replace(/\s+/g, ' ');
+      const apellido = String(document.getElementById(prefijo + 'Apellido')?.value || '').trim().replace(/\s+/g, ' ');
+      return normalizarNombrePaciente(nombre, apellido, '');
+    }
+
+    function escribirNombrePacienteFormulario(prefijo, paciente) {
+      const nombres = normalizarNombrePaciente(paciente?.nombre, paciente?.apellido, paciente?.nombre_completo);
+      const nombreInput = document.getElementById(prefijo + 'Nombre');
+      const apellidoInput = document.getElementById(prefijo + 'Apellido');
+      if (nombreInput) nombreInput.value = nombres.nombre || '';
+      if (apellidoInput) apellidoInput.value = nombres.apellido || '';
+    }
+
+    function payloadPacienteSupabase({ dni, nombre, apellido, telefono, datosExtra }) {
+      const nombres = normalizarNombrePaciente(nombre, apellido, '');
+      return {
+        clinica_id: CLINICA_ID,
+        dni: String(dni || '').replace(/\D/g, ''),
+        nombre: nombres.nombre,
+        apellido: nombres.apellido,
+        nombre_completo: nombres.nombre_completo,
+        telefono: String(telefono || '').trim(),
+        datos_extra: normalizarDatosExtraPaciente(datosExtra || {})
       };
     }
 
@@ -3467,15 +3554,14 @@
     function completarFormularioConPaciente(prefijo, paciente) {
       if (!paciente) return;
 
-      const nombreInput = document.getElementById(prefijo + 'NombreCompleto');
       const telInput = document.getElementById(prefijo + 'Telefono');
       const extraContainerId = prefijo === 'form' ? 'formCamposExtraPaciente' : (prefijo === 'edit' ? 'editCamposExtraPaciente' : 'fichaCamposExtraPaciente');
 
-      if (nombreInput) nombreInput.value = paciente.nombre_completo || '';
+      escribirNombrePacienteFormulario(prefijo, paciente);
       if (telInput) telInput.value = paciente.telefono || '';
       renderCamposPacienteFormulario(extraContainerId, prefijo + 'Extra', paciente.datosExtra || {});
 
-      [prefijo + 'NombreCompleto', prefijo + 'Telefono'].forEach(id => {
+      [prefijo + 'Nombre', prefijo + 'Apellido', prefijo + 'Telefono'].forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
         el.classList.remove('flash');
@@ -3493,7 +3579,8 @@
       hint.innerText = '';
 
       if (dniIngresado === '') {
-        document.getElementById('formNombreCompleto').value = '';
+        document.getElementById('formNombre').value = '';
+        document.getElementById('formApellido').value = '';
         document.getElementById('formTelefono').value = '';
         renderCamposPacienteFormulario('formCamposExtraPaciente', 'formExtra', {});
         return;
@@ -3613,12 +3700,12 @@
       PACIENTES_DB.forEach(p => {
         const pacienteId = String(p.id || '');
         if (!pacienteId) return;
-        const partes = dividirNombreCompleto(p.nombre_completo || '');
+        const nombres = normalizarNombrePaciente(p.nombre, p.apellido, p.nombre_completo || '');
         mapaPacientes[pacienteId] = {
           id: pacienteId,
           dni: String(p.dni || '').replace(/\D/g, ''),
-          nombre: partes.nombre || '',
-          apellido: partes.apellido || '',
+          nombre: nombres.nombre || '',
+          apellido: nombres.apellido || '',
           telefono: p.telefono || '',
           datosExtra: normalizarDatosExtraPaciente(p.datosExtra || {}),
           ultimaVisita: '',
@@ -3895,7 +3982,7 @@
       if (!id) { alert('Paciente inválido.'); return; }
 
       const paciente = buscarPacienteLocalPorId(id);
-      const nombre = paciente?.nombre_completo || 'este paciente';
+      const nombre = normalizarNombrePaciente(paciente?.nombre, paciente?.apellido, paciente?.nombre_completo).nombre_completo || 'este paciente';
 
       const ok = confirm(
         `¿Seguro que querés borrar la ficha de ${nombre}?\n\n` +
@@ -3947,7 +4034,7 @@
       const t = TRATAMIENTOS_DB[id] || {};
       document.getElementById('tratPacienteId').value = id;
       renderInputsTratamientos('tratamientosPacienteInputs', 'trat', t);
-      const nombre = paciente?.nombre_completo || paciente?.dni || 'paciente';
+      const nombre = normalizarNombrePaciente(paciente?.nombre, paciente?.apellido, paciente?.nombre_completo).nombre_completo || paciente?.dni || 'paciente';
       document.getElementById('modalTratamientosInfo').innerText = `Ficha de ${nombre}. Usá + y − para actualizar las cantidades pendientes.`;
       abrirModal('modalTratamientos');
     }
@@ -3988,7 +4075,8 @@
 
     function abrirAltaFichaPaciente() {
       document.getElementById('fichaDni').value = '';
-      document.getElementById('fichaNombreCompleto').value = '';
+      document.getElementById('fichaNombre').value = '';
+      document.getElementById('fichaApellido').value = '';
       document.getElementById('fichaTelefono').value = '';
       renderCamposPacienteFormulario('fichaCamposExtraPaciente', 'fichaExtra', {});
       renderInputsTratamientos('fichaTratamientosInputs', 'ficha', {});
@@ -4006,7 +4094,8 @@
       hint.className = 'patient-hint';
       hint.innerText = '';
       if (dniIngresado === '') {
-        document.getElementById('fichaNombreCompleto').value = '';
+        document.getElementById('fichaNombre').value = '';
+        document.getElementById('fichaApellido').value = '';
         document.getElementById('fichaTelefono').value = '';
         renderCamposPacienteFormulario('fichaCamposExtraPaciente', 'fichaExtra', {});
         renderInputsTratamientos('fichaTratamientosInputs', 'ficha', {});
@@ -4016,12 +4105,13 @@
       const paciente = buscarPacienteLocalPorDni(dniIngresado);
       const tratamientos = paciente ? (TRATAMIENTOS_DB[paciente.id] || {}) : {};
       if (paciente) {
-        document.getElementById('fichaNombreCompleto').value = paciente.nombre_completo || '';
+        escribirNombrePacienteFormulario('ficha', paciente);
         document.getElementById('fichaTelefono').value = paciente.telefono || '';
         renderCamposPacienteFormulario('fichaCamposExtraPaciente', 'fichaExtra', paciente.datosExtra || {});
         renderInputsTratamientos('fichaTratamientosInputs', 'ficha', tratamientos);
-        ['fichaNombreCompleto', 'fichaTelefono'].forEach(id => {
+        ['fichaNombre', 'fichaApellido', 'fichaTelefono'].forEach(id => {
           const el = document.getElementById(id);
+          if (!el) return;
           el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
         });
         hint.className = 'patient-hint found';
@@ -4036,19 +4126,16 @@
 
     async function guardarFichaPaciente() {
       const dni = String(document.getElementById('fichaDni').value || '').replace(/\D/g, '');
-      const nombreCompleto = String(document.getElementById('fichaNombreCompleto').value || '').trim().replace(/\s+/g, ' ');
+      const nombres = leerNombrePacienteFormulario('ficha');
       const telefono = String(document.getElementById('fichaTelefono').value || '').trim();
       const datosExtra = leerCamposPacienteFormulario('fichaCamposExtraPaciente');
-      if (!dni || !nombreCompleto) { alert('DNI y nombre del paciente son obligatorios para crear la ficha.'); return; }
+      if (!dni || !nombres.nombre) { alert('DNI y nombre del paciente son obligatorios para crear la ficha.'); return; }
       const tratamientos = leerInputsTratamientos('fichaTratamientosInputs');
       const tieneTratamientos = Object.values(tratamientos).some(v => v > 0);
-      const { data: paciente, error: errorPaciente } = await supabaseClient.from('pacientes').upsert({
-        clinica_id: CLINICA_ID,
-        dni,
-        nombre_completo: nombreCompleto,
-        telefono,
-        datos_extra: datosExtra
-      }, { onConflict: 'clinica_id,dni' }).select().single();
+      const { data: paciente, error: errorPaciente } = await supabaseClient.from('pacientes').upsert(
+        payloadPacienteSupabase({ dni, nombre: nombres.nombre, apellido: nombres.apellido, telefono, datosExtra }),
+        { onConflict: 'clinica_id,dni' }
+      ).select().single();
       if (errorPaciente) { alert('Error guardando ficha: ' + errorPaciente.message); return; }
       if (tieneTratamientos) {
         const { error: errorTratamientos } = await supabaseClient.from('tratamientos_pendientes').upsert({
@@ -4485,7 +4572,8 @@
       document.getElementById('formFecha').value = fecha;
       document.getElementById('formHora').value = hora;
       document.getElementById('formDni').value = '';
-      document.getElementById('formNombreCompleto').value = '';
+      document.getElementById('formNombre').value = '';
+      document.getElementById('formApellido').value = '';
       document.getElementById('formTelefono').value = '';
       renderCamposPacienteFormulario('formCamposExtraPaciente', 'formExtra', {});
 
@@ -4520,22 +4608,21 @@
     }
 
     async function guardarFormularioTurno() {
-      const nombreCompleto = document.getElementById('formNombreCompleto').value.trim();
-      const partesNombre = dividirNombreCompleto(nombreCompleto);
+      const nombres = leerNombrePacienteFormulario('form');
 
       const data = {
         fecha: document.getElementById('formFecha').value,
         hora: document.getElementById('formHora').value,
         dni: document.getElementById('formDni').value.trim().replace(/\D/g, ''),
-        nombre: partesNombre.nombre,
-        apellido: partesNombre.apellido,
+        nombre: nombres.nombre,
+        apellido: nombres.apellido,
         telefono: document.getElementById('formTelefono').value.trim(),
         datosExtra: leerCamposPacienteFormulario('formCamposExtraPaciente'),
         categoria: 'Consulta',
         observacion: ''
       };
 
-      if (!data.dni || !nombreCompleto) {
+      if (!data.dni || !data.nombre) {
         alert('DNI y nombre del paciente son campos obligatorios.');
         return;
       }
@@ -4562,19 +4649,13 @@
       };
 
       BASE_DATOS.push(copiaLocal);
-      upsertPacienteLocal(data.dni, nombreCompleto, data.telefono, null, data.datosExtra);
+      upsertPacienteLocal(data.dni, data.nombre, data.apellido, data.telefono, null, data.datosExtra);
       renderizarCalendarioCompleto();
       calcularYRenderizarPacientes();
 
       const { data: paciente, error: errorPaciente } = await supabaseClient
         .from('pacientes')
-        .upsert({
-          clinica_id: CLINICA_ID,
-          dni: data.dni,
-          nombre_completo: nombreCompleto,
-          telefono: data.telefono,
-          datos_extra: data.datosExtra
-        }, { onConflict: 'clinica_id,dni' })
+        .upsert(payloadPacienteSupabase(data), { onConflict: 'clinica_id,dni' })
         .select()
         .single();
 
@@ -4614,17 +4695,20 @@
       mostrarToast('Turno guardado correctamente.');
     }
 
-    function upsertPacienteLocal(dni, nombreCompleto, telefono, id, datosExtra) {
+    function upsertPacienteLocal(dni, nombre, apellido, telefono, id, datosExtra) {
       const dniLimpio = String(dni || '').replace(/\D/g, '');
       if (!dniLimpio && !id) return;
       const extra = normalizarDatosExtraPaciente(datosExtra || {});
+      const nombres = normalizarNombrePaciente(nombre, apellido, '');
 
       const existente = id
         ? PACIENTES_DB.find(p => String(p.id || '') === String(id))
         : PACIENTES_DB.find(p => p.dni === dniLimpio);
       if (existente) {
         existente.dni = dniLimpio || existente.dni;
-        existente.nombre_completo = nombreCompleto;
+        existente.nombre = nombres.nombre;
+        existente.apellido = nombres.apellido;
+        existente.nombre_completo = nombres.nombre_completo;
         existente.telefono = telefono;
         existente.datosExtra = extra;
         if (id) existente.id = id;
@@ -4632,7 +4716,9 @@
         PACIENTES_DB.push({
           id: id || '',
           dni: dniLimpio,
-          nombre_completo: nombreCompleto,
+          nombre: nombres.nombre,
+          apellido: nombres.apellido,
+          nombre_completo: nombres.nombre_completo,
           telefono: telefono,
           datosExtra: extra,
           created_at: new Date().toISOString()
@@ -4678,7 +4764,7 @@
 
       document.getElementById('editTurnoId').value = t.id;
       document.getElementById('editDni').value = t.dni || '';
-      document.getElementById('editNombreCompleto').value = nombreCompletoTurno(t);
+      escribirNombrePacienteFormulario('edit', t);
       document.getElementById('editTelefono').value = t.telefono || '';
       renderCamposPacienteFormulario('editCamposExtraPaciente', 'editExtra', t.datosExtra || {});
 
@@ -4699,22 +4785,21 @@
       if (!t) { alert('No se encontró el turno a editar.'); return; }
 
       const dni = document.getElementById('editDni').value.trim().replace(/\D/g, '');
-      const nombreCompleto = document.getElementById('editNombreCompleto').value.trim();
+      const nombres = leerNombrePacienteFormulario('edit');
       const telefono = document.getElementById('editTelefono').value.trim();
       const datosExtra = leerCamposPacienteFormulario('editCamposExtraPaciente');
-      const partes = dividirNombreCompleto(nombreCompleto);
 
-      if (!dni || !nombreCompleto) { alert('DNI y nombre del paciente son obligatorios.'); return; }
+      if (!dni || !nombres.nombre) { alert('DNI y nombre del paciente son obligatorios.'); return; }
 
       const backupTurno = { ...t };
       const backupPacientes = JSON.parse(JSON.stringify(PACIENTES_DB));
 
       t.dni = dni;
-      t.nombre = partes.nombre;
-      t.apellido = partes.apellido;
+      t.nombre = nombres.nombre;
+      t.apellido = nombres.apellido;
       t.telefono = telefono;
       t.datosExtra = datosExtra;
-      upsertPacienteLocal(dni, nombreCompleto, telefono, t.pacienteId, datosExtra);
+      upsertPacienteLocal(dni, nombres.nombre, nombres.apellido, telefono, t.pacienteId, datosExtra);
 
       cerrarModales();
       renderizarCalendarioCompleto();
@@ -4723,11 +4808,12 @@
       const pacienteExistentePorDni = buscarPacienteLocalPorDni(dni);
       let paciente = null;
       let errorPaciente = null;
+      const payload = payloadPacienteSupabase({ dni, nombre: nombres.nombre, apellido: nombres.apellido, telefono, datosExtra });
 
       if (pacienteExistentePorDni && pacienteExistentePorDni.id && pacienteExistentePorDni.id !== t.pacienteId) {
         const res = await supabaseClient
           .from('pacientes')
-          .update({ nombre_completo: nombreCompleto, telefono, datos_extra: datosExtra })
+          .update({ nombre: payload.nombre, apellido: payload.apellido, nombre_completo: payload.nombre_completo, telefono: payload.telefono, datos_extra: payload.datos_extra })
           .eq('id', pacienteExistentePorDni.id)
           .eq('clinica_id', CLINICA_ID)
           .select()
@@ -4737,7 +4823,7 @@
       } else if (t.pacienteId) {
         const res = await supabaseClient
           .from('pacientes')
-          .update({ dni, nombre_completo: nombreCompleto, telefono, datos_extra: datosExtra })
+          .update({ dni: payload.dni, nombre: payload.nombre, apellido: payload.apellido, nombre_completo: payload.nombre_completo, telefono: payload.telefono, datos_extra: payload.datos_extra })
           .eq('id', t.pacienteId)
           .eq('clinica_id', CLINICA_ID)
           .select()
@@ -4747,7 +4833,7 @@
       } else {
         const res = await supabaseClient
           .from('pacientes')
-          .upsert({ clinica_id: CLINICA_ID, dni, nombre_completo: nombreCompleto, telefono, datos_extra: datosExtra }, { onConflict: 'clinica_id,dni' })
+          .upsert(payload, { onConflict: 'clinica_id,dni' })
           .select()
           .single();
         paciente = res.data;
@@ -4779,7 +4865,7 @@
       }
 
       t.pacienteId = paciente.id;
-      upsertPacienteLocal(dni, nombreCompleto, telefono, paciente.id, datosExtra);
+      upsertPacienteLocal(dni, nombres.nombre, nombres.apellido, telefono, paciente.id, datosExtra);
       await cargarDatosDesdeSupabase();
       renderizarCalendarioCompleto();
       calcularYRenderizarPacientes();
@@ -5057,17 +5143,20 @@
       if (!t) return '';
       const fPartes = String(t.fecha || '').split('-');
       const fechaTxt = fPartes.length === 3 ? `${fPartes[2]}/${fPartes[1]}` : String(t.fecha || '');
-      const nombrePaciente = t.nombre || nombreCompletoTurno(t) || '';
+      const datosNombre = obtenerDatosMensajePaciente(t.nombre, t.apellido, nombreCompletoTurno(t));
       const template = (CONFIG_CLINICA || DEFAULT_CONFIG_CLINICA).mensajes?.turno || DEFAULT_CONFIG_CLINICA.mensajes.turno;
-      return aplicarTemplateMensaje(template, { paciente: nombrePaciente, fecha: fechaTxt, hora: t.hora || '', tratamientos: '' });
+      return aplicarTemplateMensaje(template, { ...datosNombre, fecha: fechaTxt, hora: t.hora || '', tratamientos: '' });
     }
 
     function construirMensajeSeguimientoPaciente(nombre, pacienteId) {
-      const nombrePaciente = String(nombre || '').trim();
+      const paciente = buscarPacienteLocalPorId(pacienteId);
+      const datosNombre = paciente
+        ? obtenerDatosMensajePaciente(paciente.nombre, paciente.apellido, paciente.nombre_completo)
+        : obtenerDatosMensajePaciente(nombre, '', nombre);
       const pendientesTxt = armarTextoTratamientosPendientes(pacienteId);
       const mensajes = (CONFIG_CLINICA || DEFAULT_CONFIG_CLINICA).mensajes || DEFAULT_CONFIG_CLINICA.mensajes;
       const template = pendientesTxt ? (mensajes.paciente_con_pendientes || DEFAULT_CONFIG_CLINICA.mensajes.paciente_con_pendientes) : (mensajes.paciente_sin_pendientes || DEFAULT_CONFIG_CLINICA.mensajes.paciente_sin_pendientes);
-      return aplicarTemplateMensaje(template, { paciente: nombrePaciente, tratamientos: pendientesTxt });
+      return aplicarTemplateMensaje(template, { ...datosNombre, tratamientos: pendientesTxt });
     }
 
     function abrirSoporteWhatsApp(event) {
