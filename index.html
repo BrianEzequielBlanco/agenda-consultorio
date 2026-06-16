@@ -3339,13 +3339,22 @@
     }
 
     function slugTratamiento(valor) {
-      return String(valor || '')
+      const limpio = String(valor || '')
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '_')
         .replace(/^_+|_+$/g, '')
         .slice(0, 40);
+
+      // Compatibilidad con versiones anteriores que guardaban claves en plural.
+      // El producto actual usa motivos como etiquetas simples, sin cantidades.
+      const aliasLegacy = {
+        conductos: 'conducto',
+        extracciones: 'extraccion',
+        coronas: 'corona'
+      };
+      return aliasLegacy[limpio] || limpio;
     }
 
     function normalizarCantidad(valor) {
@@ -3454,6 +3463,7 @@
       const nombreCompleto = datos.nombre_completo || nombres.nombre_completo || nombrePila;
       const vars = {
         paciente: nombrePila,
+        primer_nombre: nombrePila,
         nombre: nombrePila,
         apellido: datos.apellido || nombres.apellido || '',
         nombre_completo: nombreCompleto,
@@ -3463,7 +3473,7 @@
         tratamientos: datos.motivos || datos.tratamientos || '',
         consultorio: datos.consultorio || CLINICA_ACTUAL?.nombre || 'consultorio'
       };
-      return String(template || '').replace(/\{(paciente|nombre|apellido|nombre_completo|fecha|hora|motivos|tratamientos|consultorio)\}/g, (_, key) => vars[key] || '');
+      return String(template || '').replace(/\{(paciente|primer_nombre|nombre|apellido|nombre_completo|fecha|hora|motivos|tratamientos|consultorio)\}/g, (_, key) => vars[key] || '');
     }
 
     function abrirConfiguracion() {
@@ -3793,21 +3803,6 @@
         nombre_completo: nombres.nombre_completo,
         telefono: String(telefono || '').trim(),
         datos_extra: normalizarDatosExtraPaciente(datosExtra || {})
-      };
-    }
-
-    function dividirNombreCompleto(valor) {
-      const limpio = String(valor || '').trim().replace(/\s+/g, ' ');
-      if (!limpio) return { nombre: '', apellido: '' };
-
-      const partes = limpio.split(' ');
-      if (partes.length === 1) {
-        return { nombre: partes[0], apellido: '' };
-      }
-
-      return {
-        nombre: partes[0],
-        apellido: partes.slice(1).join(' ')
       };
     }
 
@@ -4410,7 +4405,7 @@
         completarFormularioConPaciente('ficha', paciente);
         renderInputsTratamientos('fichaTratamientosInputs', 'ficha', tratamientos);
         hint.className = 'patient-hint found';
-        hint.innerText = 'Ficha existente. Podés corregir datos o actualizar pendientes.';
+        hint.innerText = 'Ficha existente. Podés corregir datos o actualizar motivos de seguimiento.';
       } else {
         escribirNombrePacienteFormulario('ficha', { nombre: '', apellido: '' });
         document.getElementById('fichaTelefono').value = '';
@@ -5085,30 +5080,6 @@
       abrirModal('modalEditarTurno');
     }
 
-    function abrirEditarTurno(id, event) {
-      if (event) event.stopPropagation();
-
-      const t = BASE_DATOS.find(item => item.id === id);
-      if (!t) return;
-
-      cerrarModales();
-
-      document.getElementById('editTurnoId').value = t.id;
-      document.getElementById('editDni').value = t.dni || '';
-      document.getElementById('editNombreCompleto').value = nombreCompletoTurno(t);
-      document.getElementById('editTelefono').value = t.telefono || '';
-      renderCamposPacienteFormulario('editCamposExtraPaciente', 'editExtra', t.datosExtra || {});
-
-      const hint = document.getElementById('editPacienteHint');
-      hint.className = 'patient-hint';
-      hint.innerText = '';
-
-      document.getElementById('modalEditarTurnoInfo').innerText =
-        `Editando turno del ${convertirFechaLatina(t.fecha)} a las ${t.hora} hs.`;
-
-      abrirModal('modalEditarTurno');
-    }
-
     async function guardarEdicionTurno() {
       const botonGuardar = document.getElementById('btnGuardarEdicionTurno');
       if (botonGuardar?.disabled) return;
@@ -5684,7 +5655,7 @@
       cont.innerHTML = turnosDia.map(t => {
         const pacienteId = String(t.pacienteId || '');
         const motivosHtml = armarResumenTratamientos(pacienteId);
-        const nombre = nombreCompletoDesdePartes(t.nombre, t.apellido, t.nombre_completo || '') || 'Paciente';
+        const nombre = normalizarNombrePaciente(t.nombre, t.apellido, t.nombre_completo || '').nombre_completo || 'Paciente';
         const estado = t.confirmado ? 'Confirmado' : 'Sin confirmar';
         return `
           <div class="hoy-card">
