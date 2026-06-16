@@ -2642,6 +2642,7 @@
     let FECHA_LUNES_ACTUAL = new Date();
     let FECHA_MOVIL_ACTUAL = new Date();
     let FECHA_HOY_SELECCIONADA = '';
+    let HOY_RENDER_TOKEN = 0;
     let ID_TURNO_SELECCIONADO = null;
     let VISTA_ACTUAL = 'turnos';
     let DRAG_TURNO_ID = null;
@@ -5543,9 +5544,10 @@
       renderizarHoy();
     }
 
-    function renderizarHoy() {
+    async function renderizarHoy() {
       const cont = document.getElementById('listaTurnosHoy');
       if (!cont) return;
+
       const fechaISO = obtenerFechaHoySeleccionada();
       const hoyISO = formatearFechaISO(new Date());
       const esHoyReal = fechaISO === hoyISO;
@@ -5558,9 +5560,102 @@
       const titulo = document.getElementById('hoyTitulo');
       if (titulo) titulo.innerText = esHoyReal ? 'Turnos de hoy' : `Turnos del ${fechaCorta}`;
 
-      const turnosDeLaFecha = (BASE_DATOS || [])
-        .filter(t => normalizarFechaParaVistaHoy(t.fecha) === fechaISO)
-        .sort((a, b) => String(a.hora || '').localeCompare(String(b.hora || '')));
+      const subtitulo = document.getElementById('hoySubtitulo');
+      if (subtitulo) {
+        subtitulo.innerText = `${esHoyReal ? 'Hoy' : 'Fecha seleccionada'}: ${fechaLarga}. Actualizá motivos solo si el doctor indica algo al cierre de la atención.`;
+      }
+
+      const token = ++HOY_RENDER_TOKEN;
+      cont.innerHTML = `
+        <div class="empty-state hoy-empty-state">
+          <div class="hoy-empty-icon">⏳</div>
+          <div class="hoy-empty-title">Cargando turnos...</div>
+          <div class="hoy-empty-text">Buscando los turnos de ${fechaCorta}.</div>
+        </div>`;
+
+      const normalizarTurnoHoyDesdeSupabase = (t) => {
+        const paciente = normalizarPacienteDesdeSupabase(t?.pacientes || {});
+        return {
+          id: t.id,
+          fecha: normalizarFechaParaVistaHoy(t.fecha) || fechaISO,
+          hora: String(t.hora || '').slice(0, 5),
+          nombre: paciente.nombre || '',
+          apellido: paciente.apellido || '',
+          nombre_completo: paciente.nombre_completo || '',
+          telefono: paciente.telefono || '',
+          dni: paciente.dni || '',
+          confirmado: t.confirmado === true,
+          timestamp: new Date(t.created_at || Date.now()).getTime(),
+          extension: t.extension === true,
+          parentId: t.parent_id || '',
+          pacienteId: t.paciente_id,
+          datosExtra: paciente.datosExtra || {}
+        };
+      };
+
+      const obtenerTurnosHoyDesdeCache = () => {
+        return (BASE_DATOS || [])
+          .filter(t => normalizarFechaParaVistaHoy(t.fecha) === fechaISO)
+          .sort((a, b) => String(a.hora || '').localeCompare(String(b.hora || '')));
+      };
+
+      let turnosDeLaFecha = [];
+
+      try {
+        if (!CLINICA_ID) throw new Error('No hay clínica activa.');
+
+        const { data, error } = await supabaseClient
+          .from('turnos')
+          .select(`
+            *,
+            pacientes (
+              id,
+              dni,
+              nombre,
+              apellido,
+              nombre_completo,
+              telefono,
+              datos_extra
+            )
+          `)
+          .eq('clinica_id', CLINICA_ID)
+          .eq('fecha', fechaISO)
+          .order('hora', { ascending: true });
+
+        if (token !== HOY_RENDER_TOKEN) return;
+        if (error) throw error;
+
+        turnosDeLaFecha = (data || []).map(normalizarTurnoHoyDesdeSupabase);
+
+        // Sincroniza la memoria local de ese día. Así Agenda y Hoy no se pisan entre sí.
+        BASE_DATOS = (BASE_DATOS || [])
+          .filter(t => normalizarFechaParaVistaHoy(t.fecha) !== fechaISO)
+          .concat(turnosDeLaFecha)
+          .sort((a, b) => {
+            const fechaCmp = String(a.fecha || '').localeCompare(String(b.fecha || ''));
+            if (fechaCmp !== 0) return fechaCmp;
+            return String(a.hora || '').localeCompare(String(b.hora || ''));
+          });
+
+        // Fallback defensivo: si la consulta directa no devuelve nada pero la memoria local sí,
+        // usamos la memoria local para no dejar la solapa vacía por un descalce de fecha.
+        if (turnosDeLaFecha.length === 0) {
+          turnosDeLaFecha = obtenerTurnosHoyDesdeCache();
+        }
+      } catch (error) {
+        console.error('Error cargando turnos de la solapa Hoy:', error);
+        turnosDeLaFecha = obtenerTurnosHoyDesdeCache();
+
+        if (turnosDeLaFecha.length === 0) {
+          cont.innerHTML = `
+            <div class="empty-state hoy-empty-state">
+              <div class="hoy-empty-icon">⚠️</div>
+              <div class="hoy-empty-title">No se pudieron cargar los turnos de esta fecha.</div>
+              <div class="hoy-empty-text">${e(error?.message || 'Revisá la conexión o volvé a iniciar sesión.')}</div>
+            </div>`;
+          return;
+        }
+      }
 
       // La agenda puede guardar extensiones de turno como filas separadas. En la vista Hoy
       // mostramos el turno principal para no duplicarle trabajo a la secretaria. Si por
@@ -5574,11 +5669,6 @@
 
       if (turnosDia.length === 0 && turnosDeLaFecha.length > 0) {
         turnosDia = turnosDeLaFecha;
-      }
-
-      const subtitulo = document.getElementById('hoySubtitulo');
-      if (subtitulo) {
-        subtitulo.innerText = `${esHoyReal ? 'Hoy' : 'Fecha seleccionada'}: ${fechaLarga}. Actualizá motivos solo si el doctor indica algo al cierre de la atención.`;
       }
 
       if (turnosDia.length === 0) {
