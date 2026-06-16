@@ -2138,7 +2138,7 @@
 
       <div class="modal-actions">
         <button class="btn-action btn-secondary" onclick="cerrarModales()">Cancelar</button>
-        <button class="btn-action btn-primary" onclick="guardarFormularioTurno()">Guardar turno</button>
+        <button id="btnGuardarTurno" class="btn-action btn-primary" onclick="guardarFormularioTurno()">Guardar turno</button>
       </div>
     </div>
   </div>
@@ -2218,7 +2218,7 @@
 
       <div class="modal-actions">
         <button class="btn-action btn-secondary" onclick="cerrarModales()">Cancelar</button>
-        <button class="btn-action btn-primary" onclick="guardarEdicionTurno()">Guardar cambios</button>
+        <button id="btnGuardarEdicionTurno" class="btn-action btn-primary" onclick="guardarEdicionTurno()">Guardar cambios</button>
       </div>
     </div>
   </div>
@@ -2279,7 +2279,7 @@
 
       <div class="modal-actions">
         <button class="btn-action btn-secondary" onclick="cerrarModales()">Cancelar</button>
-        <button class="btn-action btn-primary" onclick="guardarTratamientosPaciente()">Guardar pendientes</button>
+        <button id="btnGuardarTratamientosPaciente" class="btn-action btn-primary" onclick="guardarTratamientosPaciente()">Guardar pendientes</button>
       </div>
     </div>
   </div>
@@ -2291,7 +2291,7 @@
       <div class="modal-subtitle">Creá la ficha antes de darle turno. Después, al cargar un turno con ese DNI, se autocompletan los datos.</div>
 
       <div class="manual-ficha-note">
-        Campos necesarios: DNI y nombre. El apellido, teléfono, datos extra y tratamientos pendientes son opcionales, pero ayudan para búsqueda, WhatsApp y seguimiento.
+        Campos necesarios: DNI y nombre. El apellido queda separado para búsquedas y listados; teléfono, datos extra y tratamientos pendientes son opcionales, pero ayudan para WhatsApp y seguimiento.
       </div>
 
       <div class="form-group">
@@ -2332,7 +2332,7 @@
 
       <div class="modal-actions">
         <button class="btn-action btn-secondary" onclick="cerrarModales()">Cancelar</button>
-        <button class="btn-action btn-primary" onclick="guardarFichaPaciente()">Guardar ficha</button>
+        <button id="btnGuardarFichaPaciente" class="btn-action btn-primary" onclick="guardarFichaPaciente()">Guardar ficha</button>
       </div>
     </div>
   </div>
@@ -3158,16 +3158,16 @@
     }
 
     function aplicarTemplateMensaje(template, datos) {
-      const datosNombre = obtenerDatosMensajePaciente(datos.nombre || datos.paciente || '', datos.apellido || '', datos.nombre_completo || '');
+      const nombres = normalizarNombrePaciente(datos.nombre, datos.apellido, datos.nombre_completo || datos.paciente);
       const vars = {
-        paciente: datosNombre.nombre || datosNombre.paciente || '',
-        nombre: datosNombre.nombre || datosNombre.paciente || '',
-        apellido: datosNombre.apellido || '',
-        nombre_completo: datosNombre.nombre_completo || datosNombre.paciente || '',
+        paciente: datos.paciente || nombres.nombre || nombres.nombre_completo || '',
+        nombre: datos.nombre || nombres.nombre || nombres.nombre_completo || '',
+        apellido: datos.apellido || nombres.apellido || '',
+        nombre_completo: datos.nombre_completo || nombres.nombre_completo || '',
         fecha: datos.fecha || '',
         hora: datos.hora || '',
         tratamientos: datos.tratamientos || '',
-        consultorio: CLINICA_ACTUAL?.nombre || 'consultorio'
+        consultorio: datos.consultorio || CLINICA_ACTUAL?.nombre || 'consultorio'
       };
       return String(template || '').replace(/\{(paciente|nombre|apellido|nombre_completo|fecha|hora|tratamientos|consultorio)\}/g, (_, key) => vars[key] || '');
     }
@@ -3242,7 +3242,7 @@
       const key = slugCampoPaciente(label);
       if (!key) { mostrarToast('Ese nombre de campo no es válido.'); return; }
       const reservados = ['dni', 'documento', 'nombre', 'apellido', 'nombre_completo', 'telefono', 'celular'];
-      if (reservados.includes(key)) { mostrarToast('DNI, nombre y teléfono son campos fijos. No los agregues acá.'); return; }
+      if (reservados.includes(key)) { mostrarToast('DNI, nombre, apellido y teléfono son campos fijos. No los agregues acá.'); return; }
       const campos = obtenerCamposPacienteConfigurados();
       if (campos.some(c => c.key === key)) { mostrarToast('Ese campo ya existe.'); return; }
       campos.push({ key, label, tipo: 'texto' });
@@ -3498,6 +3498,21 @@
       };
     }
 
+    function dividirNombreCompleto(valor) {
+      const limpio = String(valor || '').trim().replace(/\s+/g, ' ');
+      if (!limpio) return { nombre: '', apellido: '' };
+
+      const partes = limpio.split(' ');
+      if (partes.length === 1) {
+        return { nombre: partes[0], apellido: '' };
+      }
+
+      return {
+        nombre: partes[0],
+        apellido: partes.slice(1).join(' ')
+      };
+    }
+
     function normalizarTexto(valor) {
       return String(valor || '')
         .normalize('NFD')
@@ -3554,10 +3569,11 @@
     function completarFormularioConPaciente(prefijo, paciente) {
       if (!paciente) return;
 
+      escribirNombrePacienteFormulario(prefijo, paciente);
+
       const telInput = document.getElementById(prefijo + 'Telefono');
       const extraContainerId = prefijo === 'form' ? 'formCamposExtraPaciente' : (prefijo === 'edit' ? 'editCamposExtraPaciente' : 'fichaCamposExtraPaciente');
 
-      escribirNombrePacienteFormulario(prefijo, paciente);
       if (telInput) telInput.value = paciente.telefono || '';
       renderCamposPacienteFormulario(extraContainerId, prefijo + 'Extra', paciente.datosExtra || {});
 
@@ -3579,8 +3595,7 @@
       hint.innerText = '';
 
       if (dniIngresado === '') {
-        document.getElementById('formNombre').value = '';
-        document.getElementById('formApellido').value = '';
+        escribirNombrePacienteFormulario('form', { nombre: '', apellido: '' });
         document.getElementById('formTelefono').value = '';
         renderCamposPacienteFormulario('formCamposExtraPaciente', 'formExtra', {});
         return;
@@ -3700,7 +3715,7 @@
       PACIENTES_DB.forEach(p => {
         const pacienteId = String(p.id || '');
         if (!pacienteId) return;
-        const nombres = normalizarNombrePaciente(p.nombre, p.apellido, p.nombre_completo || '');
+        const nombres = normalizarNombrePaciente(p.nombre, p.apellido, p.nombre_completo);
         mapaPacientes[pacienteId] = {
           id: pacienteId,
           dni: String(p.dni || '').replace(/\D/g, ''),
@@ -3718,13 +3733,14 @@
         const pacienteId = String(turno.pacienteId || '');
         if (!pacienteId) return;
         const esPasado = turno.fecha < hoyStr;
+        const nombresTurno = normalizarNombrePaciente(turno.nombre, turno.apellido, turno.nombre_completo);
 
         if (!mapaPacientes[pacienteId]) {
           mapaPacientes[pacienteId] = {
             id: pacienteId,
             dni: String(turno.dni || '').replace(/\D/g, ''),
-            nombre: turno.nombre || '',
-            apellido: turno.apellido || '',
+            nombre: nombresTurno.nombre || '',
+            apellido: nombresTurno.apellido || '',
             telefono: turno.telefono || '',
             datosExtra: normalizarDatosExtraPaciente(turno.datosExtra || {}),
             ultimaVisita: '',
@@ -3735,8 +3751,8 @@
 
         if ((turno.timestamp || 0) > mapaPacientes[pacienteId].timestampMax) {
           mapaPacientes[pacienteId].timestampMax = turno.timestamp || 0;
-          mapaPacientes[pacienteId].nombre = turno.nombre || '';
-          mapaPacientes[pacienteId].apellido = turno.apellido || '';
+          mapaPacientes[pacienteId].nombre = nombresTurno.nombre || mapaPacientes[pacienteId].nombre;
+          mapaPacientes[pacienteId].apellido = nombresTurno.apellido || mapaPacientes[pacienteId].apellido;
           if (turno.telefono) mapaPacientes[pacienteId].telefono = turno.telefono;
           if (turno.datosExtra) mapaPacientes[pacienteId].datosExtra = normalizarDatosExtraPaciente(turno.datosExtra || {});
         }
@@ -3818,7 +3834,7 @@
       const filtroNombre = normalizarTexto(FILTRO_NOMBRE_PACIENTES);
 
       const listaFiltrada = renderList.filter(p => {
-        const nombreCompleto = [p.nombre, p.apellido].filter(Boolean).join(' ');
+        const nombreCompleto = construirNombreCompleto(p.nombre, p.apellido);
         const extraTexto = Object.values(p.datosExtra || {}).join(' ');
         const coincideDni = filtroDni ? String(p.dni || '').includes(filtroDni) : true;
         const coincideNombre = filtroNombre ? normalizarTexto(`${nombreCompleto} ${extraTexto}`).includes(filtroNombre) : true;
@@ -3842,7 +3858,7 @@
       }
 
       listaFiltrada.forEach(p => {
-        const nombreCompleto = [p.nombre, p.apellido].filter(Boolean).join(' ');
+        const nombreCompleto = construirNombreCompleto(p.nombre, p.apellido);
         const fechaVisitaLegible = p.ultimaVisita ? convertirFechaLatina(p.ultimaVisita) : 'Sin visitas';
         const diasTxt = p.diasTranscurridos === null ? '—' : `${p.diasTranscurridos} días`;
 
@@ -3982,7 +3998,7 @@
       if (!id) { alert('Paciente inválido.'); return; }
 
       const paciente = buscarPacienteLocalPorId(id);
-      const nombre = normalizarNombrePaciente(paciente?.nombre, paciente?.apellido, paciente?.nombre_completo).nombre_completo || 'este paciente';
+      const nombre = paciente?.nombre_completo || 'este paciente';
 
       const ok = confirm(
         `¿Seguro que querés borrar la ficha de ${nombre}?\n\n` +
@@ -4034,7 +4050,7 @@
       const t = TRATAMIENTOS_DB[id] || {};
       document.getElementById('tratPacienteId').value = id;
       renderInputsTratamientos('tratamientosPacienteInputs', 'trat', t);
-      const nombre = normalizarNombrePaciente(paciente?.nombre, paciente?.apellido, paciente?.nombre_completo).nombre_completo || paciente?.dni || 'paciente';
+      const nombre = paciente?.nombre_completo || paciente?.dni || 'paciente';
       document.getElementById('modalTratamientosInfo').innerText = `Ficha de ${nombre}. Usá + y − para actualizar las cantidades pendientes.`;
       abrirModal('modalTratamientos');
     }
@@ -4075,8 +4091,7 @@
 
     function abrirAltaFichaPaciente() {
       document.getElementById('fichaDni').value = '';
-      document.getElementById('fichaNombre').value = '';
-      document.getElementById('fichaApellido').value = '';
+      escribirNombrePacienteFormulario('ficha', { nombre: '', apellido: '' });
       document.getElementById('fichaTelefono').value = '';
       renderCamposPacienteFormulario('fichaCamposExtraPaciente', 'fichaExtra', {});
       renderInputsTratamientos('fichaTratamientosInputs', 'ficha', {});
@@ -4094,8 +4109,7 @@
       hint.className = 'patient-hint';
       hint.innerText = '';
       if (dniIngresado === '') {
-        document.getElementById('fichaNombre').value = '';
-        document.getElementById('fichaApellido').value = '';
+        escribirNombrePacienteFormulario('ficha', { nombre: '', apellido: '' });
         document.getElementById('fichaTelefono').value = '';
         renderCamposPacienteFormulario('fichaCamposExtraPaciente', 'fichaExtra', {});
         renderInputsTratamientos('fichaTratamientosInputs', 'ficha', {});
@@ -4105,18 +4119,13 @@
       const paciente = buscarPacienteLocalPorDni(dniIngresado);
       const tratamientos = paciente ? (TRATAMIENTOS_DB[paciente.id] || {}) : {};
       if (paciente) {
-        escribirNombrePacienteFormulario('ficha', paciente);
-        document.getElementById('fichaTelefono').value = paciente.telefono || '';
-        renderCamposPacienteFormulario('fichaCamposExtraPaciente', 'fichaExtra', paciente.datosExtra || {});
+        completarFormularioConPaciente('ficha', paciente);
         renderInputsTratamientos('fichaTratamientosInputs', 'ficha', tratamientos);
-        ['fichaNombre', 'fichaApellido', 'fichaTelefono'].forEach(id => {
-          const el = document.getElementById(id);
-          if (!el) return;
-          el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
-        });
         hint.className = 'patient-hint found';
         hint.innerText = 'Ficha existente. Podés corregir datos o actualizar pendientes.';
       } else {
+        escribirNombrePacienteFormulario('ficha', { nombre: '', apellido: '' });
+        document.getElementById('fichaTelefono').value = '';
         renderCamposPacienteFormulario('fichaCamposExtraPaciente', 'fichaExtra', {});
         renderInputsTratamientos('fichaTratamientosInputs', 'ficha', {});
         hint.className = 'patient-hint new';
@@ -4125,32 +4134,40 @@
     }
 
     async function guardarFichaPaciente() {
-      const dni = String(document.getElementById('fichaDni').value || '').replace(/\D/g, '');
-      const nombres = leerNombrePacienteFormulario('ficha');
-      const telefono = String(document.getElementById('fichaTelefono').value || '').trim();
-      const datosExtra = leerCamposPacienteFormulario('fichaCamposExtraPaciente');
-      if (!dni || !nombres.nombre) { alert('DNI y nombre del paciente son obligatorios para crear la ficha.'); return; }
-      const tratamientos = leerInputsTratamientos('fichaTratamientosInputs');
-      const tieneTratamientos = Object.values(tratamientos).some(v => v > 0);
-      const { data: paciente, error: errorPaciente } = await supabaseClient.from('pacientes').upsert(
-        payloadPacienteSupabase({ dni, nombre: nombres.nombre, apellido: nombres.apellido, telefono, datosExtra }),
-        { onConflict: 'clinica_id,dni' }
-      ).select().single();
-      if (errorPaciente) { alert('Error guardando ficha: ' + errorPaciente.message); return; }
-      if (tieneTratamientos) {
-        const { error: errorTratamientos } = await supabaseClient.from('tratamientos_pendientes').upsert({
-          clinica_id: CLINICA_ID, paciente_id: paciente.id, pendientes: tratamientos,
-          caries: normalizarCantidad(tratamientos.caries), conductos: normalizarCantidad(tratamientos.conductos),
-          extracciones: normalizarCantidad(tratamientos.extracciones), coronas: normalizarCantidad(tratamientos.coronas),
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'clinica_id,paciente_id' });
-        if (errorTratamientos) alert('La ficha se guardó, pero no se pudieron guardar tratamientos pendientes: ' + errorTratamientos.message);
+      const botonGuardar = document.getElementById('btnGuardarFichaPaciente');
+      if (botonGuardar?.disabled) return;
+      if (botonGuardar) botonGuardar.disabled = true;
+
+      try {
+        const dni = String(document.getElementById('fichaDni').value || '').replace(/\D/g, '');
+        const nombres = leerNombrePacienteFormulario('ficha');
+        const telefono = String(document.getElementById('fichaTelefono').value || '').trim();
+        const datosExtra = leerCamposPacienteFormulario('fichaCamposExtraPaciente');
+        if (!dni || !nombres.nombre) { alert('DNI y nombre del paciente son obligatorios para crear la ficha.'); return; }
+        const tratamientos = leerInputsTratamientos('fichaTratamientosInputs');
+        const tieneTratamientos = Object.values(tratamientos).some(v => v > 0);
+        const { data: paciente, error: errorPaciente } = await supabaseClient.from('pacientes').upsert(
+          payloadPacienteSupabase({ dni, nombre: nombres.nombre, apellido: nombres.apellido, telefono, datosExtra }),
+          { onConflict: 'clinica_id,dni' }
+        ).select().single();
+        if (errorPaciente) { alert('Error guardando ficha: ' + errorPaciente.message); return; }
+        if (tieneTratamientos) {
+          const { error: errorTratamientos } = await supabaseClient.from('tratamientos_pendientes').upsert({
+            clinica_id: CLINICA_ID, paciente_id: paciente.id, pendientes: tratamientos,
+            caries: normalizarCantidad(tratamientos.caries), conductos: normalizarCantidad(tratamientos.conductos),
+            extracciones: normalizarCantidad(tratamientos.extracciones), coronas: normalizarCantidad(tratamientos.coronas),
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'clinica_id,paciente_id' });
+          if (errorTratamientos) alert('La ficha se guardó, pero no se pudieron guardar tratamientos pendientes: ' + errorTratamientos.message);
+        }
+        await cargarDatosDesdeSupabase();
+        calcularYRenderizarPacientes();
+        renderizarCalendarioCompleto();
+        cerrarModales();
+        mostrarToast('Ficha de paciente guardada correctamente.');
+      } finally {
+        if (botonGuardar) botonGuardar.disabled = false;
       }
-      await cargarDatosDesdeSupabase();
-      calcularYRenderizarPacientes();
-      renderizarCalendarioCompleto();
-      cerrarModales();
-      mostrarToast('Ficha de paciente guardada correctamente.');
     }
 
     function obtenerLunesDeSemana(d) {
@@ -4572,8 +4589,7 @@
       document.getElementById('formFecha').value = fecha;
       document.getElementById('formHora').value = hora;
       document.getElementById('formDni').value = '';
-      document.getElementById('formNombre').value = '';
-      document.getElementById('formApellido').value = '';
+      escribirNombrePacienteFormulario('form', { nombre: '', apellido: '' });
       document.getElementById('formTelefono').value = '';
       renderCamposPacienteFormulario('formCamposExtraPaciente', 'formExtra', {});
 
@@ -4608,91 +4624,98 @@
     }
 
     async function guardarFormularioTurno() {
-      const nombres = leerNombrePacienteFormulario('form');
+      const botonGuardar = document.getElementById('btnGuardarTurno');
+      if (botonGuardar?.disabled) return;
+      if (botonGuardar) botonGuardar.disabled = true;
 
-      const data = {
-        fecha: document.getElementById('formFecha').value,
-        hora: document.getElementById('formHora').value,
-        dni: document.getElementById('formDni').value.trim().replace(/\D/g, ''),
-        nombre: nombres.nombre,
-        apellido: nombres.apellido,
-        telefono: document.getElementById('formTelefono').value.trim(),
-        datosExtra: leerCamposPacienteFormulario('formCamposExtraPaciente'),
-        categoria: 'Consulta',
-        observacion: ''
-      };
+      try {
+        const nombres = leerNombrePacienteFormulario('form');
+        const data = {
+          fecha: document.getElementById('formFecha').value,
+          hora: document.getElementById('formHora').value,
+          dni: document.getElementById('formDni').value.trim().replace(/\D/g, ''),
+          nombre: nombres.nombre,
+          apellido: nombres.apellido,
+          telefono: document.getElementById('formTelefono').value.trim(),
+          datosExtra: leerCamposPacienteFormulario('formCamposExtraPaciente'),
+          categoria: 'Consulta',
+          observacion: ''
+        };
 
-      if (!data.dni || !data.nombre) {
-        alert('DNI y nombre del paciente son campos obligatorios.');
-        return;
-      }
+        if (!data.dni || !data.nombre) {
+          alert('DNI y nombre del paciente son campos obligatorios.');
+          return;
+        }
 
-      cerrarModales();
+        cerrarModales();
 
-      const tempId = 'TMP-' + Date.now();
-      const copiaLocal = {
-        id: tempId,
-        fecha: data.fecha,
-        hora: data.hora,
-        nombre: data.nombre,
-        apellido: data.apellido,
-        telefono: data.telefono,
-        dni: data.dni,
-        datosExtra: data.datosExtra,
-        categoria: 'Consulta',
-        observacion: '',
-        confirmado: false,
-        timestamp: Date.now(),
-        extension: false,
-        parentId: '',
-        pacienteId: null
-      };
-
-      BASE_DATOS.push(copiaLocal);
-      upsertPacienteLocal(data.dni, data.nombre, data.apellido, data.telefono, null, data.datosExtra);
-      renderizarCalendarioCompleto();
-      calcularYRenderizarPacientes();
-
-      const { data: paciente, error: errorPaciente } = await supabaseClient
-        .from('pacientes')
-        .upsert(payloadPacienteSupabase(data), { onConflict: 'clinica_id,dni' })
-        .select()
-        .single();
-
-      if (errorPaciente) {
-        BASE_DATOS = BASE_DATOS.filter(t => t.id !== tempId);
-        renderizarCalendarioCompleto();
-        calcularYRenderizarPacientes();
-        alert('Error guardando paciente: ' + errorPaciente.message);
-        return;
-      }
-
-      const { error: errorTurno } = await supabaseClient
-        .from('turnos')
-        .insert({
-          clinica_id: CLINICA_ID,
-          paciente_id: paciente.id,
+        const tempId = 'TMP-' + Date.now();
+        const copiaLocal = {
+          id: tempId,
           fecha: data.fecha,
           hora: data.hora,
+          nombre: data.nombre,
+          apellido: data.apellido,
+          telefono: data.telefono,
+          dni: data.dni,
+          datosExtra: data.datosExtra,
+          categoria: 'Consulta',
+          observacion: '',
           confirmado: false,
+          timestamp: Date.now(),
           extension: false,
-          parent_id: null
-        });
+          parentId: '',
+          pacienteId: null
+        };
 
-      if (errorTurno) {
-        BASE_DATOS = BASE_DATOS.filter(t => t.id !== tempId);
+        BASE_DATOS.push(copiaLocal);
+        upsertPacienteLocal(data.dni, data.nombre, data.apellido, data.telefono, null, data.datosExtra);
         renderizarCalendarioCompleto();
         calcularYRenderizarPacientes();
 
-        if (errorTurno.code === '23505') alert('Ese horario ya está ocupado.');
-        else alert('Error guardando turno: ' + errorTurno.message);
-        return;
-      }
+        const { data: paciente, error: errorPaciente } = await supabaseClient
+          .from('pacientes')
+          .upsert(payloadPacienteSupabase(data), { onConflict: 'clinica_id,dni' })
+          .select()
+          .single();
 
-      await cargarDatosDesdeSupabase();
-      renderizarCalendarioCompleto();
-      calcularYRenderizarPacientes();
-      mostrarToast('Turno guardado correctamente.');
+        if (errorPaciente) {
+          BASE_DATOS = BASE_DATOS.filter(t => t.id !== tempId);
+          renderizarCalendarioCompleto();
+          calcularYRenderizarPacientes();
+          alert('Error guardando paciente: ' + errorPaciente.message);
+          return;
+        }
+
+        const { error: errorTurno } = await supabaseClient
+          .from('turnos')
+          .insert({
+            clinica_id: CLINICA_ID,
+            paciente_id: paciente.id,
+            fecha: data.fecha,
+            hora: data.hora,
+            confirmado: false,
+            extension: false,
+            parent_id: null
+          });
+
+        if (errorTurno) {
+          BASE_DATOS = BASE_DATOS.filter(t => t.id !== tempId);
+          renderizarCalendarioCompleto();
+          calcularYRenderizarPacientes();
+
+          if (errorTurno.code === '23505') alert('Ese horario ya está ocupado.');
+          else alert('Error guardando turno: ' + errorTurno.message);
+          return;
+        }
+
+        await cargarDatosDesdeSupabase();
+        renderizarCalendarioCompleto();
+        calcularYRenderizarPacientes();
+        mostrarToast('Turno guardado correctamente.');
+      } finally {
+        if (botonGuardar) botonGuardar.disabled = false;
+      }
     }
 
     function upsertPacienteLocal(dni, nombre, apellido, telefono, id, datosExtra) {
@@ -4779,97 +4802,105 @@
     }
 
     async function guardarEdicionTurno() {
-      const id = document.getElementById('editTurnoId').value;
-      const t = BASE_DATOS.find(item => item.id === id);
+      const botonGuardar = document.getElementById('btnGuardarEdicionTurno');
+      if (botonGuardar?.disabled) return;
+      if (botonGuardar) botonGuardar.disabled = true;
 
-      if (!t) { alert('No se encontró el turno a editar.'); return; }
+      try {
+        const id = document.getElementById('editTurnoId').value;
+        const t = BASE_DATOS.find(item => item.id === id);
 
-      const dni = document.getElementById('editDni').value.trim().replace(/\D/g, '');
-      const nombres = leerNombrePacienteFormulario('edit');
-      const telefono = document.getElementById('editTelefono').value.trim();
-      const datosExtra = leerCamposPacienteFormulario('editCamposExtraPaciente');
+        if (!t) { alert('No se encontró el turno a editar.'); return; }
 
-      if (!dni || !nombres.nombre) { alert('DNI y nombre del paciente son obligatorios.'); return; }
+        const dni = document.getElementById('editDni').value.trim().replace(/\D/g, '');
+        const nombres = leerNombrePacienteFormulario('edit');
+        const telefono = document.getElementById('editTelefono').value.trim();
+        const datosExtra = leerCamposPacienteFormulario('editCamposExtraPaciente');
 
-      const backupTurno = { ...t };
-      const backupPacientes = JSON.parse(JSON.stringify(PACIENTES_DB));
+        if (!dni || !nombres.nombre) { alert('DNI y nombre del paciente son obligatorios.'); return; }
 
-      t.dni = dni;
-      t.nombre = nombres.nombre;
-      t.apellido = nombres.apellido;
-      t.telefono = telefono;
-      t.datosExtra = datosExtra;
-      upsertPacienteLocal(dni, nombres.nombre, nombres.apellido, telefono, t.pacienteId, datosExtra);
+        const backupTurno = { ...t };
+        const backupPacientes = JSON.parse(JSON.stringify(PACIENTES_DB));
 
-      cerrarModales();
-      renderizarCalendarioCompleto();
-      calcularYRenderizarPacientes();
+        t.dni = dni;
+        t.nombre = nombres.nombre;
+        t.apellido = nombres.apellido;
+        t.telefono = telefono;
+        t.datosExtra = datosExtra;
+        upsertPacienteLocal(dni, nombres.nombre, nombres.apellido, telefono, t.pacienteId, datosExtra);
 
-      const pacienteExistentePorDni = buscarPacienteLocalPorDni(dni);
-      let paciente = null;
-      let errorPaciente = null;
-      const payload = payloadPacienteSupabase({ dni, nombre: nombres.nombre, apellido: nombres.apellido, telefono, datosExtra });
-
-      if (pacienteExistentePorDni && pacienteExistentePorDni.id && pacienteExistentePorDni.id !== t.pacienteId) {
-        const res = await supabaseClient
-          .from('pacientes')
-          .update({ nombre: payload.nombre, apellido: payload.apellido, nombre_completo: payload.nombre_completo, telefono: payload.telefono, datos_extra: payload.datos_extra })
-          .eq('id', pacienteExistentePorDni.id)
-          .eq('clinica_id', CLINICA_ID)
-          .select()
-          .single();
-        paciente = res.data;
-        errorPaciente = res.error;
-      } else if (t.pacienteId) {
-        const res = await supabaseClient
-          .from('pacientes')
-          .update({ dni: payload.dni, nombre: payload.nombre, apellido: payload.apellido, nombre_completo: payload.nombre_completo, telefono: payload.telefono, datos_extra: payload.datos_extra })
-          .eq('id', t.pacienteId)
-          .eq('clinica_id', CLINICA_ID)
-          .select()
-          .single();
-        paciente = res.data;
-        errorPaciente = res.error;
-      } else {
-        const res = await supabaseClient
-          .from('pacientes')
-          .upsert(payload, { onConflict: 'clinica_id,dni' })
-          .select()
-          .single();
-        paciente = res.data;
-        errorPaciente = res.error;
-      }
-
-      if (errorPaciente || !paciente) {
-        Object.assign(t, backupTurno);
-        PACIENTES_DB = backupPacientes;
+        cerrarModales();
         renderizarCalendarioCompleto();
         calcularYRenderizarPacientes();
-        alert('Error guardando paciente: ' + (errorPaciente?.message || 'No se pudo guardar.'));
-        return;
-      }
 
-      const { error: errorTurno } = await supabaseClient
-        .from('turnos')
-        .update({ paciente_id: paciente.id })
-        .eq('id', id)
-        .eq('clinica_id', CLINICA_ID);
+        const pacienteExistentePorDni = buscarPacienteLocalPorDni(dni);
+        let paciente = null;
+        let errorPaciente = null;
+        const payload = payloadPacienteSupabase({ dni, nombre: nombres.nombre, apellido: nombres.apellido, telefono, datosExtra });
 
-      if (errorTurno) {
-        Object.assign(t, backupTurno);
-        PACIENTES_DB = backupPacientes;
+        if (pacienteExistentePorDni && pacienteExistentePorDni.id && pacienteExistentePorDni.id !== t.pacienteId) {
+          const res = await supabaseClient
+            .from('pacientes')
+            .update({ nombre: payload.nombre, apellido: payload.apellido, nombre_completo: payload.nombre_completo, telefono, datos_extra: payload.datos_extra })
+            .eq('id', pacienteExistentePorDni.id)
+            .eq('clinica_id', CLINICA_ID)
+            .select()
+            .single();
+          paciente = res.data;
+          errorPaciente = res.error;
+        } else if (t.pacienteId) {
+          const res = await supabaseClient
+            .from('pacientes')
+            .update({ dni, nombre: payload.nombre, apellido: payload.apellido, nombre_completo: payload.nombre_completo, telefono, datos_extra: payload.datos_extra })
+            .eq('id', t.pacienteId)
+            .eq('clinica_id', CLINICA_ID)
+            .select()
+            .single();
+          paciente = res.data;
+          errorPaciente = res.error;
+        } else {
+          const res = await supabaseClient
+            .from('pacientes')
+            .upsert(payload, { onConflict: 'clinica_id,dni' })
+            .select()
+            .single();
+          paciente = res.data;
+          errorPaciente = res.error;
+        }
+
+        if (errorPaciente || !paciente) {
+          Object.assign(t, backupTurno);
+          PACIENTES_DB = backupPacientes;
+          renderizarCalendarioCompleto();
+          calcularYRenderizarPacientes();
+          alert('Error guardando paciente: ' + (errorPaciente?.message || 'No se pudo guardar.'));
+          return;
+        }
+
+        const { error: errorTurno } = await supabaseClient
+          .from('turnos')
+          .update({ paciente_id: paciente.id })
+          .eq('id', id)
+          .eq('clinica_id', CLINICA_ID);
+
+        if (errorTurno) {
+          Object.assign(t, backupTurno);
+          PACIENTES_DB = backupPacientes;
+          renderizarCalendarioCompleto();
+          calcularYRenderizarPacientes();
+          alert('Error actualizando turno: ' + errorTurno.message);
+          return;
+        }
+
+        t.pacienteId = paciente.id;
+        upsertPacienteLocal(dni, payload.nombre, payload.apellido, telefono, paciente.id, datosExtra);
+        await cargarDatosDesdeSupabase();
         renderizarCalendarioCompleto();
         calcularYRenderizarPacientes();
-        alert('Error actualizando turno: ' + errorTurno.message);
-        return;
+        mostrarToast('Turno editado correctamente.');
+      } finally {
+        if (botonGuardar) botonGuardar.disabled = false;
       }
-
-      t.pacienteId = paciente.id;
-      upsertPacienteLocal(dni, nombres.nombre, nombres.apellido, telefono, paciente.id, datosExtra);
-      await cargarDatosDesdeSupabase();
-      renderizarCalendarioCompleto();
-      calcularYRenderizarPacientes();
-      mostrarToast('Turno editado correctamente.');
     }
 
     function abrirReprogramarTurnoActual() {
@@ -5143,20 +5174,39 @@
       if (!t) return '';
       const fPartes = String(t.fecha || '').split('-');
       const fechaTxt = fPartes.length === 3 ? `${fPartes[2]}/${fPartes[1]}` : String(t.fecha || '');
-      const datosNombre = obtenerDatosMensajePaciente(t.nombre, t.apellido, nombreCompletoTurno(t));
+      const nombres = normalizarNombrePaciente(t.nombre, t.apellido, t.nombre_completo);
       const template = (CONFIG_CLINICA || DEFAULT_CONFIG_CLINICA).mensajes?.turno || DEFAULT_CONFIG_CLINICA.mensajes.turno;
-      return aplicarTemplateMensaje(template, { ...datosNombre, fecha: fechaTxt, hora: t.hora || '', tratamientos: '' });
+      return aplicarTemplateMensaje(template, {
+        paciente: nombres.nombre || nombres.nombre_completo,
+        nombre: nombres.nombre,
+        apellido: nombres.apellido,
+        nombre_completo: nombres.nombre_completo,
+        fecha: fechaTxt,
+        hora: t.hora || '',
+        tratamientos: '',
+        consultorio: CLINICA_ACTUAL?.nombre || 'consultorio'
+      });
     }
 
     function construirMensajeSeguimientoPaciente(nombre, pacienteId) {
-      const paciente = buscarPacienteLocalPorId(pacienteId);
-      const datosNombre = paciente
-        ? obtenerDatosMensajePaciente(paciente.nombre, paciente.apellido, paciente.nombre_completo)
-        : obtenerDatosMensajePaciente(nombre, '', nombre);
+      const paciente = buscarPacienteLocalPorId(pacienteId) || {};
+      const fallback = normalizarNombrePaciente('', '', nombre || '');
+      const nombres = normalizarNombrePaciente(
+        paciente.nombre || fallback.nombre,
+        paciente.apellido || fallback.apellido,
+        paciente.nombre_completo || fallback.nombre_completo
+      );
       const pendientesTxt = armarTextoTratamientosPendientes(pacienteId);
       const mensajes = (CONFIG_CLINICA || DEFAULT_CONFIG_CLINICA).mensajes || DEFAULT_CONFIG_CLINICA.mensajes;
       const template = pendientesTxt ? (mensajes.paciente_con_pendientes || DEFAULT_CONFIG_CLINICA.mensajes.paciente_con_pendientes) : (mensajes.paciente_sin_pendientes || DEFAULT_CONFIG_CLINICA.mensajes.paciente_sin_pendientes);
-      return aplicarTemplateMensaje(template, { ...datosNombre, tratamientos: pendientesTxt });
+      return aplicarTemplateMensaje(template, {
+        paciente: nombres.nombre || nombres.nombre_completo,
+        nombre: nombres.nombre,
+        apellido: nombres.apellido,
+        nombre_completo: nombres.nombre_completo,
+        tratamientos: pendientesTxt,
+        consultorio: CLINICA_ACTUAL?.nombre || 'consultorio'
+      });
     }
 
     function abrirSoporteWhatsApp(event) {
