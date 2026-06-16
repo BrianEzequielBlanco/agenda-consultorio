@@ -1338,6 +1338,20 @@
     .config-add-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); }
     .config-textarea { min-height: 88px; resize: vertical; line-height: 1.45; }
     .config-variable-pill { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 7px; border-radius: 999px; background: var(--blue-light); color: var(--blue-hover); margin: 2px 3px 2px 0; }
+    .variables-helper-box { border: 1px solid #bfdbfe; background: #eff6ff; border-radius: 14px; padding: 12px; margin: 8px 0 12px; }
+    .variables-helper-title { font-size: 12px; font-weight: 900; color: #1d4ed8; text-transform: uppercase; letter-spacing: .02em; margin-bottom: 6px; }
+    .variables-helper-main { font-size: 13px; color: #1e293b; line-height: 1.45; margin-bottom: 10px; }
+    .variables-helper-main strong { color: #0f172a; }
+    .variables-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .variable-card { border: 1px solid #e2e8f0; background: #ffffff; border-radius: 12px; padding: 9px 10px; }
+    .variable-card code { display: inline-block; font-size: 12px; font-weight: 900; color: #075985; background: #e0f2fe; border-radius: 999px; padding: 3px 8px; margin-bottom: 5px; }
+    .variable-card.recommended { border-color: #86efac; background: #f0fdf4; }
+    .variable-card.recommended code { color: #166534; background: #dcfce7; }
+    .variable-card.legacy { opacity: .82; background: #f8fafc; }
+    .variable-card p { margin: 0; font-size: 12px; color: #475569; line-height: 1.35; }
+    .message-tip { margin-top: 6px; font-size: 12px; color: #64748b; }
+    .message-tip strong { color: #334155; }
+    @media (max-width: 680px) { .variables-grid { grid-template-columns: 1fr; } }
     .modal-card.config-modal-card { max-width: 860px; max-height: calc(100vh - 38px); overflow-y: auto; }
     .config-days-grid { display: flex; flex-direction: column; gap: 8px; }
     .config-day-row {
@@ -2378,22 +2392,40 @@
         </div>
         <div class="config-section">
           <div class="config-section-title">Mensajes automáticos</div>
-          <div class="config-help">Variables disponibles:
-            <span class="config-variable-pill">{paciente}</span><span class="config-variable-pill">{nombre}</span><span class="config-variable-pill">{apellido}</span><span class="config-variable-pill">{nombre_completo}</span><span class="config-variable-pill">{fecha}</span><span class="config-variable-pill">{hora}</span><span class="config-variable-pill">{tratamientos}</span><span class="config-variable-pill">{consultorio}</span>
+          <div class="variables-helper-box">
+            <div class="variables-helper-title">Cómo usar las variables</div>
+            <div class="variables-helper-main">
+              Para que el WhatsApp suene humano, usá <strong>{primer_nombre}</strong>. Ejemplo: si la ficha dice <strong>Juan Carlos Pérez</strong>, el mensaje sale <strong>“Hola Juan”</strong>.
+              Usá <strong>{nombre}</strong> si querés todos los nombres cargados, y <strong>{nombre_completo}</strong> solo cuando quieras nombre y apellido juntos.
+            </div>
+            <div class="variables-grid">
+              <div class="variable-card recommended"><code>{primer_nombre}</code><p>Primera palabra del nombre. Recomendado para saludar. Ej: Juan.</p></div>
+              <div class="variable-card"><code>{nombre}</code><p>Todos los nombres cargados. Ej: Juan Carlos.</p></div>
+              <div class="variable-card"><code>{apellido}</code><p>Apellido del paciente. Ej: Pérez.</p></div>
+              <div class="variable-card"><code>{nombre_completo}</code><p>Nombre + apellido. Ej: Juan Carlos Pérez.</p></div>
+              <div class="variable-card"><code>{fecha}</code><p>Fecha del turno. Ej: 08/06.</p></div>
+              <div class="variable-card"><code>{hora}</code><p>Hora del turno. Ej: 12:00.</p></div>
+              <div class="variable-card"><code>{tratamientos}</code><p>Lista de pendientes. Solo para mensajes con tratamientos.</p></div>
+              <div class="variable-card"><code>{consultorio}</code><p>Nombre del consultorio configurado.</p></div>
+              <div class="variable-card legacy"><code>{paciente}</code><p>Compatibilidad: hace lo mismo que {primer_nombre}. Mejor usá {primer_nombre}.</p></div>
+            </div>
           </div>
           <div class="form-group">
             <label>Agenda: recordatorio de turno</label>
             <textarea id="configMensajeTurno" class="form-control config-textarea"></textarea>
             <div class="helper-text">Lo usan WhatsApp y Copiar recordatorio dentro de la agenda.</div>
+            <div class="message-tip"><strong>Ejemplo recomendado:</strong> Hola {primer_nombre}, te recordamos tu turno el día {fecha} a las {hora} hs.</div>
           </div>
           <div class="form-group">
             <label>Pacientes: seguimiento sin tratamientos pendientes</label>
             <textarea id="configMensajePacienteSinPendientes" class="form-control config-textarea"></textarea>
+            <div class="message-tip"><strong>Ejemplo recomendado:</strong> Hola {primer_nombre}, ¿cómo estás?</div>
           </div>
           <div class="form-group">
             <label>Pacientes: seguimiento con tratamientos pendientes</label>
             <textarea id="configMensajePacienteConPendientes" class="form-control config-textarea"></textarea>
             <div class="helper-text">Usá {tratamientos} para insertar la lista con cantidades.</div>
+            <div class="message-tip"><strong>Ejemplo recomendado:</strong> Hola {primer_nombre}, tenemos registrado que te quedó pendiente: {tratamientos}.</div>
           </div>
         </div>
       </div>
@@ -2433,9 +2465,9 @@
       ],
       campos_paciente: [],
       mensajes: {
-        turno: 'Hola {nombre}, te recordamos tu turno en el consultorio el día {fecha} a las {hora} hs.\n¡Te esperamos!',
-        paciente_sin_pendientes: 'Hola {nombre}, ¿cómo estás?\nTe escribimos desde el consultorio para recordarte que hace un tiempo no realizás un control.\nSi querés coordinar un turno, estamos disponibles para ayudarte.',
-        paciente_con_pendientes: 'Hola {nombre}, ¿cómo estás?\nTe escribimos desde el consultorio porque tenemos registrado que te quedó pendiente: {tratamientos}.\nSi querés, podemos coordinar un turno para ir resolviéndolo. Estamos disponibles para ayudarte.'
+        turno: 'Hola {primer_nombre}, te recordamos tu turno en el consultorio el día {fecha} a las {hora} hs.\n¡Te esperamos!',
+        paciente_sin_pendientes: 'Hola {primer_nombre}, ¿cómo estás?\nTe escribimos desde el consultorio para recordarte que hace un tiempo no realizás un control.\nSi querés coordinar un turno, estamos disponibles para ayudarte.',
+        paciente_con_pendientes: 'Hola {primer_nombre}, ¿cómo estás?\nTe escribimos desde el consultorio porque tenemos registrado que te quedó pendiente: {tratamientos}.\nSi querés, podemos coordinar un turno para ir resolviéndolo. Estamos disponibles para ayudarte.'
       },
       horarios: {
         lunes: { activo: true, inicio: '09:00', fin: '16:30', intervalo: 30 },
@@ -2979,7 +3011,7 @@
     }
 
     function normalizarCamposPacienteConfiguracion(campos) {
-      const reservados = ['id', 'dni', 'documento', 'nombre', 'apellido', 'nombre_completo', 'telefono', 'celular', 'created_at', 'clinica_id'];
+      const reservados = ['id', 'dni', 'documento', 'nombre', 'nombre_completo', 'telefono', 'celular', 'created_at', 'clinica_id'];
       const arr = Array.isArray(campos) ? campos : [];
       const unicos = [];
       arr.forEach(c => {
@@ -3159,17 +3191,21 @@
 
     function aplicarTemplateMensaje(template, datos) {
       const nombres = normalizarNombrePaciente(datos.nombre, datos.apellido, datos.nombre_completo || datos.paciente);
+      const nombreTexto = datos.nombre || nombres.nombre || nombres.nombre_completo || datos.paciente || '';
+      const primerNombre = datos.primer_nombre || obtenerPrimerNombre(nombreTexto) || nombreTexto;
+      const nombreCompleto = datos.nombre_completo || nombres.nombre_completo || nombreTexto;
       const vars = {
-        paciente: datos.paciente || nombres.nombre || nombres.nombre_completo || '',
-        nombre: datos.nombre || nombres.nombre || nombres.nombre_completo || '',
+        paciente: primerNombre,
+        primer_nombre: primerNombre,
+        nombre: nombreTexto,
         apellido: datos.apellido || nombres.apellido || '',
-        nombre_completo: datos.nombre_completo || nombres.nombre_completo || '',
+        nombre_completo: nombreCompleto,
         fecha: datos.fecha || '',
         hora: datos.hora || '',
         tratamientos: datos.tratamientos || '',
         consultorio: datos.consultorio || CLINICA_ACTUAL?.nombre || 'consultorio'
       };
-      return String(template || '').replace(/\{(paciente|nombre|apellido|nombre_completo|fecha|hora|tratamientos|consultorio)\}/g, (_, key) => vars[key] || '');
+      return String(template || '').replace(/\{(paciente|primer_nombre|nombre|apellido|nombre_completo|fecha|hora|tratamientos|consultorio)\}/g, (_, key) => vars[key] || '');
     }
 
     function abrirConfiguracion() {
@@ -3241,8 +3277,8 @@
       if (!label) { mostrarToast('Escribí el nombre del campo.'); return; }
       const key = slugCampoPaciente(label);
       if (!key) { mostrarToast('Ese nombre de campo no es válido.'); return; }
-      const reservados = ['dni', 'documento', 'nombre', 'apellido', 'nombre_completo', 'telefono', 'celular'];
-      if (reservados.includes(key)) { mostrarToast('DNI, nombre, apellido y teléfono son campos fijos. No los agregues acá.'); return; }
+      const reservados = ['dni', 'documento', 'nombre', 'nombre_completo', 'telefono', 'celular'];
+      if (reservados.includes(key)) { mostrarToast('DNI, nombre y teléfono son campos fijos. No los agregues acá.'); return; }
       const campos = obtenerCamposPacienteConfigurados();
       if (campos.some(c => c.key === key)) { mostrarToast('Ese campo ya existe.'); return; }
       campos.push({ key, label, tipo: 'texto' });
@@ -3434,6 +3470,10 @@
       return { nombre: n, apellido: a, nombre_completo: construirNombreCompleto(n, a) };
     }
 
+    function obtenerPrimerNombre(nombre) {
+      return String(nombre || '').trim().replace(/\s+/g, ' ').split(' ')[0] || '';
+    }
+
     function normalizarPacienteDesdeSupabase(p) {
       const nombres = normalizarNombrePaciente(p?.nombre, p?.apellido, p?.nombre_completo);
       return {
@@ -3464,7 +3504,8 @@
     function obtenerDatosMensajePaciente(nombre, apellido, nombreCompleto) {
       const n = normalizarNombrePaciente(nombre, apellido, nombreCompleto);
       return {
-        paciente: n.nombre || n.nombre_completo,
+        paciente: obtenerPrimerNombre(n.nombre) || n.nombre || n.nombre_completo,
+        primer_nombre: obtenerPrimerNombre(n.nombre) || n.nombre || n.nombre_completo,
         nombre: n.nombre || n.nombre_completo,
         apellido: n.apellido,
         nombre_completo: n.nombre_completo
@@ -4772,9 +4813,28 @@
       }
     }
 
-    function abrirEditarTurnoActual() {
-      if (!ID_TURNO_SELECCIONADO) return;
-      abrirEditarTurno(ID_TURNO_SELECCIONADO);
+    function abrirEditarTurno(id, event) {
+      if (event) event.stopPropagation();
+
+      const t = BASE_DATOS.find(item => item.id === id);
+      if (!t) return;
+
+      cerrarModales();
+
+      document.getElementById('editTurnoId').value = t.id;
+      document.getElementById('editDni').value = t.dni || '';
+      escribirNombrePacienteFormulario('edit', t);
+      document.getElementById('editTelefono').value = t.telefono || '';
+      renderCamposPacienteFormulario('editCamposExtraPaciente', 'editExtra', t.datosExtra || {});
+
+      const hint = document.getElementById('editPacienteHint');
+      hint.className = 'patient-hint';
+      hint.innerText = '';
+
+      document.getElementById('modalEditarTurnoInfo').innerText =
+        `Editando turno del ${convertirFechaLatina(t.fecha)} a las ${t.hora} hs.`;
+
+      abrirModal('modalEditarTurno');
     }
 
     function abrirEditarTurno(id, event) {
@@ -4787,7 +4847,7 @@
 
       document.getElementById('editTurnoId').value = t.id;
       document.getElementById('editDni').value = t.dni || '';
-      escribirNombrePacienteFormulario('edit', t);
+      document.getElementById('editNombreCompleto').value = nombreCompletoTurno(t);
       document.getElementById('editTelefono').value = t.telefono || '';
       renderCamposPacienteFormulario('editCamposExtraPaciente', 'editExtra', t.datosExtra || {});
 
