@@ -815,7 +815,8 @@
       display: flex;
       gap: 8px;
       justify-content: flex-end;
-      flex-wrap: wrap;
+      align-items: center;
+      flex-wrap: nowrap;
     }
 
     .btn-table-action {
@@ -1771,6 +1772,7 @@
 
       .patient-actions {
         justify-content: flex-start;
+        flex-wrap: wrap;
       }
 
       .modal-overlay {
@@ -6455,6 +6457,7 @@
                 <button type="button" class="hoy-status-dot red ${colorMarca === 'red' ? 'active' : ''}" onclick="marcarColorTurnoHoy('${e(t.id)}', 'red')" aria-label="Marcar en rojo"></button>
               </div>
               <button class="btn-table-action btn-whatsapp" onclick="abrirWhatsAppTurno('${e(t.id)}', event)">WhatsApp</button>
+              <button class="btn-table-action" onclick="copiarTextoRecordatorio('${e(t.id)}', event)">Copiar recordatorio</button>
               <button class="btn-table-action" onclick="copiarTelefono('${e(telefono || '')}', event)">Copiar tel.</button>
               <button class="btn-table-action" onclick="abrirTratamientosPaciente('${e(pacienteId)}')">Actualizar motivos</button>
             </div>
