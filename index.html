@@ -2325,7 +2325,7 @@
     }
 
     .time-slot.booked {
-      min-height: 80px;
+      min-height: 72px;
       padding: 8px 10px;
       border-left-width: 4px;
       border-radius: 10px;
@@ -2343,7 +2343,7 @@
       justify-content: space-between;
       font-size: 12px;
       gap: 6px;
-      margin-bottom: 5px;
+      margin-bottom: 7px;
     }
 
     .booked-tag {
@@ -2356,8 +2356,10 @@
 
     .booked-body {
       font-size: 14px;
+      font-weight: 800;
       min-width: 0;
-      line-height: 1.2;
+      line-height: 1.22;
+      color: #174ea6;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -2366,19 +2368,17 @@
 
     .booked-meta {
       width: 100%;
-      margin-top: auto;
+      margin-top: 4px;
       display: flex;
-      flex-direction: column;
-      gap: 2px;
-      align-items: flex-start;
+      align-items: center;
+      min-width: 0;
     }
 
-    .booked-phone,
-    .booked-dni {
-      font-size: 12px;
+    .booked-phone {
+      font-size: 11px;
       line-height: 1.15;
       font-weight: 700;
-      color: inherit;
+      color: #64748b;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -2391,9 +2391,9 @@
       .day-header { padding-top: 5px; padding-bottom: 5px; }
       .day-slots { padding: 5px; gap: 4px; }
       .time-slot { min-height: 28px; }
-      .time-slot.booked { min-height: 70px; padding-top: 6px; padding-bottom: 6px; }
+      .time-slot.booked { min-height: 64px; padding-top: 6px; padding-bottom: 6px; }
       .booked-body { font-size: 13px; }
-      .booked-phone, .booked-dni { font-size: 11px; }
+      .booked-phone { font-size: 10.5px; }
     }
 
   </style>
@@ -5051,7 +5051,6 @@
             slot.ondragstart = (event) => iniciarDragTurno(turnoAsignado.id, event);
 
             const nombreCompleto = nombreCompletoTurno(turnoAsignado);
-            const dniTurno = turnoAsignado.dni ? `DNI ${turnoAsignado.dni}` : 'DNI S/D';
             const tipoTurnoLabel = turnoAsignado.extension ? 'Extensión' : 'Turno';
 
             slot.title = 'Click para ver acciones del turno';
@@ -5063,7 +5062,6 @@
               <div class="booked-body">${e(nombreCompleto)}</div>
               <div class="booked-meta">
                 <span class="booked-phone">📞 ${e(turnoAsignado.telefono || 'S/T')}</span>
-                <span class="booked-dni">${e(dniTurno)}</span>
               </div>
             `;
 
