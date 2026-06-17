@@ -312,6 +312,11 @@
       border-color: #bfdbfe;
     }
 
+    .day-column.day-today .time-slot:not(.booked):hover {
+      background: var(--blue-light);
+      border-color: var(--blue);
+    }
+
     .day-header {
       background: #fff;
       padding: 14px 8px;
@@ -2325,12 +2330,12 @@
     }
 
     .time-slot.booked {
-      min-height: 72px;
+      min-height: 74px;
       padding: 8px 10px;
       border-left-width: 4px;
       border-radius: 10px;
       box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
-      margin-bottom: 2px;
+      margin-bottom: 3px;
       display: flex;
       flex-direction: column;
       justify-content: flex-start;
@@ -2339,11 +2344,19 @@
     .booked-header {
       width: 100%;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
       font-size: 12px;
-      gap: 6px;
+      gap: 8px;
       margin-bottom: 7px;
+    }
+
+    .booked-header-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+      flex-shrink: 0;
     }
 
     .booked-tag {
@@ -2352,6 +2365,22 @@
       font-weight: 800;
       border-radius: 999px;
       white-space: nowrap;
+    }
+
+    .booked-cancel-btn {
+      border: 1px solid rgba(220, 38, 38, 0.22);
+      background: rgba(254, 226, 226, 0.95);
+      color: #dc2626;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 10px;
+      font-weight: 800;
+      line-height: 1.1;
+      cursor: pointer;
+    }
+
+    .booked-cancel-btn:hover {
+      background: rgba(254, 202, 202, 1);
     }
 
     .booked-body {
@@ -2391,9 +2420,10 @@
       .day-header { padding-top: 5px; padding-bottom: 5px; }
       .day-slots { padding: 5px; gap: 4px; }
       .time-slot { min-height: 28px; }
-      .time-slot.booked { min-height: 64px; padding-top: 6px; padding-bottom: 6px; }
+      .time-slot.booked { min-height: 66px; padding-top: 6px; padding-bottom: 6px; margin-bottom: 3px; }
       .booked-body { font-size: 13px; }
       .booked-phone { font-size: 10.5px; }
+      .booked-cancel-btn { font-size: 9.5px; padding: 2px 7px; }
     }
 
   </style>
@@ -4857,14 +4887,38 @@
       const origen = BASE_DATOS.find(t => t.id === idOrigen);
       if (!origen) return;
 
+      const parentBaseId = origen.parentId || origen.id;
+      const mismoDia = String(origen.fecha) === String(fechaDestino);
+
+      let esExtensionNueva = false;
+      let parentIdNuevo = null;
+
+      if (mismoDia) {
+        const cadena = (BASE_DATOS || [])
+          .filter(t => String(t.fecha) === String(origen.fecha) && (String(t.id) === String(parentBaseId) || String(t.parentId || '') === String(parentBaseId)))
+          .sort((a, b) => minutosDesdeHora(String(a.hora || '')) - minutosDesdeHora(String(b.hora || '')));
+
+        const ultimaHora = cadena.length ? String(cadena[cadena.length - 1].hora || '') : String(origen.hora || '');
+        const horasDelDia = generarHorasParaFecha(fechaDestino).sort((a, b) => minutosDesdeHora(a) - minutosDesdeHora(b));
+        const siguienteHoraValida = horasDelDia.find(h => minutosDesdeHora(h) > minutosDesdeHora(ultimaHora));
+
+        if (!siguienteHoraValida || String(horaDestino) !== String(siguienteHoraValida)) {
+          mostrarToast('La extensión solo puede agregarse en el horario inmediato de abajo.');
+          return;
+        }
+
+        esExtensionNueva = true;
+        parentIdNuevo = parentBaseId;
+      }
+
       const copiaLocal = {
         ...origen,
         id: 'TMP-' + Date.now(),
         fecha: fechaDestino,
         hora: horaDestino,
         timestamp: Date.now(),
-        extension: true,
-        parentId: origen.parentId || origen.id
+        extension: esExtensionNueva,
+        parentId: parentIdNuevo
       };
 
       BASE_DATOS.push(copiaLocal);
@@ -4879,8 +4933,8 @@
           fecha: fechaDestino,
           hora: horaDestino,
           confirmado: origen.confirmado,
-          extension: true,
-          parent_id: origen.parentId || origen.id
+          extension: esExtensionNueva,
+          parent_id: parentIdNuevo
         });
 
       if (error) {
@@ -4891,7 +4945,7 @@
         if (error.code === '23505') {
           alert('Ese horario ya está ocupado.');
         } else {
-          alert('No se pudo alargar el turno: ' + error.message);
+          alert('No se pudo guardar el turno: ' + error.message);
         }
         return;
       }
@@ -4899,7 +4953,7 @@
       await cargarDatosDesdeSupabase();
       renderizarCalendarioCompleto();
       calcularYRenderizarPacientes();
-      mostrarToast('Turno alargado en otra casilla.');
+      mostrarToast(esExtensionNueva ? 'Extensión agregada en el horario siguiente.' : 'Se creó un turno nuevo en otra fecha.');
     }
 
     function obtenerDiasVisiblesSemana(lunes) {
@@ -5057,7 +5111,10 @@
             slot.innerHTML = `
               <div class="booked-header">
                 <span>🕒 ${e(hora)}</span>
-                <span class="booked-tag">${e(tipoTurnoLabel)}</span>
+                <div class="booked-header-right">
+                  <span class="booked-tag">${e(tipoTurnoLabel)}</span>
+                  <button type="button" class="booked-cancel-btn" onclick="prepararCancelacionTarjeta('${e(turnoAsignado.id)}', event)">Cancelar</button>
+                </div>
               </div>
               <div class="booked-body">${e(nombreCompleto)}</div>
               <div class="booked-meta">
@@ -5627,6 +5684,15 @@
       abrirModal('modalConfirmarCancelacion');
     }
 
+    function prepararCancelacionTarjeta(idTurno, event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      ID_TURNO_SELECCIONADO = idTurno;
+      abrirModal('modalConfirmarCancelacion');
+    }
+
     function cerrarConfirmacion() {
       document.getElementById('modalConfirmarCancelacion').classList.remove('active');
       ID_TURNO_SELECCIONADO = null;
@@ -5872,21 +5938,41 @@
       const turnosDeLaFecha = obtenerTurnosHoyDesdeCache();
       if (token !== HOY_RENDER_TOKEN) return;
 
-      // La agenda puede guardar extensiones de turno como filas separadas. En la vista Hoy
-      // mostramos el turno principal para no duplicarle trabajo a la secretaria. Si por
-      // algún motivo existe solo una extensión sin padre, igual la mostramos.
-      const idsDeLaFecha = new Set(turnosDeLaFecha.map(t => String(t.id || '')));
-      let turnosDia = turnosDeLaFecha.filter(t => {
-        const esExtension = t.extension === true;
-        const padreExiste = t.parentId && idsDeLaFecha.has(String(t.parentId));
-        return !esExtension || !padreExiste;
-      });
+      const agruparTurnosHoy = (items) => {
+        const grupos = new Map();
 
-      if (turnosDia.length === 0 && turnosDeLaFecha.length > 0) {
-        turnosDia = turnosDeLaFecha;
-      }
+        items.forEach(t => {
+          const key = t.extension === true ? String(t.parentId || t.id || '') : String(t.id || '');
+          if (!grupos.has(key)) grupos.set(key, []);
+          grupos.get(key).push(t);
+        });
 
-      if (turnosDia.length === 0) {
+        const horariosCfg = obtenerHorariosConfigurados();
+        const diaCfg = obtenerDiaConfigPorFecha(fechaISO);
+        const cfg = horariosCfg[diaCfg.key] || {};
+        const intervalo = [15, 20, 30, 45, 60].includes(Number(cfg.intervalo)) ? Number(cfg.intervalo) : 30;
+
+        return Array.from(grupos.values())
+          .map(lista => {
+            const ordenados = [...lista].sort((a, b) => minutosDesdeHora(String(a.hora || '')) - minutosDesdeHora(String(b.hora || '')));
+            const base = ordenados.find(x => x.extension !== true) || ordenados[0];
+            const horaInicio = String(ordenados[0].hora || '');
+            const ultimo = ordenados[ordenados.length - 1];
+            const horaFin = horaDesdeMinutos((minutosDesdeHora(String(ultimo.hora || '')) || 0) + intervalo);
+            return {
+              base,
+              turnos: ordenados,
+              horaInicio,
+              horaFin,
+              esRango: ordenados.length > 1
+            };
+          })
+          .sort((a, b) => minutosDesdeHora(a.horaInicio) - minutosDesdeHora(b.horaInicio));
+      };
+
+      const gruposHoy = agruparTurnosHoy(turnosDeLaFecha);
+
+      if (gruposHoy.length === 0) {
         cont.innerHTML = `
           <div class="empty-state hoy-empty-state">
             <div class="hoy-empty-icon">📭</div>
@@ -5896,7 +5982,8 @@
         return;
       }
 
-      cont.innerHTML = turnosDia.map(t => {
+      cont.innerHTML = gruposHoy.map(grupo => {
+        const t = grupo.base;
         const pacienteId = String(t.pacienteId || '');
         const pacienteLocal = buscarPacienteLocalPorId(pacienteId) || {};
         const motivosHtml = armarResumenTratamientos(pacienteId);
@@ -5909,9 +5996,10 @@
         const telefono = t.telefono || pacienteLocal.telefono || '';
         const colorMarca = obtenerColorHoyTurno(t.id);
         const colorClase = colorMarca ? ` status-${colorMarca}` : '';
+        const horarioLabel = grupo.esRango ? `${grupo.horaInicio} a ${grupo.horaFin}` : `${t.hora || ''}`;
         return `
           <div class="hoy-card${colorClase}">
-            <div class="hoy-time">${e(t.hora || '')}</div>
+            <div class="hoy-time">${e(horarioLabel)}</div>
             <div>
               <div class="hoy-name">${e(nombre)}</div>
               <div class="hoy-meta">DNI: ${e(dni)} · Tel: ${e(telefono || 'S/T')}</div>
