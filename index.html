@@ -3205,7 +3205,7 @@
       llenarSelectHoras('reprogHora');
 
       const hoy = new Date();
-      FECHA_LUNES_ACTUAL = obtenerLunesDeSemana(hoy);
+      FECHA_LUNES_ACTUAL = new Date(hoy);
       FECHA_MOVIL_ACTUAL = new Date(hoy);
       FECHA_MOVIL_ACTUAL.setHours(0, 0, 0, 0);
       document.getElementById('datepicker').value = formatearFechaISO(hoy);
@@ -5216,14 +5216,15 @@
 
     function navegarSemana(direccion) {
       if (esVistaMovilAgenda()) {
-        // En celular la agenda se usa día por día, por eso las flechas avanzan/retroceden 1 día.
+        // En celular la agenda se usa día por día.
         FECHA_MOVIL_ACTUAL.setDate(FECHA_MOVIL_ACTUAL.getDate() + direccion);
         FECHA_MOVIL_ACTUAL.setHours(0, 0, 0, 0);
-        FECHA_LUNES_ACTUAL = obtenerLunesDeSemana(FECHA_MOVIL_ACTUAL);
+        FECHA_LUNES_ACTUAL = new Date(FECHA_MOVIL_ACTUAL);
         sincronizarDatepickers(formatearFechaISO(FECHA_MOVIL_ACTUAL));
       } else {
-        // En escritorio se mantiene la navegación semanal.
-        FECHA_LUNES_ACTUAL.setDate(FECHA_LUNES_ACTUAL.getDate() + direccion * 7);
+        // En escritorio se mueve la ventana visible hacia adelante/atrás.
+        // Como la primera columna ya no es lunes fijo, se avanza de a 5 días operativos.
+        FECHA_LUNES_ACTUAL.setDate(FECHA_LUNES_ACTUAL.getDate() + direccion * 5);
         FECHA_LUNES_ACTUAL.setHours(0, 0, 0, 0);
         FECHA_MOVIL_ACTUAL = new Date(FECHA_LUNES_ACTUAL);
         sincronizarDatepickers(formatearFechaISO(FECHA_LUNES_ACTUAL));
@@ -5237,7 +5238,7 @@
       const d = new Date(partes[0], partes[1] - 1, partes[2]);
       d.setHours(0, 0, 0, 0);
       FECHA_MOVIL_ACTUAL = new Date(d);
-      FECHA_LUNES_ACTUAL = obtenerLunesDeSemana(d);
+      FECHA_LUNES_ACTUAL = new Date(d);
       sincronizarDatepickers(fechaStr);
       renderizarCalendarioCompleto();
     }
@@ -5349,37 +5350,42 @@
       mostrarToast(esExtensionNueva ? 'Extensión agregada en el horario siguiente.' : 'Se creó un turno nuevo en otra fecha.');
     }
 
-    function obtenerDiasVisiblesSemana(lunes) {
-      const fechasConTurnos = new Set();
-      BASE_DATOS.forEach(t => {
-        if (!t.fecha) return;
-        const p = t.fecha.split('-');
-        if (p.length !== 3) return;
-        const d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
-        const lunesTurno = obtenerLunesDeSemana(d);
-        if (lunesTurno.getTime() === lunes.getTime()) fechasConTurnos.add(t.fecha);
-      });
-
+    function obtenerDiasVisiblesSemana(fechaInicio) {
+      const arr = [];
       const horarios = obtenerHorariosConfigurados();
-      return DIAS_CONFIG
-        .filter(dia => {
-          const fecha = new Date(lunes);
-          fecha.setDate(fecha.getDate() + offsetDesdeLunes(dia.jsDay));
-          const fechaISO = formatearFechaISO(fecha);
-          return horarios[dia.key]?.activo || fechasConTurnos.has(fechaISO);
-        })
-        .map(dia => {
-          const fecha = new Date(lunes);
-          fecha.setDate(fecha.getDate() + offsetDesdeLunes(dia.jsDay));
-          const fechaISO = formatearFechaISO(fecha);
-          return {
+      const inicio = new Date(fechaInicio);
+      inicio.setHours(0, 0, 0, 0);
+
+      // Vista operativa: desde el día seleccionado hacia adelante.
+      // Al entrar al portal, HOY queda como primera columna.
+      // Los días anteriores se ven navegando hacia atrás, no cargados de entrada.
+      for (let offset = 0; offset < 21 && arr.length < 5; offset++) {
+        const fecha = new Date(inicio);
+        fecha.setDate(inicio.getDate() + offset);
+        fecha.setHours(0, 0, 0, 0);
+
+        const jsDay = fecha.getDay();
+        if (jsDay === 0 || jsDay === 6) continue;
+
+        const dia = DIAS_CONFIG.find(d => d.jsDay === jsDay);
+        if (!dia) continue;
+
+        const fechaISO = formatearFechaISO(fecha);
+        const activo = !!horarios[dia.key]?.activo;
+        const tieneTurnos = BASE_DATOS.some(t => t.fecha === fechaISO);
+
+        if (activo || tieneTurnos) {
+          arr.push({
             ...dia,
             fecha,
             fechaISO,
-            activo: !!horarios[dia.key]?.activo,
-            tieneTurnosFueraDeConfig: !horarios[dia.key]?.activo && fechasConTurnos.has(fechaISO)
-          };
-        });
+            activo,
+            tieneTurnosFueraDeConfig: !activo && tieneTurnos
+          });
+        }
+      }
+
+      return arr;
     }
 
     function obtenerDiasVisiblesMovil(fecha) {
@@ -6068,7 +6074,7 @@
       const fechaReprogramada = new Date(Number(fechaNueva.slice(0,4)), Number(fechaNueva.slice(5,7)) - 1, Number(fechaNueva.slice(8,10)));
       fechaReprogramada.setHours(0, 0, 0, 0);
       FECHA_MOVIL_ACTUAL = new Date(fechaReprogramada);
-      FECHA_LUNES_ACTUAL = obtenerLunesDeSemana(fechaReprogramada);
+      FECHA_LUNES_ACTUAL = new Date(fechaReprogramada);
       sincronizarDatepickers(fechaNueva);
       renderizarCalendarioCompleto();
       mostrarToast('Turno reprogramado correctamente.');
