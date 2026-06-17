@@ -317,6 +317,25 @@
       border-color: var(--blue);
     }
 
+    .time-slot.past-today {
+      background: rgba(243, 244, 246, 0.88) !important;
+      border-color: #d1d5db !important;
+      color: #64748b !important;
+    }
+
+    .time-slot.booked.past-today {
+      background: #eef2f7 !important;
+      border-color: #cbd5e1 !important;
+      box-shadow: none;
+    }
+
+    .time-slot.booked.past-today .booked-body,
+    .time-slot.booked.past-today .booked-phone,
+    .time-slot.booked.past-today .booked-header,
+    .time-slot.booked.past-today .booked-tag {
+      color: #64748b !important;
+    }
+
     .day-header {
       background: #fff;
       padding: 14px 8px;
@@ -708,8 +727,13 @@
     }
 
     .patient-card.critical {
-      border-left: 5px solid var(--red);
-      background: #fffafa;
+      border-left: 5px solid #f59e0b;
+      background: #fff8ef;
+    }
+
+    .patient-card.warning {
+      border-left: 5px solid #facc15;
+      background: #fffdf2;
     }
 
     .patient-card.ok {
@@ -758,7 +782,8 @@
     }
 
     .badge-al-dia { background: #eef2f6; color: #475467; }
-    .badge-para-recordar { background: var(--red); color: white; }
+    .badge-para-recordar { background: #f59e0b; color: white; }
+    .badge-atencion { background: #fde68a; color: #92400e; }
     .badge-recordado { background: var(--green); color: white; }
 
     .patient-actions {
@@ -2549,7 +2574,7 @@
     }
 
     .recordar-card {
-      grid-template-columns: minmax(240px, 1.3fr) minmax(150px, .8fr) minmax(170px, .9fr) minmax(300px, 1.1fr);
+      grid-template-columns: minmax(220px, 1.2fr) minmax(150px, .8fr) minmax(160px, .8fr) minmax(210px, .9fr) minmax(300px, 1.1fr);
     }
 
     .recordar-empty {
@@ -3097,6 +3122,7 @@
     let FILTRO_DNI_PACIENTES = '';
     let FILTRO_NOMBRE_PACIENTES = '';
     let SUBVISTA_PACIENTES = 'fichero';
+    let MODO_FICHA_PACIENTE = 'alta';
     const DEFAULT_CONFIG_CLINICA = {
       // Se conserva la clave interna "tratamientos" para compatibilidad,
       // pero desde V29 el concepto real es "motivos de seguimiento".
@@ -4389,6 +4415,35 @@
       }
     }
 
+    function prepararModalFichaPaciente(modo = 'alta') {
+      MODO_FICHA_PACIENTE = modo === 'editar' ? 'editar' : 'alta';
+
+      const titulo = document.querySelector('#modalFichaPaciente .modal-title');
+      const subtitulo = document.querySelector('#modalFichaPaciente .modal-subtitle');
+      const nota = document.querySelector('#modalFichaPaciente .manual-ficha-note');
+      const bloqueMotivosLabel = document.querySelector('#modalFichaPaciente label[for="fichaTratamientosInputs"]') || null;
+      const bloqueMotivosInputs = document.getElementById('fichaTratamientosInputs');
+      const botones = document.getElementById('btnGuardarFichaPaciente');
+
+      const contenedorMotivos = bloqueMotivosInputs ? bloqueMotivosInputs.previousElementSibling : null;
+
+      if (MODO_FICHA_PACIENTE === 'editar') {
+        if (titulo) titulo.innerText = 'Editar ficha de paciente';
+        if (subtitulo) subtitulo.innerText = 'Corregí datos generales del paciente. Los motivos de seguimiento se manejan desde el botón “Motivos”.';
+        if (nota) nota.innerText = 'Desde esta edición solo se corrigen datos de la ficha. Los motivos de seguimiento se actualizan aparte para no mezclar acciones.';
+        if (contenedorMotivos) contenedorMotivos.style.display = 'none';
+        if (bloqueMotivosInputs) bloqueMotivosInputs.style.display = 'none';
+        if (botones) botones.innerText = 'Guardar cambios';
+      } else {
+        if (titulo) titulo.innerText = 'Agregar ficha de paciente';
+        if (subtitulo) subtitulo.innerText = 'Creá la ficha antes de darle turno. Después, al cargar un turno con ese DNI, se autocompletan los datos.';
+        if (nota) nota.innerText = 'Campos necesarios: DNI y nombre. El apellido queda separado para búsquedas y listados; teléfono, datos extra y motivos de seguimiento son opcionales, pero ayudan para WhatsApp y recuperación de pacientes.';
+        if (contenedorMotivos) contenedorMotivos.style.display = '';
+        if (bloqueMotivosInputs) bloqueMotivosInputs.style.display = '';
+        if (botones) botones.innerText = 'Guardar ficha';
+      }
+    }
+
     function cambiarSubvistaPacientes(tipo) {
       SUBVISTA_PACIENTES = tipo === 'recordar' ? 'recordar' : 'fichero';
       calcularYRenderizarPacientes();
@@ -4399,13 +4454,14 @@
       const paciente = buscarPacienteLocalPorId(id);
       if (!paciente) { alert('No se encontró la ficha del paciente.'); return; }
 
+      prepararModalFichaPaciente('editar');
       document.getElementById('fichaDni').value = paciente.dni || '';
       completarFormularioConPaciente('ficha', paciente);
       renderInputsTratamientos('fichaTratamientosInputs', 'ficha', TRATAMIENTOS_DB[id] || {});
       const hint = document.getElementById('fichaPacienteHint');
       if (hint) {
         hint.className = 'patient-hint found';
-        hint.innerText = 'Editando ficha existente. Podés corregir datos o actualizar motivos.';
+        hint.innerText = 'Editando ficha existente. Acá corregís datos generales; los motivos se actualizan desde el botón “Motivos”.';
       }
       abrirModal('modalFichaPaciente');
       setTimeout(() => document.getElementById('fichaNombre')?.focus(), 100);
@@ -4559,21 +4615,24 @@
         }
 
         const tieneTurnoFuturo = (p.turnosFuturos || []).length > 0;
-        const recordadoReciente = segInfo.ultimoRecordatorio && diasDesdeUltRecordatorio !== null && diasDesdeUltRecordatorio < 30;
-        const debeRecordar = !!p.ultimaVisita && diasTranscurridos >= 30 && tieneMotivos && !tieneTurnoFuturo && !recordadoReciente;
+        const sinTurnoActivo = !!p.ultimaVisita && !tieneTurnoFuturo;
+        const prioridadRecordar = sinTurnoActivo
+          ? ((diasTranscurridos !== null && diasTranscurridos >= 30) ? 'naranja' : 'amarillo')
+          : '';
+        const apareceEnRecordar = sinTurnoActivo;
 
         let estadoLabel = 'Al día';
         let badgeClase = 'badge-al-dia';
         let cardClase = 'normal';
 
-        if (debeRecordar) {
-          estadoLabel = 'Para recordar';
+        if (prioridadRecordar === 'naranja') {
+          estadoLabel = 'Contactar';
           badgeClase = 'badge-para-recordar';
           cardClase = 'critical';
-        } else if (recordadoReciente) {
-          estadoLabel = 'Recordado este mes';
-          badgeClase = 'badge-recordado';
-          cardClase = 'ok';
+        } else if (prioridadRecordar === 'amarillo') {
+          estadoLabel = 'Sin turno futuro';
+          badgeClase = 'badge-atencion';
+          cardClase = 'warning';
         }
 
         const turnosFuturosOrdenados = [...(p.turnosFuturos || [])].sort((a, b) => {
@@ -4591,10 +4650,12 @@
           estadoLabel,
           badgeClase,
           cardClase,
-          debeRecordar,
+          debeRecordar: apareceEnRecordar,
+          prioridadRecordar,
           tieneMotivos,
           motivos,
           tieneTurnoFuturo,
+          sinTurnoActivo,
           proximoTurno: turnosFuturosOrdenados[0] || null
         };
       });
@@ -4617,7 +4678,7 @@
       if (subtitulo) {
         subtitulo.innerText = esFichero
           ? 'Fichero general estilo planilla: buscá, cargá y mantené datos de pacientes. Más adelante puede servir para importar o descargar información.'
-          : 'Lista de acción: solo pacientes con motivos activos, más de 30 días sin venir, sin turno futuro y sin recordatorio reciente.';
+          : 'Lista de acción: pacientes sin turno futuro. Amarillo = seguimiento suave. Naranja = ya pasaron 30 días o más desde la última visita.';
       }
 
       document.getElementById('tabPacientesFichero')?.classList.toggle('active', esFichero);
@@ -4637,7 +4698,14 @@
 
       const listaBase = esFichero
         ? listaPacientes
-        : listaPacientes.filter(p => p.debeRecordar).sort((a, b) => (b.diasTranscurridos || 0) - (a.diasTranscurridos || 0));
+        : listaPacientes
+            .filter(p => p.debeRecordar)
+            .sort((a, b) => {
+              const pa = a.prioridadRecordar === 'naranja' ? 2 : a.prioridadRecordar === 'amarillo' ? 1 : 0;
+              const pb = b.prioridadRecordar === 'naranja' ? 2 : b.prioridadRecordar === 'amarillo' ? 1 : 0;
+              if (pb !== pa) return pb - pa;
+              return (b.diasTranscurridos || 0) - (a.diasTranscurridos || 0);
+            });
 
       const listaFiltrada = listaBase.filter(coincideFiltros);
 
@@ -4649,7 +4717,7 @@
         const baseTxt = esFichero ? 'fichas' : 'pacientes para recordar';
         filtroInfo.innerText = filtrosActivos.length
           ? `Filtro activo por ${filtrosActivos.join(' · ')}. Resultado: ${listaFiltrada.length} ${baseTxt}.`
-          : (esFichero ? 'Mostrando todas las fichas.' : `Mostrando ${listaFiltrada.length} pacientes que requieren acción.`);
+          : (esFichero ? 'Mostrando todas las fichas.' : `Mostrando ${listaFiltrada.length} pacientes sin turno futuro.`);
       }
 
       const board = document.getElementById('tablaPacientesBody');
@@ -4677,7 +4745,7 @@
           board.innerHTML = `
             <div class="empty-state recordar-empty">
               <div class="empty-title">Todo al día.</div>
-              <div class="empty-text">No hay pacientes pendientes de recordatorio para hoy. Cuando alguien tenga motivos activos, supere los días definidos y no tenga turno futuro, aparecerá acá.</div>
+              <div class="empty-text">No hay pacientes sin turno futuro para revisar ahora. Cuando alguien quede sin turno activo, aparecerá acá.</div>
             </div>`;
         } else {
           board.innerHTML = `<div class="empty-state">No se encontró ningún paciente con esos filtros.</div>`;
@@ -4705,10 +4773,6 @@
               </td>
               <td>${e(p.dni || 'S/D')}</td>
               <td><span class="fichero-phone">${e(p.telefono || 'S/T')}</span></td>
-              <td>${e(proximoTurnoTxt(p))}</td>
-              <td><div class="fichero-sub">${e(extraTextoPlano(p))}</div></td>
-              <td><div class="treatment-summary">${motivosHtml}</div></td>
-              <td><span class="badge-status ${p.badgeClase}">${e(p.estadoLabel)}</span></td>
               <td>
                 <div class="fichero-actions">
                   <button class="btn-table-action btn-mini-blue" onclick='abrirEditarFichaPaciente(${pacienteIdJson})'>Editar</button>
@@ -4729,10 +4793,6 @@
                     <th>Paciente</th>
                     <th>DNI</th>
                     <th>Teléfono</th>
-                    <th>Próximo turno</th>
-                    <th>Datos extra</th>
-                    <th>Motivos</th>
-                    <th>Estado</th>
                     <th style="text-align:right;">Acciones</th>
                   </tr>
                 </thead>
@@ -4751,13 +4811,14 @@
         const pacienteIdJson = JSON.stringify(p.id || '');
 
         const card = document.createElement('div');
-        card.className = `patient-card recordar-card critical`;
+        card.className = `patient-card recordar-card ${p.cardClase}`;
+
+        const etiquetaAccion = p.prioridadRecordar === 'naranja' ? 'Contactar ahora' : 'Sin turno futuro';
 
         card.innerHTML = `
           <div>
             <div class="patient-name">${e(nombreCompleto)}</div>
             <div class="patient-small">DNI: ${e(p.dni || 'S/D')} · Última visita: ${e(p.ultimaVisita ? convertirFechaLatina(p.ultimaVisita) : 'Sin visitas')}</div>
-            <div class="patient-small">Motivos activos:</div>
             <div class="treatment-summary">${armarResumenTratamientos(p.id)}</div>
           </div>
 
@@ -4773,6 +4834,12 @@
             <div class="patient-label">Días sin venir</div>
             <div class="patient-value">${e(diasTxt)}</div>
             <div class="patient-small">Últ. recordatorio: ${e(p.ultRecLabel)}</div>
+          </div>
+
+          <div>
+            <div class="patient-label">Estado</div>
+            <div class="patient-value"><span class="badge-status ${p.badgeClase}">${e(etiquetaAccion)}</span></div>
+            <div class="patient-small">${p.prioridadRecordar === 'naranja' ? 'Ya superó el umbral para contactarlo.' : 'Todavía no llegó al umbral, pero quedó sin turno activo.'}</div>
           </div>
 
           <div class="patient-actions">
@@ -4969,6 +5036,7 @@
     }
 
     function abrirAltaFichaPaciente() {
+      prepararModalFichaPaciente('alta');
       document.getElementById('fichaDni').value = '';
       escribirNombrePacienteFormulario('ficha', { nombre: '', apellido: '' });
       document.getElementById('fichaTelefono').value = '';
@@ -5030,7 +5098,7 @@
           { onConflict: 'clinica_id,dni' }
         ).select().single();
         if (errorPaciente) { alert('Error guardando ficha: ' + errorPaciente.message); return; }
-        if (tieneTratamientos) {
+        if (MODO_FICHA_PACIENTE !== 'editar' && tieneTratamientos) {
           const { error: errorTratamientos } = await supabaseClient.from('tratamientos_pendientes').upsert({
             clinica_id: CLINICA_ID,
             paciente_id: paciente.id,
@@ -5043,7 +5111,7 @@
         calcularYRenderizarPacientes();
         renderizarCalendarioCompleto();
         cerrarModales();
-        mostrarToast('Ficha de paciente guardada correctamente.');
+        mostrarToast(MODO_FICHA_PACIENTE === 'editar' ? 'Ficha actualizada correctamente.' : 'Ficha de paciente guardada correctamente.');
       } finally {
         if (botonGuardar) botonGuardar.disabled = false;
       }
@@ -5399,8 +5467,12 @@
           const turnoAsignado = BASE_DATOS.find(item => item.fecha === tDiaStr && item.hora === hora);
           const slot = document.createElement('div');
 
+          const ahoraMinutos = (new Date().getHours() * 60) + new Date().getMinutes();
+          const slotMinutos = minutosDesdeHora(hora) ?? 0;
+          const esHorarioPasadoHoy = esHoy && slotMinutos < ahoraMinutos;
+
           if (turnoAsignado) {
-            slot.className = `time-slot booked ${!turnoAsignado.confirmado ? 'style-blue' : ''} ${turnoAsignado.extension ? 'extension' : ''}`;
+            slot.className = `time-slot booked ${!turnoAsignado.confirmado ? 'style-blue' : ''} ${turnoAsignado.extension ? 'extension' : ''} ${esHorarioPasadoHoy ? 'past-today' : ''}`;
             slot.draggable = true;
             slot.ondragstart = (event) => iniciarDragTurno(turnoAsignado.id, event);
 
@@ -5423,7 +5495,7 @@
 
             slot.onclick = () => abrirDetalleTurno(turnoAsignado.id);
           } else {
-            slot.className = 'time-slot';
+            slot.className = `time-slot ${esHorarioPasadoHoy ? 'past-today' : ''}`;
             slot.innerText = hora;
             slot.ondragover = permitirDropTurno;
             slot.ondragleave = salirDropTurno;
