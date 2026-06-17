@@ -107,11 +107,15 @@
       font-size: 17px;
       color: var(--text);
       margin-left: 6px;
+      white-space: nowrap;
+      line-height: 1;
+      flex: 0 0 auto;
     }
 
     .agenda-toolbar {
       display: flex;
       align-items: center;
+      justify-content: flex-start;
       gap: 14px;
       padding: 10px 18px;
       background: #fff;
@@ -123,9 +127,10 @@
     .agenda-toolbar-inner {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       flex-wrap: nowrap;
       min-width: max-content;
+      width: 100%;
     }
 
     .agenda-toolbar-date {
@@ -1583,7 +1588,7 @@
       }
 
       .agenda-toolbar-inner {
-        width: auto;
+        width: max-content;
         min-width: max-content;
       }
 
@@ -2268,12 +2273,12 @@
     }
 
     .day-header {
-      padding: 9px 7px;
+      padding: 9px 8px;
     }
 
     .day-name {
       font-size: 11px;
-      letter-spacing: 0.6px;
+      letter-spacing: 0.5px;
     }
 
     .day-number {
@@ -2281,7 +2286,7 @@
       min-width: 42px;
       height: 30px;
       padding: 0 10px;
-      font-size: 16px;
+      font-size: 15px;
     }
 
     .day-slots {
@@ -2292,11 +2297,11 @@
     .time-slot {
       min-height: 38px;
       border-radius: 9px;
-      font-size: 15px;
+      font-size: 14px;
     }
 
     .time-slot.booked {
-      min-height: 84px;
+      min-height: 76px;
       padding: 8px 10px;
       border-left-width: 4px;
     }
@@ -2304,6 +2309,7 @@
     .booked-header {
       font-size: 12px;
       gap: 4px;
+      margin-bottom: 4px;
     }
 
     .booked-tag {
@@ -2312,44 +2318,58 @@
     }
 
     .booked-body {
-      font-size: 15px;
+      font-size: 14px;
       margin-top: 0;
       flex: 1;
       min-width: 0;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding-right: 8px;
     }
 
     .booked-footer {
-      margin-top: 6px;
-      gap: 0;
+      margin-top: 2px;
+      gap: 8px;
       flex-direction: row;
       align-items: center;
       justify-content: space-between;
     }
 
     .booked-phone-row {
-      gap: 8px;
-      justify-content: flex-end;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 2px;
       text-align: right;
       flex-shrink: 0;
-      max-width: 52%;
+      min-width: 126px;
+      max-width: 48%;
     }
 
     .booked-phone {
-      font-size: 15px;
+      font-size: 12px;
       line-height: 1.15;
       font-weight: 700;
       opacity: 1;
-      white-space: normal;
-      text-overflow: clip;
-      overflow: visible;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
       flex: 0 0 auto;
     }
 
 
-    .booked-footer-inline-sep {
-      color: var(--muted);
-      font-size: 14px;
+    .booked-dni {
+      font-size: 12px;
+      line-height: 1.15;
       font-weight: 700;
+      color: inherit;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
     }
 
     @media (max-height: 760px) {
@@ -2358,10 +2378,10 @@
       .day-header { padding-top: 5px; padding-bottom: 5px; }
       .day-slots { padding: 5px; gap: 3px; }
       .time-slot { min-height: 28px; }
-      .time-slot.booked { min-height: 72px; padding-top: 6px; padding-bottom: 6px; }
-      .booked-body { font-size: 14px; margin-top: 0; }
-      .booked-footer { margin-top: 4px; }
-      .booked-phone { font-size: 13px; }
+      .time-slot.booked { min-height: 68px; padding-top: 6px; padding-bottom: 6px; }
+      .booked-body { font-size: 13px; margin-top: 0; }
+      .booked-footer { margin-top: 2px; }
+      .booked-phone, .booked-dni { font-size: 11px; }
     }
 
   </style>
@@ -5029,8 +5049,7 @@
                 <div class="booked-body">${e(nombreCompleto)}</div>
                 <div class="booked-phone-row">
                   <span class="booked-phone">📞 ${e(turnoAsignado.telefono || 'S/T')}</span>
-                  <span class="booked-footer-inline-sep">·</span>
-                  <span class="booked-phone">${e(dniTurno)}</span>
+                  <span class="booked-dni">${e(dniTurno)}</span>
                 </div>
               </div>
             `;
