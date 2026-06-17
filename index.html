@@ -1608,6 +1608,41 @@
       }
     }
 
+.turnos-export-tools {
+  display: none;
+}
+
+.turnos-export-fields {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.subview-action-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.btn-export {
+  background: #fff;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.btn-export:hover {
+  background: #f8fbff;
+  border-color: #bfd7ff;
+}
+
+.turnos-table-card .fichero-table th,
+.turnos-table-card .fichero-table td {
+  white-space: nowrap;
+}
+
+
     @media (max-width: 980px) {
       body {
         overflow: hidden;
@@ -2182,22 +2217,21 @@
     .hoy-name { font-size: 16px; font-weight: 900; color: var(--text); margin-bottom: 4px; }
     .hoy-meta { color: var(--muted); font-size: 12px; line-height: 1.4; }
 .hoy-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
-
 .hoy-status-picker {
   display: flex;
+  flex-direction: column;
   gap: 7px;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
+  align-items: stretch;
+  justify-content: center;
+  min-width: 122px;
   margin-right: 2px;
 }
-
 .hoy-status-btn {
   border: 1px solid var(--border);
   background: #fff;
   color: var(--text);
   border-radius: 999px;
-  padding: 8px 12px;
+  padding: 7px 12px;
   font-size: 12px;
   font-weight: 800;
   cursor: pointer;
@@ -2205,24 +2239,20 @@
   text-align: center;
   white-space: nowrap;
 }
-
 .hoy-status-btn:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
 }
-
 .hoy-status-btn.green.active {
   background: #dcfce7;
   border-color: #22c55e;
   color: #166534;
 }
-
 .hoy-status-btn.yellow.active {
   background: #fef9c3;
   border-color: #facc15;
   color: #854d0e;
 }
-
 .hoy-status-btn.red.active {
   background: #fee2e2;
   border-color: #ef4444;
@@ -2340,8 +2370,8 @@
       .hoy-card { grid-template-columns: 1fr; align-items: stretch; }
       .hoy-time { text-align: left; width: fit-content; }
       .hoy-actions { justify-content: stretch; }
-      .hoy-status-picker { justify-content: flex-start; width: 100%; margin-right: 0; }
-      .hoy-status-btn { flex: 1 1 120px; }
+      .hoy-status-picker { flex-direction: row; justify-content: flex-start; width: 100%; margin-right: 0; }
+      .hoy-status-dot { width: 22px; height: 22px; }
       .hoy-actions .btn-table-action { flex: 1; }
       .hoy-date-controls { justify-content: stretch; }
       .hoy-date-controls .input-date { flex: 1; min-width: 160px; }
@@ -2640,41 +2670,6 @@
       font-weight: 500;
     }
 
-
-.subview-action-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.btn-export {
-  background: #fff;
-  border: 1px solid var(--border);
-  color: var(--text);
-}
-
-.btn-export:hover {
-  background: #f8fbff;
-  border-color: #bfd7ff;
-}
-
-.turnos-export-tools {
-  display: none;
-}
-
-.turnos-export-fields {
-  display: flex;
-  gap: 12px;
-  align-items: flex-end;
-  flex-wrap: wrap;
-}
-
-.turnos-table-card .fichero-table th,
-.turnos-table-card .fichero-table td {
-  white-space: nowrap;
-}
-
     @media (max-width: 980px) {
       .fichero-table { min-width: 860px; }
       .filter-input-wide { width: 240px; }
@@ -2765,112 +2760,93 @@
     </main>
 
     <main class="hoy-container" id="appGridHoy">
-      <div class="page-title-row">
-        <div>
-          <div id="hoyTitulo" class="page-title">Turnos de hoy</div>
-          <div id="hoySubtitulo" class="page-subtitle">Lista simple del día para actualizar motivos de seguimiento al cierre de cada atención.</div>
-        </div>
-        <div class="page-title-actions hoy-date-controls" aria-label="Selector de fecha para turnos del día">
-          <button class="btn-nav-circle hoy-shift-btn" title="Día anterior" onclick="moverFechaHoy(-1)">◀</button>
-          <div class="hoy-date-pill" title="Fecha seleccionada para la vista Hoy">
-            <input type="text" id="hoyDateDisplay" class="hoy-date-display" inputmode="numeric" placeholder="dd/mm/aaaa" aria-label="Fecha vista hoy" onchange="seleccionarFechaHoy(this.value)" onkeydown="if(event.key==='Enter'){seleccionarFechaHoy(this.value);}">
-            <button class="hoy-date-calendar-btn" type="button" title="Elegir fecha" onclick="abrirDatepickerHoy()">📅</button>
-            <input type="date" id="hoyDateInput" class="hoy-date-native" title="Seleccionar fecha" onchange="seleccionarFechaHoy(this.value)">
-          </div>
-          <button class="btn-nav-circle hoy-shift-btn" title="Día siguiente" onclick="moverFechaHoy(1)">▶</button>
-          <button class="btn-table-action hoy-today-btn" title="Volver a hoy" onclick="resetearHoyAFechaActual()">Hoy</button>
-        </div>
-      </div>
-      <div id="listaTurnosHoy" class="hoy-board"></div>
-    </main>
+      
+<div class="page-title-row">
+  <div>
+    <div id="pacientesTitulo" class="page-title">Pacientes</div>
+    <div id="pacientesSubtitulo" class="page-subtitle">Fichero general del consultorio, preparado para buscar, cargar y ordenar pacientes.</div>
+  </div>
+  <div class="page-title-actions">
+    <div class="subview-action-group">
+      <button id="btnExportarFichero" class="btn-table-action btn-export" style="display:none;" onclick="exportarFicheroActual()">Exportar fichero</button>
+    </div>
+    <button class="btn-table-action btn-add-ficha" onclick="abrirAltaFichaPaciente()">+ Agregar ficha</button>
+  </div>
+</div>
 
-    <main class="pacientes-container" id="appGridPacientes">
-      <div class="page-title-row">
-        <div>
-          <div id="pacientesTitulo" class="page-title">Pacientes</div>
-          <div id="pacientesSubtitulo" class="page-subtitle">Fichero general del consultorio, preparado para buscar, cargar y ordenar pacientes.</div>
-        </div>
-        <div class="page-title-actions">
-          <div class="subview-action-group">
-            <button id="btnExportarFichero" class="btn-table-action btn-export" style="display:none;" onclick="exportarFicheroActual()">Exportar fichero</button>
-          </div>
-          <button class="btn-table-action btn-add-ficha" onclick="abrirAltaFichaPaciente()">+ Agregar ficha</button>
-        </div>
-      </div>
+<div class="patients-mode-tabs">
+  <button id="tabPacientesFichero" class="patients-mode-tab active" onclick="cambiarSubvistaPacientes('fichero')">
+    Fichero <span id="tabFicheroCount" class="patients-tab-count">0</span>
+  </button>
+  <button id="tabPacientesRecordar" class="patients-mode-tab" onclick="cambiarSubvistaPacientes('recordar')">
+    Para recordar <span id="tabRecordarCount" class="patients-tab-count">0</span>
+  </button>
+  <button id="tabPacientesTurnos" class="patients-mode-tab" onclick="cambiarSubvistaPacientes('turnos')">
+    Turnos <span id="tabTurnosCount" class="patients-tab-count">0</span>
+  </button>
+</div>
 
-      <div class="patients-mode-tabs">
-        <button id="tabPacientesFichero" class="patients-mode-tab active" onclick="cambiarSubvistaPacientes('fichero')">
-          Fichero <span id="tabFicheroCount" class="patients-tab-count">0</span>
-        </button>
-        <button id="tabPacientesRecordar" class="patients-mode-tab" onclick="cambiarSubvistaPacientes('recordar')">
-          Para recordar <span id="tabRecordarCount" class="patients-tab-count">0</span>
-        </button>
-        <button id="tabPacientesTurnos" class="patients-mode-tab" onclick="cambiarSubvistaPacientes('turnos')">
-          Turnos <span id="tabTurnosCount" class="patients-tab-count">0</span>
-        </button>
-      </div>
+<div class="metrics-panel">
+  <div class="metric-card">
+    <div id="mTotalPacientesLabel" class="metric-lbl">Fichas de pacientes</div>
+    <div id="mTotalPacientes" class="metric-val">0</div>
+  </div>
 
-      <div class="metrics-panel">
-        <div class="metric-card">
-          <div id="mTotalPacientesLabel" class="metric-lbl">Fichas de pacientes</div>
-          <div id="mTotalPacientes" class="metric-val">0</div>
-        </div>
+  <div class="metric-card metric-card-recordar">
+    <div id="mParaRecordarLabel" class="metric-lbl">Acciones pendientes</div>
+    <div id="mParaRecordar" class="metric-val">0</div>
+  </div>
+</div>
 
-        <div class="metric-card metric-card-recordar">
-          <div id="mParaRecordarLabel" class="metric-lbl">Acciones pendientes</div>
-          <div id="mParaRecordar" class="metric-val">0</div>
-        </div>
+<div class="patients-filter-card">
+  <div id="pacientesFiltroGeneral">
+    <div class="patients-filter-fields">
+      <div class="filter-group">
+        <label>Buscar por DNI</label>
+        <input
+          type="text"
+          id="filtroDniPacientes"
+          class="filter-input"
+          placeholder="Ej. 35123456"
+          oninput="filtrarPacientesPorDni(this.value)"
+        >
       </div>
 
-      <div class="patients-filter-card">
-        <div id="pacientesFiltroGeneral">
-          <div class="patients-filter-fields">
-            <div class="filter-group">
-              <label>Buscar por DNI</label>
-              <input
-                type="text"
-                id="filtroDniPacientes"
-                class="filter-input"
-                placeholder="Ej. 35123456"
-                oninput="filtrarPacientesPorDni(this.value)"
-              >
-            </div>
-
-            <div class="filter-group">
-              <label>Buscar por nombre, apellido o dato extra</label>
-              <input
-                type="text"
-                id="filtroNombrePacientes"
-                class="filter-input filter-input-wide"
-                placeholder="Ej. Juan, Pérez, obra social o teléfono"
-                oninput="filtrarPacientesPorNombre(this.value)"
-              >
-            </div>
-
-            <button class="btn-table-action" onclick="limpiarFiltroPacientes()">
-              Borrar filtros
-            </button>
-          </div>
-          <div id="filtroPacientesInfo" class="filter-info">Mostrando todos los pacientes.</div>
-        </div>
-
-        <div id="turnosExportTools" class="turnos-export-tools">
-          <div class="turnos-export-fields">
-            <div class="filter-group">
-              <label>Desde</label>
-              <input type="date" id="exportTurnosDesde" class="filter-input">
-            </div>
-            <div class="filter-group">
-              <label>Hasta</label>
-              <input type="date" id="exportTurnosHasta" class="filter-input">
-            </div>
-            <button class="btn-table-action btn-export" onclick="exportarTurnosRango()">Descargar CSV</button>
-          </div>
-          <div class="filter-info">La tabla muestra solo los turnos de hoy. Para ver más, elegí un rango y descargalo en CSV.</div>
-        </div>
+      <div class="filter-group">
+        <label>Buscar por nombre, apellido o dato extra</label>
+        <input
+          type="text"
+          id="filtroNombrePacientes"
+          class="filter-input filter-input-wide"
+          placeholder="Ej. Juan, Pérez, obra social o teléfono"
+          oninput="filtrarPacientesPorNombre(this.value)"
+        >
       </div>
 
-      <div id="tablaPacientesBody" class="patients-board"></div>
+      <button class="btn-table-action" onclick="limpiarFiltroPacientes()">
+        Borrar filtros
+      </button>
+    </div>
+    <div id="filtroPacientesInfo" class="filter-info">Mostrando todos los pacientes.</div>
+  </div>
+
+  <div id="turnosExportTools" class="turnos-export-tools">
+    <div class="turnos-export-fields">
+      <div class="filter-group">
+        <label>Desde</label>
+        <input type="date" id="exportTurnosDesde" class="filter-input">
+      </div>
+      <div class="filter-group">
+        <label>Hasta</label>
+        <input type="date" id="exportTurnosHasta" class="filter-input">
+      </div>
+      <button class="btn-table-action btn-export" onclick="exportarTurnosRango()">Descargar CSV</button>
+    </div>
+    <div class="filter-info">La tabla muestra solo los turnos de hoy. Para ver más, elegí un rango y descargalo en CSV.</div>
+  </div>
+</div>
+
+<div id="tablaPacientesBody" class="patients-board"></div>
     </main>
   </div>
 
@@ -3223,6 +3199,7 @@
     let FILTRO_NOMBRE_PACIENTES = '';
     let SUBVISTA_PACIENTES = 'fichero';
     let ULTIMA_LISTA_FICHERO = [];
+    let ULTIMA_LISTA_RECORDAR = [];
     let ULTIMA_LISTA_TURNOS_HOY = [];
     let MODO_FICHA_PACIENTE = 'alta';
     const DEFAULT_CONFIG_CLINICA = {
@@ -4621,212 +4598,169 @@
       });
     }
 
-    function obtenerExtraColumnsDesdeRegistros(registros) {
-      const configurados = obtenerCamposPacienteConfigurados();
-      const usados = new Set();
-      const cols = [];
 
-      configurados.forEach(c => {
-        const usado = registros.some(r => {
-          const extra = normalizarDatosExtraPaciente((r && (r.datosExtra || r.datos_extra)) || {});
-          return !!extra[c.key];
-        });
-
-        if (usado) {
-          cols.push({ key: c.key, label: c.label });
-          usados.add(c.key);
-        }
-      });
-
-      registros.forEach(r => {
-        const extra = normalizarDatosExtraPaciente((r && (r.datosExtra || r.datos_extra)) || {});
-        Object.keys(extra).forEach(k => {
-          if (usados.has(k)) return;
-          cols.push({ key: k, label: k.replace(/_/g, ' ').replace(/\b\w/g, m => m.toUpperCase()) });
-          usados.add(k);
-        });
-      });
-
-      return cols;
+function obtenerExtraColumnsDesdeRegistros(registros) {
+  const configurados = obtenerCamposPacienteConfigurados();
+  const usados = new Set();
+  const cols = [];
+  configurados.forEach(c => {
+    let usado = false;
+    registros.forEach(r => {
+      const extra = normalizarDatosExtraPaciente((r && (r.datosExtra || r.datos_extra)) || {});
+      if (extra[c.key]) usado = true;
+    });
+    if (usado) {
+      cols.push({ key: c.key, label: c.label });
+      usados.add(c.key);
     }
+  });
+  registros.forEach(r => {
+    const extra = normalizarDatosExtraPaciente((r && (r.datosExtra || r.datos_extra)) || {});
+    Object.keys(extra).forEach(k => {
+      if (usados.has(k)) return;
+      cols.push({ key: k, label: k.replace(/_/g, ' ').replace(/\b\w/g, m => m.toUpperCase()) });
+      usados.add(k);
+    });
+  });
+  return cols;
+}
 
-    function obtenerFirmaPacienteTurno(t) {
-      const pacienteId = String(t.pacienteId || '').trim();
-      if (pacienteId) return `pac:${pacienteId}`;
+function obtenerFirmaPacienteTurno(t) {
+  const pacienteId = String(t.pacienteId || '').trim();
+  if (pacienteId) return `pac:${pacienteId}`;
+  const nombre = normalizarNombrePaciente(t.nombre || '', t.apellido || '', t.nombre_completo || '').nombre_completo || 'paciente';
+  const telefono = String(t.telefono || '').trim();
+  return `nom:${nombre.toLowerCase()}|tel:${telefono}`;
+}
 
-      const nombre = normalizarNombrePaciente(
-        t.nombre || '',
-        t.apellido || '',
-        t.nombre_completo || ''
-      ).nombre_completo || 'paciente';
+function agruparTurnosPorRango(fechaDesdeISO, fechaHastaISO) {
+  const items = (BASE_DATOS || []).filter(t => {
+    const fecha = normalizarFechaParaVistaHoy(t.fecha);
+    return fecha >= fechaDesdeISO && fecha <= fechaHastaISO;
+  });
 
-      const telefono = String(t.telefono || '').trim();
-      return `nom:${nombre.toLowerCase()}|tel:${telefono}`;
-    }
+  const porFecha = {};
+  items.forEach(t => {
+    const fecha = normalizarFechaParaVistaHoy(t.fecha);
+    if (!porFecha[fecha]) porFecha[fecha] = [];
+    porFecha[fecha].push(t);
+  });
 
-    function agruparTurnosPorRango(fechaDesdeISO, fechaHastaISO) {
-      const items = (BASE_DATOS || []).filter(t => {
-        const fecha = normalizarFechaParaVistaHoy(t.fecha);
-        return fecha >= fechaDesdeISO && fecha <= fechaHastaISO;
-      });
+  const filas = [];
+  Object.keys(porFecha).sort().forEach(fechaISO => {
+    const horariosCfg = obtenerHorariosConfigurados();
+    const diaCfg = obtenerDiaConfigPorFecha(fechaISO);
+    const cfg = horariosCfg[diaCfg.key] || {};
+    const intervalo = [15, 20, 30, 45, 60].includes(Number(cfg.intervalo)) ? Number(cfg.intervalo) : 30;
 
-      const porFecha = {};
-      items.forEach(t => {
-        const fecha = normalizarFechaParaVistaHoy(t.fecha);
-        if (!porFecha[fecha]) porFecha[fecha] = [];
-        porFecha[fecha].push(t);
-      });
+    const ordenados = [...porFecha[fechaISO]].sort((a, b) => minutosDesdeHora(String(a.hora || '')) - minutosDesdeHora(String(b.hora || '')));
+    const grupos = [];
 
-      const filas = [];
+    ordenados.forEach(t => {
+      const firma = obtenerFirmaPacienteTurno(t);
+      const minActual = minutosDesdeHora(String(t.hora || '')) || 0;
+      const ultimo = grupos[grupos.length - 1];
 
-      Object.keys(porFecha).sort().forEach(fechaISO => {
-        const horariosCfg = obtenerHorariosConfigurados();
-        const diaCfg = obtenerDiaConfigPorFecha(fechaISO);
-        const cfg = horariosCfg[diaCfg.key] || {};
-        const intervalo = [15, 20, 30, 45, 60].includes(Number(cfg.intervalo)) ? Number(cfg.intervalo) : 30;
-
-        const ordenados = [...porFecha[fechaISO]].sort((a, b) => {
-          return minutosDesdeHora(String(a.hora || '')) - minutosDesdeHora(String(b.hora || ''));
-        });
-
-        const grupos = [];
-
-        ordenados.forEach(t => {
-          const firma = obtenerFirmaPacienteTurno(t);
-          const minActual = minutosDesdeHora(String(t.hora || '')) || 0;
-          const ultimo = grupos[grupos.length - 1];
-
-          if (ultimo && ultimo.firma === firma && minActual === (ultimo.ultimoMinutoInicio + intervalo)) {
-            ultimo.turnos.push(t);
-            ultimo.horaFin = horaDesdeMinutos(minActual + intervalo);
-            ultimo.ultimoMinutoInicio = minActual;
-            return;
-          }
-
-          grupos.push({
-            firma,
-            turnos: [t],
-            horaInicio: String(t.hora || ''),
-            horaFin: horaDesdeMinutos(minActual + intervalo),
-            ultimoMinutoInicio: minActual
-          });
-        });
-
-        grupos.forEach(g => {
-          const base = g.turnos.find(x => x.extension !== true) || g.turnos[0];
-          const pacienteLocal = buscarPacienteLocalPorId(String(base.pacienteId || '')) || {};
-          const nombres = normalizarNombrePaciente(
-            base.nombre || pacienteLocal.nombre || '',
-            base.apellido || pacienteLocal.apellido || '',
-            base.nombre_completo || pacienteLocal.nombre_completo || ''
-          );
-
-          filas.push({
-            fecha: fechaISO,
-            horaInicio: g.horaInicio,
-            horaFin: g.horaFin,
-            nombre: nombres.nombre || '',
-            apellido: nombres.apellido || '',
-            nombreCompleto: nombres.nombre_completo || 'Paciente',
-            telefono: base.telefono || pacienteLocal.telefono || '',
-            dni: String(base.dni || pacienteLocal.dni || '').replace(/\D/g, ''),
-            datosExtra: normalizarDatosExtraPaciente(base.datosExtra || pacienteLocal.datosExtra || pacienteLocal.datos_extra || {}),
-            pacienteId: String(base.pacienteId || '')
-          });
-        });
-      });
-
-      return filas;
-    }
-
-    function descargarCSV(nombreArchivo, headers, rows) {
-      const escapeCsv = (val) => {
-        const str = String(val ?? '');
-        if (/[",;\n]/.test(str)) return '"' + str.replace(/"/g, '""') + '"';
-        return str;
-      };
-
-      const contenido = [
-        headers.map(escapeCsv).join(';'),
-        ...rows.map(r => r.map(escapeCsv).join(';'))
-      ].join('\n');
-
-      const blob = new Blob(['\ufeff' + contenido], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = nombreArchivo;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    }
-
-    function exportarFicheroActual() {
-      const lista = [...(ULTIMA_LISTA_FICHERO || [])];
-
-      if (lista.length === 0) {
-        alert('No hay fichas para exportar con los filtros actuales.');
+      if (ultimo && ultimo.firma === firma && minActual === (ultimo.ultimoMinutoInicio + intervalo)) {
+        ultimo.turnos.push(t);
+        ultimo.horaFin = horaDesdeMinutos(minActual + intervalo);
+        ultimo.ultimoMinutoInicio = minActual;
         return;
       }
 
-      const extraCols = obtenerExtraColumnsDesdeRegistros(lista);
-      const headers = ['Paciente', 'DNI', 'Teléfono', 'Visitas', 'Última visita', ...extraCols.map(c => c.label)];
-
-      const rows = lista.map(p => {
-        const nombre = construirNombreCompleto(p.nombre, p.apellido) || 'Sin nombre';
-        const ultima = p.ultimaVisita ? convertirFechaLatina(p.ultimaVisita) : 'Sin visitas';
-        const extra = normalizarDatosExtraPaciente(p.datosExtra || {});
-
-        return [
-          nombre,
-          p.dni || '',
-          p.telefono || '',
-          p.cantVisitas || 0,
-          ultima,
-          ...extraCols.map(c => extra[c.key] || '')
-        ];
+      grupos.push({
+        firma,
+        turnos: [t],
+        horaInicio: String(t.hora || ''),
+        horaFin: horaDesdeMinutos(minActual + intervalo),
+        ultimoMinutoInicio: minActual
       });
+    });
 
-      descargarCSV(`fichero_pacientes_${formatearFechaISO(new Date())}.csv`, headers, rows);
-    }
-
-    function exportarTurnosRango() {
-      const desde = document.getElementById('exportTurnosDesde')?.value || formatearFechaISO(new Date());
-      const hasta = document.getElementById('exportTurnosHasta')?.value || desde;
-
-      if (hasta < desde) {
-        alert('La fecha hasta no puede ser menor que la fecha desde.');
-        return;
-      }
-
-      const filas = agruparTurnosPorRango(desde, hasta);
-
-      if (filas.length === 0) {
-        alert('No hay turnos para exportar en ese rango.');
-        return;
-      }
-
-      const extraCols = obtenerExtraColumnsDesdeRegistros(filas);
-      const headers = ['Fecha', 'Desde', 'Hasta', 'Nombre', 'Apellido', 'DNI', 'Teléfono', ...extraCols.map(c => c.label)];
-
-      const rows = filas.map(r => {
-        const extra = normalizarDatosExtraPaciente(r.datosExtra || {});
-
-        return [
-          convertirFechaLatina(r.fecha),
-          r.horaInicio || '',
-          r.horaFin || '',
-          r.nombre || '',
-          r.apellido || '',
-          r.dni || '',
-          r.telefono || '',
-          ...extraCols.map(c => extra[c.key] || '')
-        ];
+    grupos.forEach(g => {
+      const base = g.turnos.find(x => x.extension !== true) || g.turnos[0];
+      const pacienteLocal = buscarPacienteLocalPorId(String(base.pacienteId || '')) || {};
+      const nombres = normalizarNombrePaciente(
+        base.nombre || pacienteLocal.nombre || '',
+        base.apellido || pacienteLocal.apellido || '',
+        base.nombre_completo || pacienteLocal.nombre_completo || ''
+      );
+      filas.push({
+        fecha: fechaISO,
+        horaInicio: g.horaInicio,
+        horaFin: g.horaFin,
+        nombre: nombres.nombre || '',
+        apellido: nombres.apellido || '',
+        nombreCompleto: nombres.nombre_completo || 'Paciente',
+        telefono: base.telefono || pacienteLocal.telefono || '',
+        dni: String(base.dni || pacienteLocal.dni || '').replace(/\D/g, ''),
+        datosExtra: normalizarDatosExtraPaciente(base.datosExtra || pacienteLocal.datosExtra || pacienteLocal.datos_extra || {}),
+        pacienteId: String(base.pacienteId || '')
       });
+    });
+  });
 
-      descargarCSV(`turnos_${desde}_a_${hasta}.csv`, headers, rows);
-    }
+  return filas;
+}
+
+function descargarCSV(nombreArchivo, headers, rows) {
+  const escapeCsv = (val) => {
+    const str = String(val ?? '');
+    if (/[",;\n]/.test(str)) return '"' + str.replace(/"/g, '""') + '"';
+    return str;
+  };
+  const contenido = [
+    headers.map(escapeCsv).join(';'),
+    ...rows.map(r => r.map(escapeCsv).join(';'))
+  ].join('\n');
+  const blob = new Blob(['\ufeff' + contenido], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nombreArchivo;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function exportarFicheroActual() {
+  const lista = [...(ULTIMA_LISTA_FICHERO || [])];
+  if (lista.length === 0) {
+    alert('No hay fichas para exportar con los filtros actuales.');
+    return;
+  }
+  const extraCols = obtenerExtraColumnsDesdeRegistros(lista);
+  const headers = ['Paciente', 'DNI', 'Teléfono', 'Visitas', 'Última visita', ...extraCols.map(c => c.label)];
+  const rows = lista.map(p => {
+    const nombre = construirNombreCompleto(p.nombre, p.apellido) || 'Sin nombre';
+    const ultima = p.ultimaVisita ? convertirFechaLatina(p.ultimaVisita) : 'Sin visitas';
+    const extra = normalizarDatosExtraPaciente(p.datosExtra || {});
+    return [nombre, p.dni || '', p.telefono || '', p.cantVisitas || 0, ultima, ...extraCols.map(c => extra[c.key] || '')];
+  });
+  descargarCSV(`fichero_pacientes_${formatearFechaISO(new Date())}.csv`, headers, rows);
+}
+
+function exportarTurnosRango() {
+  const desde = document.getElementById('exportTurnosDesde')?.value || formatearFechaISO(new Date());
+  const hasta = document.getElementById('exportTurnosHasta')?.value || desde;
+  if (hasta < desde) {
+    alert('La fecha hasta no puede ser menor que la fecha desde.');
+    return;
+  }
+  const filas = agruparTurnosPorRango(desde, hasta);
+  if (filas.length === 0) {
+    alert('No hay turnos para exportar en ese rango.');
+    return;
+  }
+  const extraCols = obtenerExtraColumnsDesdeRegistros(filas);
+  const headers = ['Fecha', 'Desde', 'Hasta', 'Nombre', 'Apellido', 'DNI', 'Teléfono', ...extraCols.map(c => c.label)];
+  const rows = filas.map(r => {
+    const extra = normalizarDatosExtraPaciente(r.datosExtra || {});
+    return [convertirFechaLatina(r.fecha), r.horaInicio || '', r.horaFin || '', r.nombre || '', r.apellido || '', r.dni || '', r.telefono || '', ...extraCols.map(c => extra[c.key] || '')];
+  });
+  descargarCSV(`turnos_${desde}_a_${hasta}.csv`, headers, rows);
+}
 
     function armarResumenTratamientos(pacienteId) {
       const tags = motivosAArray(TRATAMIENTOS_DB[String(pacienteId || '')] || {});
@@ -4834,385 +4768,373 @@
       return tags.map(key => `<span class="treatment-pill">${e(obtenerLabelMotivo(key))}</span>`).join('');
     }
 
-    function calcularYRenderizarPacientes() {
-      const hoy = new Date();
-      hoy.setHours(0, 0, 0, 0);
-      const hoyStr = formatearFechaISO(hoy);
 
-      const mapaPacientes = {};
+function calcularYRenderizarPacientes() {
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const hoyStr = formatearFechaISO(hoy);
 
-      const asegurarPaciente = (pacienteId, base = {}) => {
-        const id = String(pacienteId || '');
-        if (!id) return null;
+  const mapaPacientes = {};
 
-        if (!mapaPacientes[id]) {
-          const nombresBase = normalizarNombrePaciente(base.nombre, base.apellido, base.nombre_completo);
-          mapaPacientes[id] = {
-            id,
-            dni: String(base.dni || '').replace(/\D/g, ''),
-            nombre: nombresBase.nombre || '',
-            apellido: nombresBase.apellido || '',
-            telefono: base.telefono || '',
-            datosExtra: normalizarDatosExtraPaciente(base.datosExtra || base.datos_extra || {}),
-            ultimaVisita: '',
-            fechasVisita: {},
-            turnosFuturos: [],
-            timestampMax: base.created_at ? new Date(base.created_at).getTime() : 0
-          };
-        }
-
-        return mapaPacientes[id];
+  const asegurarPaciente = (pacienteId, base = {}) => {
+    const id = String(pacienteId || '');
+    if (!id) return null;
+    if (!mapaPacientes[id]) {
+      const nombresBase = normalizarNombrePaciente(base.nombre, base.apellido, base.nombre_completo);
+      mapaPacientes[id] = {
+        id,
+        dni: String(base.dni || '').replace(/\D/g, ''),
+        nombre: nombresBase.nombre || '',
+        apellido: nombresBase.apellido || '',
+        telefono: base.telefono || '',
+        datosExtra: normalizarDatosExtraPaciente(base.datosExtra || base.datos_extra || {}),
+        ultimaVisita: '',
+        fechasVisita: {},
+        turnosFuturos: [],
+        timestampMax: base.created_at ? new Date(base.created_at).getTime() : 0
       };
+    }
+    return mapaPacientes[id];
+  };
 
-      PACIENTES_DB.forEach(p => {
-        const paciente = asegurarPaciente(p.id, p);
-        if (!paciente) return;
+  PACIENTES_DB.forEach(p => {
+    const paciente = asegurarPaciente(p.id, p);
+    if (!paciente) return;
+    const nombres = normalizarNombrePaciente(p.nombre, p.apellido, p.nombre_completo);
+    paciente.dni = String(p.dni || paciente.dni || '').replace(/\D/g, '');
+    paciente.nombre = nombres.nombre || paciente.nombre;
+    paciente.apellido = nombres.apellido || paciente.apellido;
+    paciente.telefono = p.telefono || paciente.telefono;
+    paciente.datosExtra = normalizarDatosExtraPaciente(p.datosExtra || paciente.datosExtra || {});
+  });
 
-        const nombres = normalizarNombrePaciente(p.nombre, p.apellido, p.nombre_completo);
-        paciente.dni = String(p.dni || paciente.dni || '').replace(/\D/g, '');
-        paciente.nombre = nombres.nombre || paciente.nombre;
-        paciente.apellido = nombres.apellido || paciente.apellido;
-        paciente.telefono = p.telefono || paciente.telefono;
-        paciente.datosExtra = normalizarDatosExtraPaciente(p.datosExtra || paciente.datosExtra || {});
-      });
+  BASE_DATOS.forEach(turno => {
+    const pacienteId = String(turno.pacienteId || '');
+    if (!pacienteId) return;
+    const paciente = asegurarPaciente(pacienteId, turno);
+    if (!paciente) return;
 
-      BASE_DATOS.forEach(turno => {
-        const pacienteId = String(turno.pacienteId || '');
-        if (!pacienteId) return;
-
-        const paciente = asegurarPaciente(pacienteId, turno);
-        if (!paciente) return;
-
-        const nombresTurno = normalizarNombrePaciente(turno.nombre, turno.apellido, turno.nombre_completo);
-
-        if ((turno.timestamp || 0) > paciente.timestampMax) {
-          paciente.timestampMax = turno.timestamp || 0;
-          paciente.nombre = nombresTurno.nombre || paciente.nombre;
-          paciente.apellido = nombresTurno.apellido || paciente.apellido;
-          if (turno.telefono) paciente.telefono = turno.telefono;
-          if (turno.dni) paciente.dni = String(turno.dni || '').replace(/\D/g, '') || paciente.dni;
-          if (turno.datosExtra) paciente.datosExtra = normalizarDatosExtraPaciente(turno.datosExtra || {});
-        }
-
-        if (turno.fecha < hoyStr) {
-          paciente.fechasVisita[turno.fecha] = true;
-          if (!paciente.ultimaVisita || turno.fecha > paciente.ultimaVisita) {
-            paciente.ultimaVisita = turno.fecha;
-          }
-        }
-
-        if (turno.fecha >= hoyStr && turno.extension !== true) {
-          paciente.turnosFuturos.push(turno);
-        }
-      });
-
-      let listaPacientes = Object.values(mapaPacientes).map(p => {
-        const cantVisitas = Object.keys(p.fechasVisita || {}).length;
-        const segInfo = SEGUIMIENTO_COMPACTO[p.id] || { ultimoRecordatorio: '', estado: '' };
-        const motivos = motivosAArray(TRATAMIENTOS_DB[String(p.id || '')] || {});
-
-        let diasTranscurridos = null;
-
-        if (p.ultimaVisita) {
-          const partes = p.ultimaVisita.split('-');
-          const fechaUltVis = new Date(partes[0], partes[1] - 1, partes[2]);
-          const difTiempo = hoy.getTime() - fechaUltVis.getTime();
-          diasTranscurridos = Math.floor(difTiempo / (1000 * 60 * 60 * 24));
-          if (diasTranscurridos < 0) diasTranscurridos = 0;
-        }
-
-        const tieneTurnoFuturo = (p.turnosFuturos || []).length > 0;
-        const debeRecordar = !!p.ultimaVisita && !tieneTurnoFuturo && diasTranscurridos !== null && diasTranscurridos >= 30;
-
-        const turnosFuturosOrdenados = [...(p.turnosFuturos || [])].sort((a, b) => {
-          const f = String(a.fecha || '').localeCompare(String(b.fecha || ''));
-          if (f !== 0) return f;
-          return String(a.hora || '').localeCompare(String(b.hora || ''));
-        });
-
-        return {
-          ...p,
-          cantVisitas,
-          diasTranscurridos,
-          ultRecLabel: segInfo.ultimoRecordatorio ? convertirFechaLatina(segInfo.ultimoRecordatorio) : 'Ninguno',
-          estadoLabel: debeRecordar ? 'Sin turno 30+ días' : 'Al día',
-          badgeClase: debeRecordar ? 'badge-atencion' : 'badge-al-dia',
-          cardClase: debeRecordar ? 'warning' : 'normal',
-          debeRecordar,
-          motivos,
-          tieneTurnoFuturo,
-          proximoTurno: turnosFuturosOrdenados[0] || null
-        };
-      });
-
-      listaPacientes.sort((a, b) => {
-        const na = construirNombreCompleto(a.nombre, a.apellido).toLowerCase();
-        const nb = construirNombreCompleto(b.nombre, b.apellido).toLowerCase();
-        return na.localeCompare(nb);
-      });
-
-      const turnosHoyTabla = agruparTurnosPorRango(hoyStr, hoyStr);
-      ULTIMA_LISTA_TURNOS_HOY = [...turnosHoyTabla];
-
-      const totalPacientes = listaPacientes.length;
-      const totalRecordar = listaPacientes.filter(p => p.debeRecordar).length;
-      actualizarMetricasPacientes(totalPacientes, totalRecordar, turnosHoyTabla.length);
-
-      const titulo = document.getElementById('pacientesTitulo');
-      const subtitulo = document.getElementById('pacientesSubtitulo');
-
-      const esFichero = SUBVISTA_PACIENTES === 'fichero';
-      const esRecordar = SUBVISTA_PACIENTES === 'recordar';
-      const esTurnos = SUBVISTA_PACIENTES === 'turnos';
-
-      if (titulo) titulo.innerText = esFichero ? 'Pacientes' : (esRecordar ? 'Para recordar' : 'Turnos');
-
-      if (subtitulo) {
-        subtitulo.innerText = esFichero
-          ? 'Fichero general estilo planilla: buscá, cargá y mantené datos de pacientes. Más adelante puede servir para importar o descargar información.'
-          : esRecordar
-            ? 'Lista de acción: pacientes sin turno futuro y con 30 días o más desde la última visita.'
-            : 'Tabla de turnos de hoy. No se edita desde acá; para ver más, descargá un rango en CSV.';
-      }
-
-      document.getElementById('tabPacientesFichero')?.classList.toggle('active', esFichero);
-      document.getElementById('tabPacientesRecordar')?.classList.toggle('active', esRecordar);
-      document.getElementById('tabPacientesTurnos')?.classList.toggle('active', esTurnos);
-
-      document.getElementById('btnExportarFichero')?.style.setProperty('display', esFichero ? 'inline-flex' : 'none');
-      document.getElementById('pacientesFiltroGeneral')?.style.setProperty('display', esTurnos ? 'none' : 'block');
-      document.getElementById('turnosExportTools')?.style.setProperty('display', esTurnos ? 'block' : 'none');
-
-      const desdeInput = document.getElementById('exportTurnosDesde');
-      const hastaInput = document.getElementById('exportTurnosHasta');
-      if (desdeInput && !desdeInput.value) desdeInput.value = hoyStr;
-      if (hastaInput && !hastaInput.value) hastaInput.value = hoyStr;
-
-      const filtroDni = String(FILTRO_DNI_PACIENTES || '').replace(/\D/g, '');
-      const filtroNombre = normalizarTexto(FILTRO_NOMBRE_PACIENTES);
-
-      const coincideFiltros = (p) => {
-        const nombreCompleto = construirNombreCompleto(p.nombre, p.apellido);
-        const extraTexto = Object.values(p.datosExtra || {}).join(' ');
-        const telefonoTexto = String(p.telefono || '');
-        const coincideDni = filtroDni ? String(p.dni || '').includes(filtroDni) : true;
-        const coincideNombre = filtroNombre ? normalizarTexto(`${nombreCompleto} ${extraTexto} ${telefonoTexto}`).includes(filtroNombre) : true;
-        return coincideDni && coincideNombre;
-      };
-
-      const listaBase = esFichero
-        ? listaPacientes
-        : esRecordar
-          ? listaPacientes.filter(p => p.debeRecordar).sort((a, b) => (b.diasTranscurridos || 0) - (a.diasTranscurridos || 0))
-          : [];
-
-      const listaFiltrada = esTurnos ? [] : listaBase.filter(coincideFiltros);
-
-      if (esFichero) ULTIMA_LISTA_FICHERO = [...listaFiltrada];
-
-      const filtroInfo = document.getElementById('filtroPacientesInfo');
-      if (filtroInfo && !esTurnos) {
-        const filtrosActivos = [];
-        if (filtroDni) filtrosActivos.push(`DNI: ${filtroDni}`);
-        if (filtroNombre) filtrosActivos.push(`Texto: ${FILTRO_NOMBRE_PACIENTES}`);
-
-        const baseTxt = esFichero ? 'fichas' : 'pacientes para recordar';
-        filtroInfo.innerText = filtrosActivos.length
-          ? `Filtro activo por ${filtrosActivos.join(' · ')}. Resultado: ${listaFiltrada.length} ${baseTxt}.`
-          : (esFichero ? 'Mostrando todas las fichas.' : `Mostrando ${listaFiltrada.length} pacientes con 30 días o más sin turno futuro.`);
-      }
-
-      const board = document.getElementById('tablaPacientesBody');
-      if (!board) return;
-      board.innerHTML = '';
-
-      const nombrePaciente = (p) => construirNombreCompleto(p.nombre, p.apellido) || 'Sin nombre';
-
-      if (esTurnos) {
-        if (turnosHoyTabla.length === 0) {
-          board.innerHTML = `
-            <div class="empty-state recordar-empty">
-              <div class="empty-title">No hay turnos cargados para hoy.</div>
-              <div class="empty-text">Cuando haya turnos para la fecha actual, se mostrarán acá en formato planilla.</div>
-            </div>`;
-          return;
-        }
-
-        const extraCols = obtenerExtraColumnsDesdeRegistros(turnosHoyTabla);
-
-        board.innerHTML = `
-          <div class="fichero-table-card turnos-table-card">
-            <div class="fichero-table-scroll">
-              <table class="fichero-table">
-                <thead>
-                  <tr>
-                    <th>Fecha</th>
-                    <th>Horario</th>
-                    <th>Nombre</th>
-                    <th>Apellido</th>
-                    <th>DNI</th>
-                    <th>Teléfono</th>
-                    ${extraCols.map(c => `<th>${e(c.label)}</th>`).join('')}
-                  </tr>
-                </thead>
-                <tbody>
-                  ${turnosHoyTabla.map(r => {
-                    const extra = normalizarDatosExtraPaciente(r.datosExtra || {});
-                    return `
-                      <tr>
-                        <td>${e(convertirFechaLatina(r.fecha))}</td>
-                        <td><strong>${e(r.horaInicio)} a ${e(r.horaFin)}</strong></td>
-                        <td>${e(r.nombre || '')}</td>
-                        <td>${e(r.apellido || '')}</td>
-                        <td>${e(r.dni || 'S/D')}</td>
-                        <td class="fichero-phone">${e(r.telefono || 'S/T')}</td>
-                        ${extraCols.map(c => `<td>${e(extra[c.key] || '—')}</td>`).join('')}
-                      </tr>`;
-                  }).join('')}
-                </tbody>
-              </table>
-            </div>
-          </div>`;
-        return;
-      }
-
-      if (listaFiltrada.length === 0) {
-        if (esFichero) {
-          board.innerHTML = `
-            <div class="empty-state">
-              <div class="empty-title">No hay fichas que coincidan con el filtro.</div>
-              <div class="empty-text">Probá con otro DNI, nombre o limpiá los filtros para volver a ver el fichero completo.</div>
-            </div>`;
-        } else {
-          board.innerHTML = `
-            <div class="empty-state recordar-empty">
-              <div class="empty-title">Todo al día.</div>
-              <div class="empty-text">No hay pacientes con 30 días o más sin turno futuro. Cuando aparezca alguno, se mostrará acá.</div>
-            </div>`;
-        }
-        return;
-      }
-
-      if (esFichero) {
-        const extraCols = obtenerExtraColumnsDesdeRegistros(listaFiltrada);
-
-        board.innerHTML = `
-          <div class="fichero-table-card">
-            <div class="fichero-table-scroll">
-              <table class="fichero-table">
-                <thead>
-                  <tr>
-                    <th>Paciente</th>
-                    <th>DNI</th>
-                    <th>Teléfono</th>
-                    ${extraCols.map(c => `<th>${e(c.label)}</th>`).join('')}
-                    <th style="text-align:right;">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${listaFiltrada.map(p => {
-                    const pacienteIdJson = JSON.stringify(String(p.id || ''));
-                    const botonBorrar = (ROL_USUARIO_ACTUAL === 'admin')
-                      ? `<button class="btn-table-action btn-delete-ficha" onclick='confirmarBorrarFichaPaciente(${pacienteIdJson})'>Borrar</button>`
-                      : '';
-                    const extra = normalizarDatosExtraPaciente(p.datosExtra || {});
-
-                    return `
-                      <tr>
-                        <td>
-                          <div class="fichero-name">${e(nombrePaciente(p))}</div>
-                          <div class="fichero-sub">Visitas: ${e(String(p.cantVisitas || 0))} · Última: ${e(p.ultimaVisita ? convertirFechaLatina(p.ultimaVisita) : 'Sin visitas')}</div>
-                        </td>
-                        <td>${e(p.dni || 'S/D')}</td>
-                        <td class="fichero-phone">${e(p.telefono || 'S/T')}</td>
-                        ${extraCols.map(c => `<td>${e(extra[c.key] || '—')}</td>`).join('')}
-                        <td>
-                          <div class="fichero-actions">
-                            <button class="btn-table-action btn-mini-blue" onclick='abrirEditarFichaPaciente(${pacienteIdJson})'>Editar</button>
-                            ${botonBorrar}
-                          </div>
-                        </td>
-                      </tr>`;
-                  }).join('')}
-                </tbody>
-              </table>
-            </div>
-          </div>`;
-        return;
-      }
-
-      listaFiltrada.forEach(p => {
-        const pacienteIdJson = JSON.stringify(String(p.id || ''));
-        const telJson = JSON.stringify(String(p.telefono || ''));
-        const nombreJson = JSON.stringify(nombrePaciente(p));
-        const diasTxt = p.diasTranscurridos === null ? 'Sin visitas' : `${p.diasTranscurridos} días`;
-        const card = document.createElement('div');
-        card.className = 'patient-card recordar-card warning';
-
-        card.innerHTML = `
-          <div>
-            <div class="patient-name">${e(nombrePaciente(p))}</div>
-            <div class="patient-small">DNI: ${e(p.dni || 'S/D')} · Última visita: ${e(p.ultimaVisita ? convertirFechaLatina(p.ultimaVisita) : 'Sin visitas')}</div>
-            <div class="treatment-summary">${armarResumenTratamientos(p.id)}</div>
-          </div>
-
-          <div>
-            <div class="patient-label">Teléfono</div>
-            <div class="patient-value phone-copy-line">
-              <span>${e(p.telefono || 'S/T')}</span>
-              <button class="btn-copy-phone" title="Copiar teléfono" onclick='copiarTelefono(${telJson}, event)'>📞</button>
-            </div>
-          </div>
-
-          <div>
-            <div class="patient-label">Días sin venir</div>
-            <div class="patient-value">${e(diasTxt)}</div>
-            <div class="patient-small">Últ. recordatorio: ${e(p.ultRecLabel)}</div>
-          </div>
-
-          <div>
-            <div class="patient-label">Estado</div>
-            <div class="patient-value"><span class="badge-status badge-atencion">Sin turno 30+ días</span></div>
-            <div class="patient-small">Pasaron 30 días o más desde la última visita y no tiene turno futuro.</div>
-          </div>
-
-          <div class="patient-actions">
-            <button class="btn-table-action btn-whatsapp-green" onclick='abrirWhatsAppPaciente(${telJson}, ${nombreJson}, ${pacienteIdJson}, event)'>WhatsApp</button>
-            <button class="btn-table-action" onclick='copiarWhatsAppSeguimiento(${nombreJson}, ${telJson}, ${pacienteIdJson})'>Copiar recordatorio</button>
-            <button class="btn-table-action btn-recordado" onclick='marcarPacienteRecordado(${pacienteIdJson})'>Marcar recordado</button>
-            <button class="btn-table-action btn-mini-blue" onclick='abrirTratamientosPaciente(${pacienteIdJson})'>Motivos</button>
-          </div>
-        `;
-
-        board.appendChild(card);
-      });
+    const nombresTurno = normalizarNombrePaciente(turno.nombre, turno.apellido, turno.nombre_completo);
+    if ((turno.timestamp || 0) > paciente.timestampMax) {
+      paciente.timestampMax = turno.timestamp || 0;
+      paciente.nombre = nombresTurno.nombre || paciente.nombre;
+      paciente.apellido = nombresTurno.apellido || paciente.apellido;
+      if (turno.telefono) paciente.telefono = turno.telefono;
+      if (turno.dni) paciente.dni = String(turno.dni || '').replace(/\D/g, '') || paciente.dni;
+      if (turno.datosExtra) paciente.datosExtra = normalizarDatosExtraPaciente(turno.datosExtra || {});
     }
 
-    function actualizarMetricasPacientes(totalPacientes, accionesPendientes, totalParaRecordar, totalTurnosHoy) {
-      const total = document.getElementById('mTotalPacientes');
-      const recordar = document.getElementById('mParaRecordar');
-      const tabF = document.getElementById('tabFicheroCount');
-      const tabR = document.getElementById('tabRecordarCount');
-      const tabT = document.getElementById('tabTurnosCount');
-      const totalLabel = document.getElementById('mTotalPacientesLabel');
-      const recordarLabel = document.getElementById('mParaRecordarLabel');
-
-      if (tabF) tabF.innerText = totalPacientes;
-      if (tabR) tabR.innerText = totalParaRecordar;
-      if (tabT) tabT.innerText = totalTurnosHoy;
-      if (recordar) recordar.innerText = accionesPendientes;
-      if (recordarLabel) recordarLabel.innerText = 'Acciones pendientes';
-
-      if (SUBVISTA_PACIENTES === 'turnos') {
-        if (totalLabel) totalLabel.innerText = 'Turnos de hoy';
-        if (total) total.innerText = totalTurnosHoy;
-      } else {
-        if (totalLabel) totalLabel.innerText = 'Fichas de pacientes';
-        if (total) total.innerText = totalPacientes;
+    if (turno.fecha < hoyStr) {
+      paciente.fechasVisita[turno.fecha] = true;
+      if (!paciente.ultimaVisita || turno.fecha > paciente.ultimaVisita) {
+        paciente.ultimaVisita = turno.fecha;
       }
     }
 
-    function convertirFechaLatina(fechaISO) {
+    if (turno.fecha >= hoyStr && turno.extension !== true) {
+      paciente.turnosFuturos.push(turno);
+    }
+  });
+
+  let listaPacientes = Object.values(mapaPacientes).map(p => {
+    const cantVisitas = Object.keys(p.fechasVisita || {}).length;
+    const segInfo = SEGUIMIENTO_COMPACTO[p.id] || { ultimoRecordatorio: '', estado: '' };
+    const motivos = motivosAArray(TRATAMIENTOS_DB[String(p.id || '')] || {});
+
+    let diasTranscurridos = null;
+    if (p.ultimaVisita) {
+      const partes = p.ultimaVisita.split('-');
+      const fechaUltVis = new Date(partes[0], partes[1] - 1, partes[2]);
+      const difTiempo = hoy.getTime() - fechaUltVis.getTime();
+      diasTranscurridos = Math.floor(difTiempo / (1000 * 60 * 60 * 24));
+      if (diasTranscurridos < 0) diasTranscurridos = 0;
+    }
+
+    const tieneTurnoFuturo = (p.turnosFuturos || []).length > 0;
+    const esAlertaRecordatorio = !!p.ultimaVisita && !tieneTurnoFuturo && diasTranscurridos !== null && diasTranscurridos >= 30;
+
+    const turnosFuturosOrdenados = [...(p.turnosFuturos || [])].sort((a, b) => {
+      const f = String(a.fecha || '').localeCompare(String(b.fecha || ''));
+      if (f !== 0) return f;
+      return String(a.hora || '').localeCompare(String(b.hora || ''));
+    });
+
+    return {
+      ...p,
+      cantVisitas,
+      diasTranscurridos,
+      ultRecLabel: segInfo.ultimoRecordatorio ? convertirFechaLatina(segInfo.ultimoRecordatorio) : 'Ninguno',
+      estadoLabel: esAlertaRecordatorio ? 'Sin turno 30+ días' : 'Al día',
+      badgeClase: esAlertaRecordatorio ? 'badge-atencion' : 'badge-al-dia',
+      cardClase: esAlertaRecordatorio ? 'warning' : 'normal',
+      debeRecordar: esAlertaRecordatorio,
+      prioridadRecordar: esAlertaRecordatorio ? 'amarillo' : '',
+      motivos,
+      tieneTurnoFuturo,
+      proximoTurno: turnosFuturosOrdenados[0] || null
+    };
+  });
+
+  listaPacientes.sort((a, b) => {
+    const na = construirNombreCompleto(a.nombre, a.apellido).toLowerCase();
+    const nb = construirNombreCompleto(b.nombre, b.apellido).toLowerCase();
+    return na.localeCompare(nb);
+  });
+
+  const totalP = listaPacientes.length;
+  const paraRecordarP = listaPacientes.filter(p => p.debeRecordar).length;
+  const accionesPendientesP = paraRecordarP;
+  const turnosHoyLista = agruparTurnosPorRango(hoyStr, hoyStr);
+  ULTIMA_LISTA_TURNOS_HOY = [...turnosHoyLista];
+
+  const titulo = document.getElementById('pacientesTitulo');
+  const subtitulo = document.getElementById('pacientesSubtitulo');
+  const esFichero = SUBVISTA_PACIENTES === 'fichero';
+  const esRecordar = SUBVISTA_PACIENTES === 'recordar';
+  const esTurnos = SUBVISTA_PACIENTES === 'turnos';
+
+  actualizarMetricas(totalP, accionesPendientesP, paraRecordarP, turnosHoyLista.length);
+
+  if (titulo) titulo.innerText = esFichero ? 'Pacientes' : (esRecordar ? 'Para recordar' : 'Turnos');
+  if (subtitulo) {
+    subtitulo.innerText = esFichero
+      ? 'Fichero general estilo planilla: buscá, cargá y mantené datos de pacientes. Más adelante puede servir para importar o descargar información.'
+      : (esRecordar
+        ? 'Lista de acción: solo pacientes sin turno futuro y con 30 días o más desde la última visita.'
+        : 'Listado estilo planilla con los turnos de hoy. No se edita acá. Para ver más, exportá un rango en CSV.');
+  }
+
+  document.getElementById('tabPacientesFichero')?.classList.toggle('active', esFichero);
+  document.getElementById('tabPacientesRecordar')?.classList.toggle('active', esRecordar);
+  document.getElementById('tabPacientesTurnos')?.classList.toggle('active', esTurnos);
+  document.getElementById('btnExportarFichero')?.style.setProperty('display', esFichero ? 'inline-flex' : 'none');
+  document.getElementById('pacientesFiltroGeneral')?.style.setProperty('display', esTurnos ? 'none' : 'block');
+  document.getElementById('turnosExportTools')?.style.setProperty('display', esTurnos ? 'block' : 'none');
+
+  const desdeInput = document.getElementById('exportTurnosDesde');
+  const hastaInput = document.getElementById('exportTurnosHasta');
+  if (desdeInput && !desdeInput.value) desdeInput.value = hoyStr;
+  if (hastaInput && !hastaInput.value) hastaInput.value = hoyStr;
+
+  const filtroDni = String(FILTRO_DNI_PACIENTES || '').replace(/\D/g, '');
+  const filtroNombre = normalizarTexto(FILTRO_NOMBRE_PACIENTES);
+
+  const coincideFiltros = (p) => {
+    const nombreCompleto = construirNombreCompleto(p.nombre, p.apellido);
+    const extraTexto = Object.values(p.datosExtra || {}).join(' ');
+    const telefonoTexto = String(p.telefono || '');
+    const coincideDni = filtroDni ? String(p.dni || '').includes(filtroDni) : true;
+    const coincideNombre = filtroNombre ? normalizarTexto(`${nombreCompleto} ${extraTexto} ${telefonoTexto}`).includes(filtroNombre) : true;
+    return coincideDni && coincideNombre;
+  };
+
+  const listaBase = esFichero
+    ? listaPacientes
+    : esRecordar
+      ? listaPacientes.filter(p => p.debeRecordar).sort((a, b) => (b.diasTranscurridos || 0) - (a.diasTranscurridos || 0))
+      : [];
+
+  const listaFiltrada = esTurnos ? [] : listaBase.filter(coincideFiltros);
+  if (esFichero) ULTIMA_LISTA_FICHERO = [...listaFiltrada];
+  if (esRecordar) ULTIMA_LISTA_RECORDAR = [...listaFiltrada];
+
+  const filtroInfo = document.getElementById('filtroPacientesInfo');
+  if (filtroInfo && !esTurnos) {
+    const filtrosActivos = [];
+    if (filtroDni) filtrosActivos.push(`DNI: ${filtroDni}`);
+    if (filtroNombre) filtrosActivos.push(`Texto: ${FILTRO_NOMBRE_PACIENTES}`);
+    const baseTxt = esFichero ? 'fichas' : 'pacientes para recordar';
+    filtroInfo.innerText = filtrosActivos.length
+      ? `Filtro activo por ${filtrosActivos.join(' · ')}. Resultado: ${listaFiltrada.length} ${baseTxt}.`
+      : (esFichero ? 'Mostrando todas las fichas.' : `Mostrando ${listaFiltrada.length} pacientes con 30 días o más sin turno futuro.`);
+  }
+
+  const board = document.getElementById('tablaPacientesBody');
+  if (!board) return;
+  board.innerHTML = '';
+
+  const nombrePaciente = (p) => construirNombreCompleto(p.nombre, p.apellido) || 'Sin nombre';
+
+  if (esTurnos) {
+    const filasTurnos = [...turnosHoyLista];
+    if (filasTurnos.length === 0) {
+      board.innerHTML = `
+        <div class="empty-state recordar-empty">
+          <div class="empty-title">No hay turnos cargados para hoy.</div>
+          <div class="empty-text">Cuando haya turnos para la fecha actual, se mostrarán acá en formato planilla.</div>
+        </div>`;
+      return;
+    }
+
+    const extraCols = obtenerExtraColumnsDesdeRegistros(filasTurnos);
+    board.innerHTML = `
+      <div class="fichero-table-card turnos-table-card">
+        <div class="fichero-table-scroll">
+          <table class="fichero-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Horario</th>
+                <th>Nombre</th>
+                <th>Apellido</th>
+                <th>DNI</th>
+                <th>Teléfono</th>
+                ${extraCols.map(c => `<th>${e(c.label)}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${filasTurnos.map(r => {
+                const extra = normalizarDatosExtraPaciente(r.datosExtra || {});
+                return `
+                  <tr>
+                    <td>${e(convertirFechaLatina(r.fecha))}</td>
+                    <td><strong>${e(r.horaInicio)} a ${e(r.horaFin)}</strong></td>
+                    <td>${e(r.nombre || '')}</td>
+                    <td>${e(r.apellido || '')}</td>
+                    <td>${e(r.dni || 'S/D')}</td>
+                    <td class="fichero-phone">${e(r.telefono || 'S/T')}</td>
+                    ${extraCols.map(c => `<td>${e(extra[c.key] || '—')}</td>`).join('')}
+                  </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+    return;
+  }
+
+  if (listaFiltrada.length === 0) {
+    if (esFichero) {
+      board.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-title">No hay fichas que coincidan con el filtro.</div>
+          <div class="empty-text">Probá con otro DNI, nombre o limpiá los filtros para volver a ver el fichero completo.</div>
+        </div>`;
+    } else {
+      board.innerHTML = `
+        <div class="empty-state recordar-empty">
+          <div class="empty-title">Todo al día.</div>
+          <div class="empty-text">No hay pacientes con 30 días o más sin turno futuro. Cuando aparezca alguno, se mostrará acá.</div>
+        </div>`;
+    }
+    return;
+  }
+
+  if (esFichero) {
+    const extraCols = obtenerExtraColumnsDesdeRegistros(listaFiltrada);
+    board.innerHTML = `
+      <div class="fichero-table-card">
+        <div class="fichero-table-scroll">
+          <table class="fichero-table">
+            <thead>
+              <tr>
+                <th>Paciente</th>
+                <th>DNI</th>
+                <th>Teléfono</th>
+                ${extraCols.map(c => `<th>${e(c.label)}</th>`).join('')}
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${listaFiltrada.map(p => {
+                const pacienteIdJson = JSON.stringify(String(p.id || ''));
+                const extra = normalizarDatosExtraPaciente(p.datosExtra || {});
+                return `
+                  <tr>
+                    <td>
+                      <div class="fichero-name">${e(nombrePaciente(p))}</div>
+                      <div class="fichero-sub">Visitas: ${e(String(p.cantVisitas || 0))} · Última: ${e(p.ultimaVisita ? convertirFechaLatina(p.ultimaVisita) : 'Sin visitas')}</div>
+                    </td>
+                    <td>${e(p.dni || 'S/D')}</td>
+                    <td class="fichero-phone">${e(p.telefono || 'S/T')}</td>
+                    ${extraCols.map(c => `<td>${e(extra[c.key] || '—')}</td>`).join('')}
+                    <td>
+                      <div class="fichero-actions">
+                        <button class="btn-table-action btn-mini-blue" onclick='abrirEditarFichaPaciente(${pacienteIdJson})'>Editar</button>
+                        <button class="btn-table-action btn-mini-danger" onclick='confirmarBorrarFichaPaciente(${pacienteIdJson})'>Borrar</button>
+                      </div>
+                    </td>
+                  </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+    return;
+  }
+
+  listaFiltrada.forEach(p => {
+    const pacienteIdJson = JSON.stringify(String(p.id || ''));
+    const telJson = JSON.stringify(String(p.telefono || ''));
+    const nombreJson = JSON.stringify(nombrePaciente(p));
+    const card = document.createElement('div');
+    card.className = 'patient-card recordar-card warning';
+
+    card.innerHTML = `
+      <div>
+        <div class="patient-name">${e(nombrePaciente(p))}</div>
+        <div class="patient-meta">DNI: ${e(p.dni || 'S/D')} · Última visita: ${e(p.ultimaVisita ? convertirFechaLatina(p.ultimaVisita) : 'Sin visitas')}</div>
+        <div class="motivos-inline">${armarResumenTratamientos(p.id)}</div>
+      </div>
+
+      <div>
+        <div class="patient-small-label">Teléfono</div>
+        <div class="patient-phone-row">
+          <div class="patient-phone">${e(p.telefono || 'Sin teléfono')}</div>
+          <button class="copy-icon-btn" onclick='copiarTelefono(${telJson}, event)' title="Copiar teléfono">📞</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="patient-small-label">Días sin venir</div>
+        <div class="patient-days">${e(String(p.diasTranscurridos ?? 0))} días</div>
+        <div class="patient-small">Últ. recordatorio: ${e(p.ultRecLabel)}</div>
+      </div>
+
+      <div>
+        <div class="patient-small-label">Estado</div>
+        <span class="patient-badge badge-atencion">Sin turno 30+ días</span>
+        <div class="patient-small">Pasaron 30 días o más desde la última visita y no tiene turno futuro.</div>
+      </div>
+
+      <div class="patient-actions">
+        <button class="btn-table-action btn-whatsapp-green" onclick='abrirWhatsAppPaciente(${telJson}, ${nombreJson}, ${pacienteIdJson}, event)'>WhatsApp</button>
+        <button class="btn-table-action" onclick='copiarWhatsAppSeguimiento(${nombreJson}, ${telJson}, ${pacienteIdJson})'>Copiar recordatorio</button>
+        <button class="btn-table-action btn-recordado" onclick='marcarPacienteRecordado(${pacienteIdJson})'>Marcar recordado</button>
+        <button class="btn-table-action btn-mini-blue" onclick='abrirTratamientosPaciente(${pacienteIdJson})'>Motivos</button>
+      </div>
+    `;
+
+    board.appendChild(card);
+  });
+}
+
+function actualizarMetricas(totalPacientes, accionesPendientes, totalAlertasRecordar, totalTurnosHoy = 0) {
+  const total = document.getElementById('mTotalPacientes');
+  const recordar = document.getElementById('mParaRecordar');
+  const tabF = document.getElementById('tabFicheroCount');
+  const tabR = document.getElementById('tabRecordarCount');
+  const tabT = document.getElementById('tabTurnosCount');
+  const lblTotal = document.getElementById('mTotalPacientesLabel');
+  const lblRecordar = document.getElementById('mParaRecordarLabel');
+
+  if (tabF) tabF.innerText = totalPacientes;
+  if (tabR) tabR.innerText = totalAlertasRecordar;
+  if (tabT) tabT.innerText = totalTurnosHoy;
+  if (recordar) recordar.innerText = accionesPendientes;
+
+  if (SUBVISTA_PACIENTES === 'turnos') {
+    if (lblTotal) lblTotal.innerText = 'Turnos de hoy';
+    if (total) total.innerText = totalTurnosHoy;
+  } else {
+    if (lblTotal) lblTotal.innerText = 'Fichas de pacientes';
+    if (total) total.innerText = totalPacientes;
+  }
+
+  if (lblRecordar) lblRecordar.innerText = 'Acciones pendientes';
+}
+
+function convertirFechaLatina(fechaISO) {
       if (!fechaISO) return '';
       const p = fechaISO.split('-');
       return `${p[2]}/${p[1]}/${p[0]}`;
@@ -6771,7 +6693,7 @@
               <div class="motivos-inline">${motivosHtml}</div>
             </div>
             <div class="hoy-actions">
-              <div class="hoy-status-picker" title="Estado interno de la secretaria">
+              <div class="hoy-status-picker" title="Marcador interno de la secretaria">
                 <button type="button" class="hoy-status-btn green ${colorMarca === 'green' ? 'active' : ''}" onclick="marcarColorTurnoHoy('${e(t.id)}', 'green')">Confirmado</button>
                 <button type="button" class="hoy-status-btn yellow ${colorMarca === 'yellow' ? 'active' : ''}" onclick="marcarColorTurnoHoy('${e(t.id)}', 'yellow')">Pendiente</button>
                 <button type="button" class="hoy-status-btn red ${colorMarca === 'red' ? 'active' : ''}" onclick="marcarColorTurnoHoy('${e(t.id)}', 'red')">Cancelado</button>
