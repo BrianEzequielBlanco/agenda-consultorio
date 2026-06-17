@@ -2369,7 +2369,7 @@
 
     .booked-cancel-btn {
       border: 1px solid rgba(220, 38, 38, 0.22);
-      background: rgba(254, 226, 226, 0.95);
+      background: rgba(254, 226, 226, 0.96);
       color: #dc2626;
       border-radius: 999px;
       padding: 2px 8px;
@@ -2377,6 +2377,17 @@
       font-weight: 800;
       line-height: 1.1;
       cursor: pointer;
+      opacity: 0;
+      transform: translateY(-2px);
+      pointer-events: none;
+      transition: opacity .14s ease, transform .14s ease, background-color .14s ease;
+    }
+
+    .time-slot.booked:hover .booked-cancel-btn,
+    .time-slot.booked:focus-within .booked-cancel-btn {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
     }
 
     .booked-cancel-btn:hover {
@@ -2412,6 +2423,25 @@
       overflow: hidden;
       text-overflow: ellipsis;
       width: 100%;
+    }
+
+    .booked-extension-note {
+      font-size: 11px;
+      font-weight: 700;
+      color: #5b6b84;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+    }
+
+    .time-slot.booked.extension {
+      justify-content: center;
+    }
+
+    .time-slot.booked.extension .booked-header {
+      margin-bottom: 3px;
     }
 
     @media (max-height: 760px) {
@@ -5108,19 +5138,34 @@
             const tipoTurnoLabel = turnoAsignado.extension ? 'Extensión' : 'Turno';
 
             slot.title = 'Click para ver acciones del turno';
-            slot.innerHTML = `
-              <div class="booked-header">
-                <span>🕒 ${e(hora)}</span>
-                <div class="booked-header-right">
-                  <span class="booked-tag">${e(tipoTurnoLabel)}</span>
-                  <button type="button" class="booked-cancel-btn" onclick="prepararCancelacionTarjeta('${e(turnoAsignado.id)}', event)">Cancelar</button>
+
+            if (turnoAsignado.extension) {
+              slot.innerHTML = `
+                <div class="booked-header">
+                  <span>🕒 ${e(hora)}</span>
+                  <div class="booked-header-right">
+                    <span class="booked-tag">${e(tipoTurnoLabel)}</span>
+                  </div>
                 </div>
-              </div>
-              <div class="booked-body">${e(nombreCompleto)}</div>
-              <div class="booked-meta">
-                <span class="booked-phone">📞 ${e(turnoAsignado.telefono || 'S/T')}</span>
-              </div>
-            `;
+                <div class="booked-meta">
+                  <span class="booked-extension-note">↳ Continúa atención</span>
+                </div>
+              `;
+            } else {
+              slot.innerHTML = `
+                <div class="booked-header">
+                  <span>🕒 ${e(hora)}</span>
+                  <div class="booked-header-right">
+                    <span class="booked-tag">${e(tipoTurnoLabel)}</span>
+                    <button type="button" class="booked-cancel-btn" onclick="prepararCancelacionTarjeta('${e(turnoAsignado.id)}', event)">Cancelar</button>
+                  </div>
+                </div>
+                <div class="booked-body">${e(nombreCompleto)}</div>
+                <div class="booked-meta">
+                  <span class="booked-phone">📞 ${e(turnoAsignado.telefono || 'S/T')}</span>
+                </div>
+              `;
+            }
 
             slot.onclick = () => abrirDetalleTurno(turnoAsignado.id);
           } else {
