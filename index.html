@@ -115,8 +115,6 @@
     .agenda-toolbar {
       display: flex;
       align-items: center;
-      justify-content: flex-start;
-      gap: 14px;
       padding: 10px 18px;
       background: #fff;
       border-bottom: 1px solid var(--border);
@@ -127,18 +125,35 @@
     .agenda-toolbar-inner {
       display: flex;
       align-items: center;
-      gap: 12px;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: nowrap;
+      width: 100%;
+      min-width: max-content;
+    }
+
+    .agenda-toolbar-left,
+    .agenda-toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
       flex-wrap: nowrap;
       min-width: max-content;
-      width: 100%;
     }
 
     .agenda-toolbar-date {
-      width: 210px;
-      min-width: 210px;
-      padding: 10px 12px;
+      width: 168px;
+      min-width: 168px;
+      padding: 9px 12px;
       border-radius: 10px;
       background: #fff;
+      flex: 0 0 auto;
+    }
+
+    #agendaToolbar #ctrlHoy {
+      white-space: nowrap;
+      padding-inline: 12px;
+      flex: 0 0 auto;
     }
 
     .main-container {
@@ -1590,11 +1605,17 @@
       .agenda-toolbar-inner {
         width: max-content;
         min-width: max-content;
+        gap: 12px;
+      }
+
+      .agenda-toolbar-left,
+      .agenda-toolbar-right {
+        gap: 8px;
       }
 
       .agenda-toolbar-date {
-        width: 180px;
-        min-width: 180px;
+        width: 156px;
+        min-width: 156px;
       }
 
       .main-container {
@@ -2301,7 +2322,7 @@
     }
 
     .time-slot.booked {
-      min-height: 76px;
+      min-height: 78px;
       padding: 8px 10px;
       border-left-width: 4px;
     }
@@ -2309,7 +2330,7 @@
     .booked-header {
       font-size: 12px;
       gap: 4px;
-      margin-bottom: 4px;
+      margin-bottom: 5px;
     }
 
     .booked-tag {
@@ -2320,33 +2341,31 @@
     .booked-body {
       font-size: 14px;
       margin-top: 0;
-      flex: 1;
       min-width: 0;
       line-height: 1.2;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      padding-right: 8px;
+      width: 100%;
     }
 
     .booked-footer {
-      margin-top: 2px;
-      gap: 8px;
-      flex-direction: row;
-      align-items: center;
-      justify-content: space-between;
+      margin-top: 5px;
+      gap: 3px;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: flex-start;
     }
 
     .booked-phone-row {
       display: flex;
       flex-direction: column;
-      align-items: flex-end;
-      justify-content: center;
+      align-items: flex-start;
+      justify-content: flex-start;
       gap: 2px;
-      text-align: right;
-      flex-shrink: 0;
-      min-width: 126px;
-      max-width: 48%;
+      text-align: left;
+      width: 100%;
+      max-width: 100%;
     }
 
     .booked-phone {
@@ -2357,7 +2376,7 @@
       white-space: nowrap;
       text-overflow: ellipsis;
       overflow: hidden;
-      flex: 0 0 auto;
+      width: 100%;
     }
 
 
@@ -2369,7 +2388,7 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 100%;
+      width: 100%;
     }
 
     @media (max-height: 760px) {
@@ -2380,7 +2399,7 @@
       .time-slot { min-height: 28px; }
       .time-slot.booked { min-height: 68px; padding-top: 6px; padding-bottom: 6px; }
       .booked-body { font-size: 13px; margin-top: 0; }
-      .booked-footer { margin-top: 2px; }
+      .booked-footer { margin-top: 3px; gap: 2px; }
       .booked-phone, .booked-dni { font-size: 11px; }
     }
 
@@ -2448,11 +2467,15 @@
 
   <div class="agenda-toolbar" id="agendaToolbar">
     <div class="agenda-toolbar-inner">
-      <input type="date" id="datepicker" class="input-date agenda-toolbar-date" onchange="seleccionarFechaManual(this.value)">
-      <button class="btn-nav" id="ctrlHoy" onclick="irHoy()">Ir a hoy</button>
-      <button class="btn-nav btn-arrow" id="ctrlPrev" onclick="navegarSemana(-1)">◀</button>
-      <button class="btn-nav btn-arrow" id="ctrlNext" onclick="navegarSemana(1)">▶</button>
-      <span id="currentMonthLabel" class="current-month-label">Junio de 2026</span>
+      <div class="agenda-toolbar-left">
+        <input type="date" id="datepicker" class="input-date agenda-toolbar-date" onchange="seleccionarFechaManual(this.value)">
+      </div>
+      <div class="agenda-toolbar-right">
+        <button class="btn-nav" id="ctrlHoy" onclick="irHoy()">Ir a hoy</button>
+        <button class="btn-nav btn-arrow" id="ctrlPrev" onclick="navegarSemana(-1)">◀</button>
+        <button class="btn-nav btn-arrow" id="ctrlNext" onclick="navegarSemana(1)">▶</button>
+        <span id="currentMonthLabel" class="current-month-label">Junio de 2026</span>
+      </div>
     </div>
   </div>
 
@@ -2599,7 +2622,6 @@
       <div class="detail-row"><span class="detail-label">Teléfono:</span><span id="lblTelefono" class="detail-value"></span></div>
       <div id="detalleCamposExtra" class="extra-data-list"></div>
       <div class="detail-row"><span class="detail-label">Horario:</span><span id="lblHorario" class="detail-value"></span></div>
-      <div class="detail-row"><span class="detail-label">Estado:</span><span id="lblEstado" class="detail-value"></span></div>
       <div class="detail-row"><span class="detail-label">Tipo:</span><span id="lblTipoTurno" class="detail-value"></span></div>
 
       <div class="modal-actions detail-actions">
@@ -5142,7 +5164,6 @@
       document.getElementById('lblTelefono').innerText = t.telefono || 'Sin teléfono';
       renderCamposExtraDetalle('detalleCamposExtra', t.datosExtra || {});
       document.getElementById('lblHorario').innerText = `${fPartes[2]}/${fPartes[1]}/${fPartes[0]} a las ${t.hora} hs`;
-      document.getElementById('lblEstado').innerText = t.confirmado ? '🟢 Confirmado' : '🔵 Pendiente';
       document.getElementById('lblTipoTurno').innerText = t.extension ? 'Extensión de turno' : 'Turno principal';
 
       abrirModal('modalDetalle');
@@ -5306,7 +5327,6 @@
       const turno = BASE_DATOS.find(item => item.id === ID_TURNO_SELECCIONADO);
       if (!turno) return;
 
-      document.getElementById('lblEstado').innerText = turno.confirmado ? '🟢 Confirmado' : '🔵 Pendiente';
       mostrarToast(turno.confirmado ? 'Turno confirmado.' : 'Turno marcado como pendiente.');
     }
 
