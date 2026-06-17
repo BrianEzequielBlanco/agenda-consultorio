@@ -4693,7 +4693,8 @@
 
       const totalP = listaPacientes.length;
       const paraRecordarP = listaPacientes.filter(p => p.debeRecordar).length;
-      actualizarMetricas(totalP, paraRecordarP);
+      const accionesPendientesP = listaPacientes.filter(p => p.prioridadRecordar === 'naranja').length;
+      actualizarMetricas(totalP, accionesPendientesP, paraRecordarP);
 
       const titulo = document.getElementById('pacientesTitulo');
       const subtitulo = document.getElementById('pacientesSubtitulo');
@@ -4801,8 +4802,6 @@
               <td>
                 <div class="fichero-actions">
                   <button class="btn-table-action btn-mini-blue" onclick='abrirEditarFichaPaciente(${pacienteIdJson})'>Editar</button>
-                  <button class="btn-table-action btn-whatsapp-green" onclick='abrirWhatsAppPaciente(${telJson}, ${nombreJson}, ${pacienteIdJson}, event)'>WhatsApp</button>
-                  <button class="btn-table-action" onclick='abrirTratamientosPaciente(${pacienteIdJson})'>Motivos</button>
                   ${botonBorrar}
                 </div>
               </td>
@@ -4879,16 +4878,16 @@
       });
     }
 
-    function actualizarMetricas(t, pr) {
+    function actualizarMetricas(totalPacientes, accionesPendientes, totalAlertasRecordar) {
       const total = document.getElementById('mTotalPacientes');
       const recordar = document.getElementById('mParaRecordar');
       const tabF = document.getElementById('tabFicheroCount');
       const tabR = document.getElementById('tabRecordarCount');
 
-      if (total) total.innerText = t;
-      if (recordar) recordar.innerText = pr;
-      if (tabF) tabF.innerText = t;
-      if (tabR) tabR.innerText = pr;
+      if (total) total.innerText = totalPacientes;
+      if (recordar) recordar.innerText = accionesPendientes;
+      if (tabF) tabF.innerText = totalPacientes;
+      if (tabR) tabR.innerText = totalAlertasRecordar;
     }
 
     function convertirFechaLatina(fechaISO) {
