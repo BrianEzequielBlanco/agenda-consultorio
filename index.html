@@ -2507,9 +2507,6 @@
           <button class="btn-table-action hoy-today-btn" title="Volver a hoy" onclick="resetearHoyAFechaActual()">Hoy</button>
         </div>
       </div>
-      <div class="hoy-help-card">
-        Esta solapa no reemplaza la agenda ni la ficha clínica. Sirve para que la secretaria marque, con un clic, qué motivo quedó para que el paciente vuelva. Si el doctor no indica nada, no se toca nada.
-      </div>
       <div id="listaTurnosHoy" class="hoy-board"></div>
     </main>
 
@@ -5912,32 +5909,83 @@
       if (token !== HOY_RENDER_TOKEN) return;
 
       const agruparTurnosHoy = (items) => {
-        const grupos = new Map();
-
-        items.forEach(t => {
-          const key = t.extension === true ? String(t.parentId || t.id || '') : String(t.id || '');
-          if (!grupos.has(key)) grupos.set(key, []);
-          grupos.get(key).push(t);
-        });
-
         const horariosCfg = obtenerHorariosConfigurados();
         const diaCfg = obtenerDiaConfigPorFecha(fechaISO);
         const cfg = horariosCfg[diaCfg.key] || {};
         const intervalo = [15, 20, 30, 45, 60].includes(Number(cfg.intervalo)) ? Number(cfg.intervalo) : 30;
 
-        return Array.from(grupos.values())
-          .map(lista => {
-            const ordenados = [...lista].sort((a, b) => minutosDesdeHora(String(a.hora || '')) - minutosDesdeHora(String(b.hora || '')));
-            const base = ordenados.find(x => x.extension !== true) || ordenados[0];
-            const horaInicio = String(ordenados[0].hora || '');
-            const ultimo = ordenados[ordenados.length - 1];
-            const horaFin = horaDesdeMinutos((minutosDesdeHora(String(ultimo.hora || '')) || 0) + intervalo);
+        const firmaPaciente = (t) => {
+          const pacienteId = String(t.pacienteId || '').trim();
+          if (pacienteId) return `pac:${pacienteId}`;
+
+          const nombre = normalizarNombrePaciente(
+            t.nombre || '',
+            t.apellido || '',
+            t.nombre_completo || ''
+          ).nombre_completo || 'paciente';
+
+          const telefono = String(t.telefono || '').trim();
+          return `nom:${nombre.toLowerCase()}|tel:${telefono}`;
+        };
+
+        const ordenados = [...items].sort((a, b) => minutosDesdeHora(String(a.hora || '')) - minutosDesdeHora(String(b.hora || '')));
+
+        const grupos = [];
+
+        ordenados.forEach((t) => {
+          const firma = firmaPaciente(t);
+          const minActual = minutosDesdeHora(String(t.hora || '')) || 0;
+          const ultimoGrupo = grupos[grupos.length - 1];
+
+          if (!ultimoGrupo) {
+            grupos.push({
+              base: t.extension === true ? t : t,
+              turnos: [t],
+              horaInicio: String(t.hora || ''),
+              horaFin: horaDesdeMinutos(minActual + intervalo),
+              esRango: false,
+              firma,
+              ultimoMinutoInicio: minActual
+            });
+            return;
+          }
+
+          const esConsecutivo = minActual === (ultimoGrupo.ultimoMinutoInicio + intervalo);
+          const mismaPersona = ultimoGrupo.firma === firma;
+
+          if (esConsecutivo && mismaPersona) {
+            ultimoGrupo.turnos.push(t);
+
+            if (ultimoGrupo.base && ultimoGrupo.base.extension === true && t.extension !== true) {
+              ultimoGrupo.base = t;
+            }
+
+            ultimoGrupo.horaFin = horaDesdeMinutos(minActual + intervalo);
+            ultimoGrupo.esRango = true;
+            ultimoGrupo.ultimoMinutoInicio = minActual;
+            return;
+          }
+
+          grupos.push({
+            base: t.extension === true ? t : t,
+            turnos: [t],
+            horaInicio: String(t.hora || ''),
+            horaFin: horaDesdeMinutos(minActual + intervalo),
+            esRango: false,
+            firma,
+            ultimoMinutoInicio: minActual
+          });
+        });
+
+        return grupos
+          .map(g => {
+            const baseNoExtension = g.turnos.find(x => x.extension !== true);
             return {
-              base,
-              turnos: ordenados,
-              horaInicio,
-              horaFin,
-              esRango: ordenados.length > 1
+              base: baseNoExtension || g.base || g.turnos[0],
+              turnos: g.turnos,
+              horaInicio: g.horaInicio,
+              horaFin: g.horaFin,
+              esRango: g.esRango
             };
           })
           .sort((a, b) => minutosDesdeHora(a.horaInicio) - minutosDesdeHora(b.horaInicio));
