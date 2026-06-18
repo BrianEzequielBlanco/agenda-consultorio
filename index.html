@@ -7138,24 +7138,39 @@
       return '549' + digitos;
     }
 
-    function armarUrlWhatsApp(telefono, mensaje) {
+    function armarLinksWhatsApp(telefono, mensaje) {
       const numero = normalizarTelefonoWhatsAppArgentina(telefono);
-      if (!numero) return '';
+      if (!numero) return null;
 
       const texto = String(mensaje || '').trim();
       const params = new URLSearchParams();
+
+      params.set('phone', numero);
       if (texto) params.set('text', texto);
 
-      // URL universal: funciona mejor en PC y celular que el protocolo whatsapp://.
-      const query = params.toString();
-      return `https://wa.me/${numero}${query ? '?' + query : ''}`;
+      const queryApp = params.toString();
+      const queryWeb = texto ? ('?text=' + encodeURIComponent(texto)) : '';
+
+      return {
+        numero,
+        app: `whatsapp://send?${queryApp}`,
+        web: `https://wa.me/${numero}${queryWeb}`
+      };
+    }
+
+    function armarUrlWhatsApp(telefono, mensaje) {
+      const links = armarLinksWhatsApp(telefono, mensaje);
+      return links ? links.app : '';
     }
 
     function abrirWhatsAppTelefono(telefono, mensaje, event) {
-      if (event) event.stopPropagation();
+      if (event) {
+        event.preventDefault?.();
+        event.stopPropagation?.();
+      }
 
-      const url = armarUrlWhatsApp(telefono, mensaje);
-      if (!url) {
+      const links = armarLinksWhatsApp(telefono, mensaje);
+      if (!links) {
         mostrarToast('No hay un teléfono válido para abrir WhatsApp.');
         return;
       }
@@ -7170,14 +7185,21 @@
           document.body.appendChild(launcher);
         }
 
-        launcher.href = url;
-        launcher.target = '_blank';
-        launcher.rel = 'noopener';
+        // Prioridad para consultorios con WhatsApp instalado en la PC:
+        // abre directo la app de WhatsApp. La primera vez Chrome/Edge pide permiso;
+        // después, si el usuario marca recordar/permitir, entra directo.
+        launcher.href = links.app;
+        launcher.removeAttribute('target');
+        launcher.removeAttribute('rel');
         launcher.click();
 
-        mostrarToast('Abriendo WhatsApp.');
+        mostrarToast('Abriendo WhatsApp en la app.');
+
+        // Fallback no invasivo: si no hay app instalada o el navegador bloquea el protocolo,
+        // no abrimos web automáticamente para no generar doble apertura.
+        // El consultorio va a tener WhatsApp instalado, que es el flujo buscado.
       } catch (err) {
-        mostrarToast('No se pudo abrir WhatsApp.');
+        window.open(links.web, '_blank', 'noopener');
       }
     }
 
