@@ -2320,6 +2320,51 @@
 
     .hoy-name { font-size: 16px; font-weight: 900; color: var(--text); margin-bottom: 4px; }
     .hoy-meta { color: var(--muted); font-size: 12px; line-height: 1.4; }
+
+    .hoy-summary {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 12px;
+      margin: 10px 0 14px;
+    }
+
+    .hoy-summary-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px 16px;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+    }
+
+    .hoy-summary-card.asistio {
+      border-left: 5px solid #22c55e;
+      background: linear-gradient(90deg, #f0fdf4 0%, #ffffff 72%);
+    }
+
+    .hoy-summary-card.ausente {
+      border-left: 5px solid #ef4444;
+      background: linear-gradient(90deg, #fef2f2 0%, #ffffff 72%);
+    }
+
+    .hoy-summary-label {
+      font-size: 11px;
+      font-weight: 900;
+      color: #475467;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-bottom: 6px;
+    }
+
+    .hoy-summary-value {
+      font-size: 28px;
+      line-height: 1;
+      font-weight: 900;
+      color: var(--text);
+    }
+
+    .hoy-summary-card.asistio .hoy-summary-value { color: #0b7a35; }
+    .hoy-summary-card.ausente .hoy-summary-value { color: #c5221f; }
+
     .hoy-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
     .hoy-status-picker {
       position: relative;
@@ -2541,6 +2586,9 @@
 
     @media (max-width: 760px) {
       .hoy-container { padding: 12px; }
+      .hoy-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .hoy-summary-card { padding: 12px; border-radius: 14px; }
+      .hoy-summary-value { font-size: 24px; }
       .hoy-card { grid-template-columns: 1fr; align-items: stretch; }
       .hoy-time { text-align: left; width: fit-content; }
       .hoy-actions { justify-content: stretch; }
@@ -5060,12 +5108,12 @@
             dni: String(base.dni || pacienteLocal.dni || '').replace(/\D/g, ''),
             telefono: base.telefono || pacienteLocal.telefono || '',
             estado: valorDbEstadoHoyAColor(base.estadoHoy || '') === 'green'
-              ? 'Confirmado'
+              ? 'Asistió'
               : valorDbEstadoHoyAColor(base.estadoHoy || '') === 'yellow'
-                ? 'Pendiente'
+                ? 'Recordatorio enviado'
                 : valorDbEstadoHoyAColor(base.estadoHoy || '') === 'red'
-                  ? 'Cancelado'
-                  : (base.confirmado ? 'Confirmado' : 'Sin estado'),
+                  ? 'Ausente'
+                  : (base.confirmado ? 'Asistió' : 'Sin estado'),
             tipo: g.turnos.length > 1 ? 'Turno extendido' : 'Turno',
             datosExtra
           });
@@ -7419,7 +7467,7 @@
         else delete data[id];
         guardarColoresHoyGuardados(data);
         renderizarHoy();
-        alert('No se pudo guardar el estado del turno. Aplicá primero la migración SQL v69. Detalle: ' + error.message);
+        alert('No se pudo guardar el estado del turno. Aplicá primero la migración SQL v70. Detalle: ' + error.message);
       }
     }
 
@@ -7543,8 +7591,37 @@
 
       const gruposHoy = agruparTurnosHoy(turnosDeLaFecha);
 
+      const armarResumenHoy = (grupos) => {
+        const resumen = {
+          asistio: 0,
+          ausente: 0
+        };
+
+        grupos.forEach(grupo => {
+          const turnoBase = grupo.base || grupo.turnos?.[0] || {};
+          const color = obtenerColorHoyTurno(turnoBase.id);
+          if (color === 'green') resumen.asistio += 1;
+          if (color === 'red') resumen.ausente += 1;
+        });
+
+        return `
+          <div class="hoy-summary" aria-label="Resumen de asistencia del día">
+            <div class="hoy-summary-card asistio">
+              <div class="hoy-summary-label">Asistió</div>
+              <div class="hoy-summary-value">${resumen.asistio}</div>
+            </div>
+            <div class="hoy-summary-card ausente">
+              <div class="hoy-summary-label">Ausente</div>
+              <div class="hoy-summary-value">${resumen.ausente}</div>
+            </div>
+          </div>`;
+      };
+
+      const resumenHoyHtml = armarResumenHoy(gruposHoy);
+
       if (gruposHoy.length === 0) {
         cont.innerHTML = `
+          ${resumenHoyHtml}
           <div class="empty-state hoy-empty-state">
             <div class="hoy-empty-icon">📭</div>
             <div class="hoy-empty-title">No hay turnos cargados para ${esHoyReal ? 'hoy' : 'esta fecha'}.</div>
@@ -7553,7 +7630,7 @@
         return;
       }
 
-      cont.innerHTML = gruposHoy.map(grupo => {
+      cont.innerHTML = resumenHoyHtml + gruposHoy.map(grupo => {
         const t = grupo.base;
         const pacienteId = String(t.pacienteId || '');
         const pacienteLocal = buscarPacienteLocalPorId(pacienteId) || {};
@@ -7579,18 +7656,18 @@
             <div class="hoy-actions">
               <div id="estadoHoyPicker-${e(t.id)}" class="hoy-status-picker" title="Estado interno de la secretaria">
                 <button type="button" class="hoy-status-pill ${colorMarca || 'none'}" onclick="alternarMenuEstadoHoy('${e(t.id)}', event)">
-                  ${colorMarca === 'green' ? 'Confirmado' : colorMarca === 'red' ? 'Cancelado' : colorMarca === 'yellow' ? 'Pendiente' : 'Estado'}
+                  ${colorMarca === 'green' ? 'Asistió' : colorMarca === 'red' ? 'Ausente' : colorMarca === 'yellow' ? 'Recordatorio enviado' : 'Estado'}
                   <span class="hoy-status-caret">▼</span>
                 </button>
                 <div class="hoy-status-menu">
                   <button type="button" class="hoy-status-option" onclick="seleccionarEstadoTurnoHoy('${e(t.id)}', 'green', event)">
-                    <span class="hoy-status-dot-mini green"></span> Confirmado
+                    <span class="hoy-status-dot-mini green"></span> Asistió
                   </button>
                   <button type="button" class="hoy-status-option" onclick="seleccionarEstadoTurnoHoy('${e(t.id)}', 'yellow', event)">
-                    <span class="hoy-status-dot-mini yellow"></span> Pendiente
+                    <span class="hoy-status-dot-mini yellow"></span> Recordatorio enviado
                   </button>
                   <button type="button" class="hoy-status-option" onclick="seleccionarEstadoTurnoHoy('${e(t.id)}', 'red', event)">
-                    <span class="hoy-status-dot-mini red"></span> Cancelado
+                    <span class="hoy-status-dot-mini red"></span> Ausente
                   </button>
                 </div>
               </div>
