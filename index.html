@@ -6329,7 +6329,9 @@
 
             const nombreCompleto = nombreCompletoTurno(turnoBaseVisual);
             const tipoTurnoLabel = esTurnoExtendido ? 'Turno extendido' : (turnoBaseVisual.extension ? 'Extensión' : 'Turno');
-            const horarioLabel = esTurnoExtendido ? `${rangoTurno.inicio} a ${rangoTurno.fin}` : hora;
+            const horarioLabel = (rangoTurno.inicio && rangoTurno.fin)
+              ? `${rangoTurno.inicio} a ${rangoTurno.fin}`
+              : hora;
 
             const extensionesHtml = esTurnoExtendido
               ? `
