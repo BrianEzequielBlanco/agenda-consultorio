@@ -3594,17 +3594,13 @@
       if (!session?.user) throw new Error('Sesión inválida.');
       USUARIO_ACTUAL = session.user;
 
+      // Cargamos la membresía y la clínica en 2 consultas separadas.
+      // Motivo: si Supabase tiene más de una foreign key entre usuarios_clinicas y clinicas,
+      // el embed clinicas (...) puede fallar con:
+      // "more than one relationship was found for usuarios_clinicas and clinicas".
       const { data: membresia, error } = await supabaseClient
         .from('usuarios_clinicas')
-        .select(`
-          clinica_id,
-          rol,
-          clinicas (
-            id,
-            nombre,
-            configuracion
-          )
-        `)
+        .select('clinica_id, rol')
         .eq('usuario_id', session.user.id)
         .single();
 
@@ -3614,8 +3610,20 @@
         return;
       }
 
+      const { data: clinica, error: errorClinica } = await supabaseClient
+        .from('clinicas')
+        .select('id, nombre, configuracion')
+        .eq('id', membresia.clinica_id)
+        .single();
+
+      if (errorClinica || !clinica) {
+        await supabaseClient.auth.signOut();
+        mostrarPantallaLogin('El usuario existe, pero no se pudo cargar la clínica. Detalle: ' + (errorClinica?.message || 'sin fila en clinicas'));
+        return;
+      }
+
       CLINICA_ID = membresia.clinica_id;
-      CLINICA_ACTUAL = membresia.clinicas || { id: membresia.clinica_id, nombre: 'Clínica' };
+      CLINICA_ACTUAL = clinica;
       ROL_USUARIO = membresia.rol || 'secretaria';
       CONFIG_CLINICA = normalizarConfigClinica(CLINICA_ACTUAL.configuracion || {});
       HORAS_PERMITIDAS = obtenerTodasHorasConfiguradas();
