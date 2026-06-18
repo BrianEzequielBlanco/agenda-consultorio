@@ -1069,6 +1069,13 @@
       color: var(--blue-hover);
     }
 
+    .field-helper {
+      margin-top: 6px;
+      font-size: 11px;
+      line-height: 1.4;
+      color: #667085;
+    }
+
     .detail-row {
       margin-bottom: 12px;
       font-size: 14px;
@@ -1077,7 +1084,7 @@
 
     .detail-label {
       font-weight: 700;
-      color: var(--muted);
+      color: #475467;
       display: inline-block;
       width: 145px;
     }
@@ -1113,12 +1120,36 @@
       justify-content: flex-start;
       flex-wrap: wrap;
       gap: 10px;
+      align-items: center;
     }
 
     .modal-actions.detail-actions .btn-action {
       min-width: 96px;
       padding: 10px 14px;
       text-align: center;
+    }
+
+    .modal-actions.detail-actions .btn-light-link {
+      min-width: 0;
+      padding: 6px 2px;
+      border: 0;
+      background: transparent;
+      color: var(--blue);
+      font-weight: 700;
+    }
+
+    .modal-actions.detail-actions .btn-light-link:hover {
+      color: var(--blue-hover);
+      text-decoration: underline;
+      background: transparent;
+    }
+
+    .modal-actions.detail-actions .btn-light-link.btn-close-link {
+      color: #667085;
+    }
+
+    .modal-actions.detail-actions .btn-light-link.btn-close-link:hover {
+      color: #475467;
     }
 
     .btn-whatsapp-action {
@@ -3060,6 +3091,7 @@
           oninput="procesarEntradaDNI(this)"
         >
         <div id="pacienteHint" class="patient-hint"></div>
+        <div class="field-helper">Si el DNI ya existe, se completan automáticamente nombre, apellido y teléfono.</div>
       </div>
 
       <div class="form-group">
@@ -3102,10 +3134,10 @@
         <button class="btn-action btn-whatsapp-action" onclick="abrirWhatsAppTurnoActual()">WhatsApp</button>
         <button class="btn-action btn-secondary" onclick="copiarTelefonoTurnoActual()">Copiar teléfono</button>
         <button class="btn-action btn-secondary" onclick="copiarRecordatorioTurnoActual()">Copiar recordatorio</button>
-        <button class="btn-action btn-secondary" onclick="abrirEditarTurnoActual()">Editar turno</button>
-        <button class="btn-action btn-secondary" onclick="abrirReprogramarTurnoActual()">Reprogramar</button>
+        <button class="btn-action btn-light-link" onclick="abrirEditarTurnoActual()">Editar turno</button>
+        <button class="btn-action btn-light-link" onclick="abrirReprogramarTurnoActual()">Reprogramar</button>
         <button class="btn-action btn-danger" onclick="eliminarTurnoActual()">Cancelar cita</button>
-        <button class="btn-action btn-secondary" onclick="cerrarModales()">Cerrar</button>
+        <button class="btn-action btn-light-link btn-close-link" onclick="cerrarModales()">Cerrar</button>
       </div>
     </div>
   </div>
