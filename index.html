@@ -2194,40 +2194,60 @@
     .hoy-status-btn {
       width: 100%;
       border-radius: 999px;
-      border: 1px solid transparent;
+      border: 1px solid var(--border);
       padding: 8px 12px;
+      font-family: var(--font);
       font-size: 12px;
-      font-weight: 900;
+      font-weight: 700;
       cursor: pointer;
-      transition: transform .12s ease, box-shadow .12s ease, filter .12s ease, border-color .12s ease;
+      transition: 0.15s;
       text-align: center;
       white-space: nowrap;
-      line-height: 1.1;
-      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.10);
+      line-height: normal;
+      box-shadow: none;
     }
     .hoy-status-btn:hover {
-      transform: translateY(-1px);
-      filter: brightness(0.98);
-      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.14);
+      background: var(--blue-light);
+      border-color: var(--blue);
+      transform: none;
+      filter: none;
+      box-shadow: none;
     }
     .hoy-status-btn.active {
-      border-color: #0f172a;
-      box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.16), 0 4px 10px rgba(15, 23, 42, 0.12);
-      transform: translateY(-1px);
+      box-shadow: inset 0 0 0 1px currentColor;
+      transform: none;
     }
     .hoy-status-btn.green {
-      background: #22c55e;
-      color: white;
-      border-color: #16a34a;
+      background: #e6f4ea;
+      color: #0b7a35;
+      border-color: #b7e4c7;
+    }
+    .hoy-status-btn.green:hover,
+    .hoy-status-btn.green.active {
+      background: #d7f0df;
+      color: #0b7a35;
+      border-color: #0b7a35;
     }
     .hoy-status-btn.yellow {
-      background: #facc15;
-      color: #713f12;
-      border-color: #eab308;
+      background: #fef3c7;
+      color: #92400e;
+      border-color: #facc15;
+    }
+    .hoy-status-btn.yellow:hover,
+    .hoy-status-btn.yellow.active {
+      background: #fde68a;
+      color: #78350f;
+      border-color: #d97706;
     }
     .hoy-status-btn.red {
-      background: #ef4444;
-      color: white;
+      background: #fce8e6;
+      color: #c5221f;
+      border-color: #fca5a5;
+    }
+    .hoy-status-btn.red:hover,
+    .hoy-status-btn.red.active {
+      background: #fee2e2;
+      color: #991b1b;
       border-color: #dc2626;
     }
     .hoy-date-controls {
