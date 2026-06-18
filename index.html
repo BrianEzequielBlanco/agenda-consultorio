@@ -5409,10 +5409,29 @@
       }
     }
 
+    function obtenerDiasUmbralRecordatorio() {
+      const cfg = CONFIG_CLINICA || {};
+      const candidatos = [
+        cfg.dias_recordatorio,
+        cfg.recordatorio_dias,
+        cfg.umbral_recordatorio,
+        cfg.dias_para_recordar,
+        cfg.pacientes_recordatorio_dias
+      ];
+
+      for (const valor of candidatos) {
+        const n = Number(valor);
+        if (Number.isFinite(n) && n > 0) return Math.floor(n);
+      }
+
+      return 30;
+    }
+
     function calcularYRenderizarPacientes() {
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
       const hoyStr = formatearFechaISO(hoy);
+      const diasUmbralRecordatorio = obtenerDiasUmbralRecordatorio();
 
       const mapaPacientes = {};
 
@@ -5498,9 +5517,25 @@
           diasDesdeUltRecordatorio = Math.floor((hoy.getTime() - fechaUltRec.getTime()) / (1000 * 60 * 60 * 24));
         }
 
+        const fechasBaseAlerta = [p.ultimaVisita, segInfo.ultimoRecordatorio].filter(Boolean).sort();
+        const fechaBaseAlerta = fechasBaseAlerta.length ? fechasBaseAlerta[fechasBaseAlerta.length - 1] : '';
+        let diasDesdeBaseAlerta = null;
+
+        if (fechaBaseAlerta) {
+          const bPartes = fechaBaseAlerta.split('-');
+          const fechaBase = new Date(bPartes[0], bPartes[1] - 1, bPartes[2]);
+          diasDesdeBaseAlerta = Math.floor((hoy.getTime() - fechaBase.getTime()) / (1000 * 60 * 60 * 24));
+          if (diasDesdeBaseAlerta < 0) diasDesdeBaseAlerta = 0;
+        }
+
         const tieneTurnoFuturo = (p.turnosFuturos || []).length > 0;
         const sinTurnoActivo = !!p.ultimaVisita && !tieneTurnoFuturo;
-        const apareceEnRecordar = sinTurnoActivo && diasTranscurridos !== null && diasTranscurridos >= 30;
+
+        // Regla real de Para recordar:
+        // aparece si no tiene turno futuro y pasaron X días desde la última visita
+        // o desde el último recordatorio, lo que sea más reciente.
+        // Así, al tocar "Marcar recordado", desaparece y vuelve a contar el ciclo.
+        const apareceEnRecordar = sinTurnoActivo && diasDesdeBaseAlerta !== null && diasDesdeBaseAlerta >= diasUmbralRecordatorio;
         const prioridadRecordar = apareceEnRecordar ? 'amarillo' : '';
 
         let estadoLabel = 'Al día';
@@ -5524,6 +5559,8 @@
           cantVisitas,
           diasTranscurridos,
           diasDesdeUltRecordatorio,
+          diasDesdeBaseAlerta,
+          fechaBaseAlerta,
           ultRecLabel: segInfo.ultimoRecordatorio ? convertirFechaLatina(segInfo.ultimoRecordatorio) : 'Ninguno',
           estadoLabel,
           badgeClase,
@@ -5557,7 +5594,7 @@
       if (subtitulo) {
         subtitulo.innerText = esFichero
           ? 'Fichero general estilo planilla: buscá, cargá y mantené datos de pacientes. Más adelante puede servir para importar o descargar información.'
-          : 'Lista de acción: solo pacientes con 30 días o más sin venir y sin turno futuro.';
+          : 'Lista de acción: solo pacientes que superaron el umbral de recordatorio y no tienen turno futuro.';
       }
 
       document.getElementById('tabPacientesFichero')?.classList.toggle('active', esFichero);
@@ -5598,7 +5635,7 @@
         const baseTxt = esFichero ? 'fichas' : 'pacientes para recordar';
         filtroInfo.innerText = filtrosActivos.length
           ? `Filtro activo por ${filtrosActivos.join(' · ')}. Resultado: ${listaFiltrada.length} ${baseTxt}.`
-          : (esFichero ? 'Mostrando todas las fichas.' : `Mostrando ${listaFiltrada.length} pacientes con 30 días o más sin turno futuro.`);
+          : (esFichero ? 'Mostrando todas las fichas.' : `Mostrando ${listaFiltrada.length} pacientes con ${diasUmbralRecordatorio} días o más desde última visita/recordatorio y sin turno futuro.`);
       }
 
       const board = document.getElementById('tablaPacientesBody');
@@ -5626,7 +5663,7 @@
           board.innerHTML = `
             <div class="empty-state recordar-empty">
               <div class="empty-title">Todo al día.</div>
-              <div class="empty-text">No hay pacientes con 30 días o más sin turno futuro. Cuando alguien cumpla esa condición, aparecerá acá.</div>
+              <div class="empty-text">No hay pacientes pendientes de recordatorio. Cuando alguien supere el umbral configurado y no tenga turno futuro, aparecerá acá.</div>
             </div>`;
         } else {
           board.innerHTML = `<div class="empty-state">No se encontró ningún paciente con esos filtros.</div>`;
@@ -5696,7 +5733,7 @@
         const card = document.createElement('div');
         card.className = `patient-card recordar-card warning`;
 
-        const etiquetaAccion = 'Sin turno 30+ días';
+        const etiquetaAccion = `Sin turno ${diasUmbralRecordatorio}+ días`;
 
         card.innerHTML = `
           <div>
@@ -5722,7 +5759,7 @@
           <div>
             <div class="patient-label">Estado</div>
             <div class="patient-value"><span class="badge-status ${p.badgeClase}">${e(etiquetaAccion)}</span></div>
-            <div class="patient-small">Pasaron 30+ días y no tiene turno futuro.</div>
+            <div class="patient-small">Pasó el umbral de recordatorio y no tiene turno futuro.</div>
           </div>
 
           <div class="patient-actions">
@@ -5795,7 +5832,7 @@
 
     async function marcarPacienteRecordado(pacienteId) {
       const id = String(pacienteId || '');
-      const hoyStr = new Date().toISOString().split('T')[0];
+      const hoyStr = formatearFechaISO(new Date());
 
       if (!id) {
         alert('Paciente inválido.');
@@ -5808,7 +5845,7 @@
           clinica_id: CLINICA_ID,
           paciente_id: id,
           ultimo_recordatorio: hoyStr,
-          estado: 'Recordado este mes'
+          estado: 'Recordatorio enviado'
         }, {
           onConflict: 'clinica_id,paciente_id'
         });
@@ -5818,9 +5855,9 @@
         return;
       }
 
-      SEGUIMIENTO_COMPACTO[id] = { ultimoRecordatorio: hoyStr, estado: 'Recordado este mes' };
+      SEGUIMIENTO_COMPACTO[id] = { ultimoRecordatorio: hoyStr, estado: 'Recordatorio enviado' };
       calcularYRenderizarPacientes();
-      mostrarToast('Paciente marcado como recordado.');
+      mostrarToast(`Recordatorio marcado. El paciente volverá a aparecer si pasan ${obtenerDiasUmbralRecordatorio()} días sin turno nuevo.`);
     }
 
     async function borrarFichaPaciente(pacienteId, event) {
