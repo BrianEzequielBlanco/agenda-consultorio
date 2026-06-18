@@ -461,6 +461,83 @@
       opacity: 0.92;
     }
 
+    .time-slot.booked.extension-group {
+      overflow: hidden;
+      padding-bottom: 9px;
+    }
+
+    .time-slot.booked.extension-group .booked-header {
+      margin-bottom: 2px;
+    }
+
+    .extension-segments {
+      width: 100%;
+      margin-top: 8px;
+      padding-top: 7px;
+      border-top: 1px dashed rgba(26, 115, 232, 0.30);
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .extension-segment {
+      width: 100%;
+      min-height: 32px;
+      border-radius: 8px;
+      border: 1px solid rgba(26, 115, 232, 0.18);
+      background: rgba(255, 255, 255, 0.42);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 5px 6px 5px 8px;
+      cursor: pointer;
+    }
+
+    .extension-segment:hover {
+      background: rgba(255, 255, 255, 0.72);
+      border-color: rgba(26, 115, 232, 0.34);
+    }
+
+    .extension-segment-main {
+      min-width: 0;
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1.15;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      opacity: 0.88;
+    }
+
+    .extension-remove-btn {
+      border: 1px solid #f3b5b2;
+      background: #fff;
+      color: var(--red);
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 10px;
+      font-weight: 800;
+      line-height: 1;
+      cursor: pointer;
+      flex: 0 0 auto;
+    }
+
+    .extension-remove-btn:hover {
+      background: var(--red-light);
+      border-color: var(--red);
+    }
+
+    .day-column.day-past .extension-segment {
+      background: rgba(255, 255, 255, 0.45) !important;
+      border-color: rgba(107, 114, 128, 0.18) !important;
+    }
+
+    .day-column.day-past .extension-remove-btn {
+      color: #9ca3af !important;
+      border-color: #d1d5db !important;
+    }
+
     .booked-header {
       width: 100%;
       display: flex;
@@ -6031,6 +6108,129 @@
       grid.style.gridTemplateColumns = `repeat(${total}, minmax(170px, 1fr))`;
     }
 
+    function obtenerIntervaloFechaAgenda(fechaISO) {
+      const dia = obtenerDiaConfigPorFecha(fechaISO);
+      const horarios = obtenerHorariosConfigurados();
+      const cfg = horarios[dia.key] || {};
+      return [15, 20, 30, 45, 60].includes(Number(cfg.intervalo)) ? Number(cfg.intervalo) : 30;
+    }
+
+    function obtenerIdBaseTurnoExtendido(turno) {
+      if (!turno) return '';
+      return String(turno.parentId || turno.id || '');
+    }
+
+    function obtenerCadenaTurnoExtendido(turno) {
+      if (!turno) return [];
+      const baseId = obtenerIdBaseTurnoExtendido(turno);
+      const base = BASE_DATOS.find(t => String(t.id || '') === baseId) || turno;
+      const fecha = String(base.fecha || turno.fecha || '');
+      const intervalo = obtenerIntervaloFechaAgenda(fecha);
+
+      const candidatos = (BASE_DATOS || [])
+        .filter(t => String(t.fecha || '') === fecha && (String(t.id || '') === baseId || String(t.parentId || '') === baseId))
+        .sort((a, b) => minutosDesdeHora(String(a.hora || '')) - minutosDesdeHora(String(b.hora || '')));
+
+      if (candidatos.length === 0) return [turno];
+
+      const cadena = [];
+      let esperado = null;
+
+      candidatos.forEach(t => {
+        const min = minutosDesdeHora(String(t.hora || ''));
+        if (min === null) return;
+
+        if (cadena.length === 0) {
+          cadena.push(t);
+          esperado = min + intervalo;
+          return;
+        }
+
+        if (min === esperado) {
+          cadena.push(t);
+          esperado += intervalo;
+        }
+      });
+
+      return cadena.length ? cadena : [turno];
+    }
+
+    function obtenerRangoCadenaTurno(cadena) {
+      const lista = Array.isArray(cadena) ? cadena : [];
+      if (lista.length === 0) return { inicio: '', fin: '' };
+      const fecha = lista[0].fecha;
+      const intervalo = obtenerIntervaloFechaAgenda(fecha);
+      const inicio = String(lista[0].hora || '');
+      const ultimoMin = minutosDesdeHora(String(lista[lista.length - 1].hora || '')) || 0;
+      return { inicio, fin: horaDesdeMinutos(ultimoMin + intervalo) };
+    }
+
+    async function quitarExtensionTurno(extensionId, event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+
+      const id = String(extensionId || '');
+      const extension = BASE_DATOS.find(t => String(t.id || '') === id);
+      if (!extension) {
+        mostrarToast('No se encontró esa extensión.');
+        return;
+      }
+
+      if (!extension.extension) {
+        abrirDetalleTurno(id);
+        return;
+      }
+
+      const baseId = String(extension.parentId || '');
+      const minSeleccionado = minutosDesdeHora(String(extension.hora || '')) || 0;
+      const extensionesABorrar = BASE_DATOS
+        .filter(t =>
+          String(t.fecha || '') === String(extension.fecha || '') &&
+          String(t.parentId || '') === baseId &&
+          t.extension === true &&
+          (minutosDesdeHora(String(t.hora || '')) || 0) >= minSeleccionado
+        )
+        .sort((a, b) => minutosDesdeHora(String(a.hora || '')) - minutosDesdeHora(String(b.hora || '')));
+
+      const idsABorrar = extensionesABorrar.map(t => String(t.id || '')).filter(Boolean);
+      if (idsABorrar.length === 0) return;
+
+      const texto = idsABorrar.length === 1
+        ? '¿Querés quitar esta extensión del turno?'
+        : 'Vas a quitar esta extensión y las extensiones posteriores para mantener el turno continuo. ¿Continuar?';
+
+      if (!confirm(texto)) return;
+
+      const backup = [...BASE_DATOS];
+      BASE_DATOS = BASE_DATOS.filter(t => !idsABorrar.includes(String(t.id || '')));
+      renderizarCalendarioCompleto();
+      calcularYRenderizarPacientes();
+
+      const idsPersistidos = idsABorrar.filter(x => !String(x).startsWith('TMP-'));
+      if (idsPersistidos.length > 0) {
+        const { error } = await supabaseClient
+          .from('turnos')
+          .delete()
+          .eq('clinica_id', CLINICA_ID)
+          .in('id', idsPersistidos);
+
+        if (error) {
+          BASE_DATOS = backup;
+          renderizarCalendarioCompleto();
+          calcularYRenderizarPacientes();
+          alert('Error quitando extensión: ' + error.message);
+          return;
+        }
+      }
+
+      mostrarToast(idsABorrar.length === 1 ? 'Extensión quitada.' : 'Extensiones quitadas.');
+      await cargarDatosDesdeSupabase();
+      renderizarCalendarioCompleto();
+      calcularYRenderizarPacientes();
+    }
+
     function renderizarCalendarioCompleto() {
       actualizarEtiquetasMes();
 
@@ -6089,8 +6289,21 @@
           slotsContainer.appendChild(empty);
         }
 
+        const extensionesYaIntegradas = new Set();
+
         horasDia.forEach(hora => {
           const turnoAsignado = BASE_DATOS.find(item => item.fecha === tDiaStr && item.hora === hora);
+
+          if (turnoAsignado && turnoAsignado.extension && extensionesYaIntegradas.has(String(turnoAsignado.id))) {
+            return;
+          }
+
+          if (turnoAsignado && turnoAsignado.extension) {
+            const baseId = obtenerIdBaseTurnoExtendido(turnoAsignado);
+            const baseVisible = BASE_DATOS.find(t => String(t.id || '') === baseId && String(t.fecha || '') === tDiaStr);
+            if (baseVisible) return;
+          }
+
           const slot = document.createElement('div');
 
           const ahoraMinutos = (new Date().getHours() * 60) + new Date().getMinutes();
@@ -6098,28 +6311,56 @@
           const esHorarioPasadoHoy = esHoy && slotMinutos < ahoraMinutos;
 
           if (turnoAsignado) {
-            slot.className = `time-slot booked ${!turnoAsignado.confirmado ? 'style-blue' : ''} ${turnoAsignado.extension ? 'extension' : ''} ${esHorarioPasadoHoy ? 'past-today' : ''}`;
-            slot.draggable = true;
-            slot.ondragstart = (event) => iniciarDragTurno(turnoAsignado.id, event);
+            const cadenaTurno = obtenerCadenaTurnoExtendido(turnoAsignado);
+            const extensiones = cadenaTurno.slice(1);
+            extensiones.forEach(ext => extensionesYaIntegradas.add(String(ext.id)));
 
-            const nombreCompleto = nombreCompletoTurno(turnoAsignado);
-            const tipoTurnoLabel = turnoAsignado.extension ? 'Extensión' : 'Turno';
+            const esTurnoExtendido = extensiones.length > 0;
+            const rangoTurno = obtenerRangoCadenaTurno(cadenaTurno);
+            const turnoBaseVisual = cadenaTurno[0] || turnoAsignado;
+
+            slot.className = `time-slot booked ${!turnoBaseVisual.confirmado ? 'style-blue' : ''} ${turnoBaseVisual.extension ? 'extension' : ''} ${esTurnoExtendido ? 'extension-group' : ''} ${esHorarioPasadoHoy ? 'past-today' : ''}`;
+            slot.draggable = true;
+            slot.ondragstart = (event) => iniciarDragTurno(turnoBaseVisual.id, event);
+
+            if (esTurnoExtendido) {
+              slot.style.minHeight = `${102 + (extensiones.length * 48)}px`;
+            }
+
+            const nombreCompleto = nombreCompletoTurno(turnoBaseVisual);
+            const tipoTurnoLabel = esTurnoExtendido ? 'Turno extendido' : (turnoBaseVisual.extension ? 'Extensión' : 'Turno');
+            const horarioLabel = esTurnoExtendido ? `${rangoTurno.inicio} a ${rangoTurno.fin}` : hora;
+
+            const extensionesHtml = esTurnoExtendido
+              ? `
+                <div class="extension-segments">
+                  ${extensiones.map(ext => {
+                    const extIdJson = JSON.stringify(String(ext.id || ''));
+                    return `
+                      <div class="extension-segment" title="Click para ver esta extensión" onclick='abrirDetalleTurno(${extIdJson})'>
+                        <span class="extension-segment-main">↳ ${e(ext.hora || '')} · Extensión</span>
+                        <button type="button" class="extension-remove-btn" onclick='quitarExtensionTurno(${extIdJson}, event)'>Quitar</button>
+                      </div>`;
+                  }).join('')}
+                </div>`
+              : '';
 
             slot.title = 'Click para ver acciones del turno';
             slot.innerHTML = `
               <div class="booked-header">
-                <span>🕒 ${e(hora)}</span>
+                <span>🕒 ${e(horarioLabel)}</span>
                 <div class="booked-header-right">
                   <span class="booked-tag">${e(tipoTurnoLabel)}</span>
                 </div>
               </div>
               <div class="booked-body">${e(nombreCompleto)}</div>
               <div class="booked-meta">
-                <span class="booked-phone">📞 ${e(turnoAsignado.telefono || 'S/T')}</span>
+                <span class="booked-phone">📞 ${e(turnoBaseVisual.telefono || 'S/T')}</span>
               </div>
+              ${extensionesHtml}
             `;
 
-            slot.onclick = () => abrirDetalleTurno(turnoAsignado.id);
+            slot.onclick = () => abrirDetalleTurno(turnoBaseVisual.id);
           } else {
             slot.className = `time-slot ${esHorarioPasadoHoy ? 'past-today' : ''}`;
             slot.innerText = hora;
