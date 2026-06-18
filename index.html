@@ -150,7 +150,8 @@
       flex: 0 0 auto;
     }
 
-    #agendaToolbar #ctrlHoy {
+    #agendaToolbar #ctrlHoy,
+    #agendaToolbar #ctrlExportTurnos {
       white-space: nowrap;
       word-break: keep-all;
       line-height: 1;
@@ -2756,6 +2757,7 @@
         <input type="date" id="datepicker" class="input-date agenda-toolbar-date" onchange="seleccionarFechaManual(this.value)">
       </div>
       <div class="agenda-toolbar-right">
+        <button class="btn-nav" id="ctrlExportTurnos" onclick="abrirModalExportarTurnos()">Exportar turnos</button>
         <button class="btn-nav" id="ctrlHoy" onclick="irHoy()">Ir a hoy</button>
         <button class="btn-nav btn-arrow" id="ctrlPrev" onclick="navegarSemana(-1)">◀</button>
         <button class="btn-nav btn-arrow" id="ctrlNext" onclick="navegarSemana(1)">▶</button>
@@ -3182,6 +3184,28 @@
       <div class="modal-actions">
         <button class="btn-action btn-secondary" onclick="cerrarModales()">Cancelar</button>
         <button id="btnGuardarConfiguracion" class="btn-action btn-primary" onclick="guardarConfiguracionClinica()">Guardar configuración</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalExportarTurnos" class="modal-overlay">
+    <div class="modal-card">
+      <h2 class="modal-title">Exportar turnos</h2>
+      <div class="modal-subtitle">Elegí desde qué fecha hasta qué fecha querés descargar los turnos en CSV.</div>
+
+      <div class="form-group">
+        <label>Desde</label>
+        <input type="date" id="agendaExportTurnosDesde" class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label>Hasta</label>
+        <input type="date" id="agendaExportTurnosHasta" class="form-control">
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-action btn-secondary" onclick="cerrarModales()">Cancelar</button>
+        <button class="btn-action btn-primary" onclick="confirmarExportarTurnosAgenda()">Descargar CSV</button>
       </div>
     </div>
   </div>
@@ -4683,6 +4707,227 @@
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
+    }
+
+    function normalizarDatosExtraTurnoExport(turno) {
+      const posibles = [
+        turno?.datosExtraTurno,
+        turno?.datos_extra_turno,
+        turno?.datosExtra,
+        turno?.datos_extra
+      ];
+
+      const combinado = {};
+      posibles.forEach(obj => {
+        if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return;
+        Object.keys(obj).forEach(k => {
+          const key = slugCampoPaciente(k);
+          const val = obj[k];
+          if (!key || val === null || val === undefined) return;
+          const limpio = String(val).trim();
+          if (limpio) combinado[key] = limpio;
+        });
+      });
+
+      return combinado;
+    }
+
+    function obtenerColumnasExtraTurnosExport(filas) {
+      const configurados = obtenerCamposPacienteConfigurados();
+      const usadas = new Set();
+      const columnas = [];
+
+      configurados.forEach(c => {
+        const hayDato = filas.some(f => {
+          const extra = normalizarDatosExtraTurnoExport(f);
+          return !!extra[c.key];
+        });
+
+        if (hayDato) {
+          columnas.push({ key: c.key, label: c.label });
+          usadas.add(c.key);
+        }
+      });
+
+      filas.forEach(f => {
+        const extra = normalizarDatosExtraTurnoExport(f);
+        Object.keys(extra).forEach(k => {
+          if (usadas.has(k)) return;
+          columnas.push({
+            key: k,
+            label: k.replace(/_/g, ' ').replace(/\b\w/g, m => m.toUpperCase())
+          });
+          usadas.add(k);
+        });
+      });
+
+      return columnas;
+    }
+
+    function obtenerFirmaTurnoExport(t) {
+      const pacienteId = String(t?.pacienteId || '').trim();
+      if (pacienteId) return `pac:${pacienteId}`;
+      const nombre = construirNombreCompleto(t?.nombre || '', t?.apellido || '').toLowerCase();
+      const telefono = String(t?.telefono || '').trim();
+      const dni = String(t?.dni || '').trim();
+      return `nom:${nombre}|tel:${telefono}|dni:${dni}`;
+    }
+
+    function agruparTurnosParaExportar(desdeISO, hastaISO) {
+      const porFecha = {};
+      (BASE_DATOS || [])
+        .filter(t => {
+          const fecha = normalizarFechaParaVistaHoy(t.fecha);
+          return fecha >= desdeISO && fecha <= hastaISO;
+        })
+        .forEach(t => {
+          const fecha = normalizarFechaParaVistaHoy(t.fecha);
+          if (!porFecha[fecha]) porFecha[fecha] = [];
+          porFecha[fecha].push(t);
+        });
+
+      const filas = [];
+
+      Object.keys(porFecha).sort().forEach(fechaISO => {
+        const diaCfg = obtenerDiaConfigPorFecha(fechaISO);
+        const horarios = obtenerHorariosConfigurados();
+        const cfg = horarios[diaCfg.key] || {};
+        const intervalo = [15, 20, 30, 45, 60].includes(Number(cfg.intervalo)) ? Number(cfg.intervalo) : 30;
+
+        const ordenados = [...porFecha[fechaISO]].sort((a, b) => {
+          return minutosDesdeHora(String(a.hora || '')) - minutosDesdeHora(String(b.hora || ''));
+        });
+
+        const grupos = [];
+
+        ordenados.forEach(t => {
+          const minActual = minutosDesdeHora(String(t.hora || '')) || 0;
+          const firma = obtenerFirmaTurnoExport(t);
+          const ultimo = grupos[grupos.length - 1];
+          const esContinuacion = !!(
+            ultimo &&
+            t.extension === true &&
+            ultimo.firma === firma &&
+            minActual === ultimo.ultimoMinutoInicio + intervalo
+          );
+
+          if (esContinuacion) {
+            ultimo.turnos.push(t);
+            ultimo.horaFin = horaDesdeMinutos(minActual + intervalo);
+            ultimo.ultimoMinutoInicio = minActual;
+            return;
+          }
+
+          grupos.push({
+            firma,
+            turnos: [t],
+            horaInicio: String(t.hora || ''),
+            horaFin: horaDesdeMinutos(minActual + intervalo),
+            ultimoMinutoInicio: minActual
+          });
+        });
+
+        grupos.forEach(g => {
+          const base = g.turnos.find(t => t.extension !== true) || g.turnos[0];
+          const pacienteLocal = buscarPacienteLocalPorId(String(base.pacienteId || '')) || {};
+          const nombres = normalizarNombrePaciente(
+            base.nombre || pacienteLocal.nombre || '',
+            base.apellido || pacienteLocal.apellido || '',
+            base.nombre_completo || pacienteLocal.nombre_completo || ''
+          );
+
+          const datosExtra = {};
+          g.turnos.forEach(t => {
+            Object.assign(datosExtra, normalizarDatosExtraTurnoExport(t));
+          });
+
+          filas.push({
+            fecha: fechaISO,
+            horaInicio: g.horaInicio,
+            horaFin: g.horaFin,
+            nombre: nombres.nombre || '',
+            apellido: nombres.apellido || '',
+            paciente: nombres.nombre_completo || construirNombreCompleto(base.nombre, base.apellido) || 'Paciente',
+            dni: String(base.dni || pacienteLocal.dni || '').replace(/\D/g, ''),
+            telefono: base.telefono || pacienteLocal.telefono || '',
+            estado: base.confirmado ? 'Confirmado' : 'Sin confirmar',
+            tipo: g.turnos.length > 1 ? 'Turno extendido' : 'Turno',
+            datosExtra
+          });
+        });
+      });
+
+      return filas;
+    }
+
+    function abrirModalExportarTurnos() {
+      const fechaBase = document.getElementById('datepicker')?.value || formatearFechaISO(new Date());
+      const desde = document.getElementById('agendaExportTurnosDesde');
+      const hasta = document.getElementById('agendaExportTurnosHasta');
+
+      if (desde) desde.value = fechaBase;
+      if (hasta) hasta.value = fechaBase;
+
+      const modal = document.getElementById('modalExportarTurnos');
+      if (modal) modal.classList.add('active');
+    }
+
+    function confirmarExportarTurnosAgenda() {
+      const desde = document.getElementById('agendaExportTurnosDesde')?.value || '';
+      const hasta = document.getElementById('agendaExportTurnosHasta')?.value || '';
+
+      if (!desde || !hasta) {
+        alert('Elegí fecha desde y fecha hasta.');
+        return;
+      }
+
+      if (hasta < desde) {
+        alert('La fecha hasta no puede ser menor que la fecha desde.');
+        return;
+      }
+
+      const filas = agruparTurnosParaExportar(desde, hasta);
+
+      if (filas.length === 0) {
+        alert('No hay turnos para exportar en ese rango.');
+        return;
+      }
+
+      const columnasExtra = obtenerColumnasExtraTurnosExport(filas);
+      const headers = [
+        'Fecha',
+        'Desde',
+        'Hasta',
+        'Paciente',
+        'Nombre',
+        'Apellido',
+        'DNI',
+        'Teléfono',
+        'Estado',
+        'Tipo',
+        ...columnasExtra.map(c => c.label)
+      ];
+
+      const rows = filas.map(f => {
+        const extra = normalizarDatosExtraTurnoExport(f);
+        return [
+          convertirFechaLatina(f.fecha),
+          f.horaInicio,
+          f.horaFin,
+          f.paciente,
+          f.nombre,
+          f.apellido,
+          f.dni,
+          f.telefono,
+          f.estado,
+          f.tipo,
+          ...columnasExtra.map(c => extra[c.key] || '')
+        ];
+      });
+
+      descargarCSV(`turnos_${desde}_a_${hasta}.csv`, headers, rows);
+      cerrarModales();
+      mostrarToast('Turnos exportados en CSV.');
     }
 
     function exportarFicheroActual() {
@@ -6916,12 +7161,14 @@
       const modalTratamientos = document.getElementById('modalTratamientos');
       const modalFicha = document.getElementById('modalFichaPaciente');
       const modalConfiguracion = document.getElementById('modalConfiguracion');
+      const modalExportarTurnos = document.getElementById('modalExportarTurnos');
 
       if (modalEditar) modalEditar.classList.remove('active');
       if (modalReprogramar) modalReprogramar.classList.remove('active');
       if (modalTratamientos) modalTratamientos.classList.remove('active');
       if (modalFicha) modalFicha.classList.remove('active');
       if (modalConfiguracion) modalConfiguracion.classList.remove('active');
+      if (modalExportarTurnos) modalExportarTurnos.classList.remove('active');
 
       ID_TURNO_SELECCIONADO = null;
     }
