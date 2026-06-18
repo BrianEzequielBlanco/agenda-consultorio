@@ -6400,9 +6400,9 @@
 
           const slot = document.createElement('div');
 
-          const ahoraMinutos = (new Date().getHours() * 60) + new Date().getMinutes();
-          const slotMinutos = minutosDesdeHora(hora) ?? 0;
-          const esHorarioPasadoHoy = esHoy && slotMinutos < ahoraMinutos;
+          // El día actual no se pinta en gris por horarios ya transcurridos.
+          // Solo los días anteriores completos se marcan como pasados con day-past.
+          const esHorarioPasadoHoy = false;
 
           if (turnoAsignado) {
             const cadenaTurno = obtenerCadenaTurnoExtendido(turnoAsignado);
