@@ -150,6 +150,15 @@
       flex: 0 0 auto;
     }
 
+    #agendaToolbar .btn-nav {
+      height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-color: #d7dee8;
+      font-weight: 600;
+    }
+
     #agendaToolbar #ctrlHoy,
     #agendaToolbar #ctrlExportTurnos {
       white-space: nowrap;
@@ -334,13 +343,15 @@
     }
 
     .day-column.day-today .time-slot:not(.booked) {
-      background: rgba(255, 255, 255, 0.86);
-      border-color: #bfdbfe;
+      background: rgba(255, 255, 255, 0.88);
+      border-color: #dbeafe;
+      color: #334155;
     }
 
     .day-column.day-today .time-slot:not(.booked):hover {
-      background: var(--blue-light);
-      border-color: var(--blue);
+      background: #eff6ff;
+      border-color: #93c5fd;
+      color: var(--blue);
     }
 
     .time-slot.past-today {
@@ -411,11 +422,11 @@
     .time-slot {
       min-height: 48px;
       border-radius: 10px;
-      border: 1px dashed #cbd5e1;
+      border: 1px solid #e2e8f0;
       background: #fff;
       font-size: 14px;
-      color: var(--blue);
-      font-weight: 600;
+      color: #334155;
+      font-weight: 700;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -424,8 +435,9 @@
     }
 
     .time-slot:hover {
-      background: var(--blue-light);
-      border-color: var(--blue);
+      background: #eff6ff;
+      border-color: #93c5fd;
+      color: var(--blue);
     }
 
     .time-slot.drag-over {
@@ -474,7 +486,7 @@
       width: 100%;
       margin-top: 8px;
       padding-top: 7px;
-      border-top: 1px dashed rgba(26, 115, 232, 0.30);
+      border-top: 1px solid rgba(147, 197, 253, 0.55);
       display: flex;
       flex-direction: column;
       gap: 5px;
@@ -484,8 +496,8 @@
       width: 100%;
       min-height: 32px;
       border-radius: 8px;
-      border: 1px solid rgba(26, 115, 232, 0.18);
-      background: rgba(255, 255, 255, 0.42);
+      border: 1px solid rgba(147, 197, 253, 0.55);
+      background: rgba(255, 255, 255, 0.52);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -495,8 +507,8 @@
     }
 
     .extension-segment:hover {
-      background: rgba(255, 255, 255, 0.72);
-      border-color: rgba(26, 115, 232, 0.34);
+      background: rgba(255, 255, 255, 0.82);
+      border-color: rgba(59, 130, 246, 0.42);
     }
 
     .extension-segment-main {
@@ -511,9 +523,9 @@
     }
 
     .extension-remove-btn {
-      border: 1px solid #f3b5b2;
-      background: #fff;
-      color: var(--red);
+      border: 1px solid #fed7aa;
+      background: #fff7ed;
+      color: #c2410c;
       border-radius: 999px;
       padding: 4px 8px;
       font-size: 10px;
@@ -524,8 +536,9 @@
     }
 
     .extension-remove-btn:hover {
-      background: var(--red-light);
-      border-color: var(--red);
+      background: #ffedd5;
+      border-color: #fb923c;
+      color: #9a3412;
     }
 
     .day-column.day-past .extension-segment {
