@@ -2185,32 +2185,51 @@
     .hoy-status-picker {
       display: flex;
       flex-direction: column;
-      gap: 7px;
-      align-items: center;
+      gap: 8px;
+      align-items: stretch;
       justify-content: center;
       margin-right: 2px;
+      min-width: 126px;
     }
-    .hoy-status-dot {
-      width: 18px;
-      height: 18px;
+    .hoy-status-btn {
+      width: 100%;
       border-radius: 999px;
-      border: 2px solid rgba(15, 23, 42, 0.18);
+      border: 1px solid transparent;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 900;
       cursor: pointer;
-      transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease, opacity .12s ease;
-      opacity: 0.95;
+      transition: transform .12s ease, box-shadow .12s ease, filter .12s ease, border-color .12s ease;
+      text-align: center;
+      white-space: nowrap;
+      line-height: 1.1;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.10);
     }
-    .hoy-status-dot:hover {
-      transform: scale(1.08);
-      box-shadow: 0 0 0 4px rgba(148, 163, 184, 0.16);
+    .hoy-status-btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(0.98);
+      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.14);
     }
-    .hoy-status-dot.active {
+    .hoy-status-btn.active {
       border-color: #0f172a;
-      box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.10);
-      transform: scale(1.06);
+      box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.16), 0 4px 10px rgba(15, 23, 42, 0.12);
+      transform: translateY(-1px);
     }
-    .hoy-status-dot.green { background: #22c55e; }
-    .hoy-status-dot.yellow { background: #facc15; }
-    .hoy-status-dot.red { background: #ef4444; }
+    .hoy-status-btn.green {
+      background: #22c55e;
+      color: white;
+      border-color: #16a34a;
+    }
+    .hoy-status-btn.yellow {
+      background: #facc15;
+      color: #713f12;
+      border-color: #eab308;
+    }
+    .hoy-status-btn.red {
+      background: #ef4444;
+      color: white;
+      border-color: #dc2626;
+    }
     .hoy-date-controls {
       display: flex;
       align-items: center;
@@ -2323,8 +2342,8 @@
       .hoy-card { grid-template-columns: 1fr; align-items: stretch; }
       .hoy-time { text-align: left; width: fit-content; }
       .hoy-actions { justify-content: stretch; }
-      .hoy-status-picker { flex-direction: row; justify-content: flex-start; width: 100%; margin-right: 0; }
-      .hoy-status-dot { width: 22px; height: 22px; }
+      .hoy-status-picker { width: 100%; margin-right: 0; min-width: 0; }
+      .hoy-status-btn { width: 100%; padding: 10px 12px; }
       .hoy-actions .btn-table-action { flex: 1; }
       .hoy-date-controls { justify-content: stretch; }
       .hoy-date-controls .input-date { flex: 1; min-width: 160px; }
@@ -6451,10 +6470,10 @@
               <div class="motivos-inline">${motivosHtml}</div>
             </div>
             <div class="hoy-actions">
-              <div class="hoy-status-picker" title="Marcador interno de la secretaria">
-                <button type="button" class="hoy-status-dot green ${colorMarca === 'green' ? 'active' : ''}" onclick="marcarColorTurnoHoy('${e(t.id)}', 'green')" aria-label="Marcar en verde"></button>
-                <button type="button" class="hoy-status-dot yellow ${colorMarca === 'yellow' ? 'active' : ''}" onclick="marcarColorTurnoHoy('${e(t.id)}', 'yellow')" aria-label="Marcar en amarillo"></button>
-                <button type="button" class="hoy-status-dot red ${colorMarca === 'red' ? 'active' : ''}" onclick="marcarColorTurnoHoy('${e(t.id)}', 'red')" aria-label="Marcar en rojo"></button>
+              <div class="hoy-status-picker" title="Estado interno de la secretaria">
+                <button type="button" class="hoy-status-btn green ${colorMarca === 'green' ? 'active' : ''}" onclick="marcarColorTurnoHoy('${e(t.id)}', 'green')">Confirmado</button>
+                <button type="button" class="hoy-status-btn yellow ${colorMarca === 'yellow' ? 'active' : ''}" onclick="marcarColorTurnoHoy('${e(t.id)}', 'yellow')">Pendiente</button>
+                <button type="button" class="hoy-status-btn red ${colorMarca === 'red' ? 'active' : ''}" onclick="marcarColorTurnoHoy('${e(t.id)}', 'red')">Cancelado</button>
               </div>
               <button class="btn-table-action btn-whatsapp" onclick="abrirWhatsAppTurno('${e(t.id)}', event)">WhatsApp</button>
               <button class="btn-table-action" onclick="copiarTextoRecordatorio('${e(t.id)}', event)">Copiar recordatorio</button>
