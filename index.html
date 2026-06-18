@@ -3856,20 +3856,18 @@
 
       PACIENTES_DB = (pacientes || []).map(p => normalizarPacienteDesdeSupabase(p));
 
+      // No usamos embed de pacientes dentro de turnos.
+      // Motivo: si Supabase tiene más de una foreign key entre turnos y pacientes,
+      // el embed pacientes (...) falla con:
+      // "more than one relationship was found for turnos and pacientes".
+      // Como PACIENTES_DB ya fue cargado arriba, cruzamos los datos en memoria por paciente_id.
+      const pacientesPorId = new Map(
+        (PACIENTES_DB || []).map(p => [String(p.id || ''), p])
+      );
+
       const { data: turnos, error: errorTurnos } = await supabaseClient
         .from('turnos')
-        .select(`
-          *,
-          pacientes (
-            id,
-            dni,
-            nombre,
-            apellido,
-            nombre_completo,
-            telefono,
-            datos_extra
-          )
-        `)
+        .select('id, clinica_id, paciente_id, fecha, hora, confirmado, estado_hoy, extension, parent_id, created_at')
         .eq('clinica_id', CLINICA_ID)
         .order('fecha', { ascending: true })
         .order('hora', { ascending: true });
@@ -3881,7 +3879,7 @@
       }
 
       BASE_DATOS = (turnos || []).map(t => {
-        const paciente = normalizarPacienteDesdeSupabase(t.pacientes || {});
+        const paciente = pacientesPorId.get(String(t.paciente_id || '')) || {};
 
         return {
           id: t.id,
@@ -3895,7 +3893,7 @@
           observacion: '',
           confirmado: t.confirmado === true,
           estadoHoy: t.estado_hoy || '',
-          timestamp: new Date(t.created_at).getTime(),
+          timestamp: t.created_at ? new Date(t.created_at).getTime() : Date.now(),
           extension: t.extension === true,
           parentId: t.parent_id || '',
           pacienteId: t.paciente_id,
