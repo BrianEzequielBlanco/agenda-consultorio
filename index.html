@@ -2631,8 +2631,167 @@
     }
 
 
+    /* V57: Exportación, históricos de turnos y estados con botones */
+    .metric-card-recordar {
+      border-left-color: #facc15 !important;
+    }
+
+    .metric-card-recordar .metric-lbl,
+    .metric-card-recordar .metric-val {
+      color: #92400e !important;
+    }
+
+    .btn-export-data {
+      background: #f0fff4;
+      color: var(--green);
+      border-color: #b7e4c7;
+      box-shadow: 0 1px 4px rgba(19, 115, 51, 0.12);
+    }
+
+    .btn-export-data:hover {
+      background: var(--green-light);
+      border-color: var(--green);
+    }
+
+    .turnos-history-panel {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+
+    .turnos-history-controls {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .turnos-history-fields {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .turnos-history-fields .filter-group input {
+      width: 160px;
+    }
+
+    .turnos-history-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .turnos-readonly-note {
+      margin-top: 10px;
+      font-size: 12px;
+      line-height: 1.4;
+      color: var(--muted);
+    }
+
+    .turnos-range-info {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 8px 0 12px;
+      font-weight: 600;
+    }
+
+    .readonly-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #eef2f6;
+      color: #475467;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .02em;
+    }
+
+    .hoy-status-picker {
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 6px;
+      min-width: 260px;
+    }
+
+    .hoy-status-button {
+      border: 1px solid #d0d5dd;
+      background: #f8fafc;
+      color: #475467;
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: .15s ease;
+      white-space: nowrap;
+      box-shadow: none;
+    }
+
+    .hoy-status-button:hover {
+      background: #fff;
+      border-color: #98a2b3;
+      transform: translateY(-1px);
+    }
+
+    .hoy-status-button.active.green {
+      background: var(--green);
+      border-color: var(--green);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(19, 115, 51, .18);
+    }
+
+    .hoy-status-button.active.yellow {
+      background: #facc15;
+      border-color: #eab308;
+      color: #713f12;
+      box-shadow: 0 4px 12px rgba(234, 179, 8, .20);
+    }
+
+    .hoy-status-button.active.red {
+      background: #ef4444;
+      border-color: #dc2626;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, .20);
+    }
+
+    @media (max-width: 760px) {
+      .turnos-history-controls,
+      .turnos-history-fields,
+      .turnos-history-actions {
+        width: 100%;
+        justify-content: stretch;
+      }
+
+      .turnos-history-fields .filter-group,
+      .turnos-history-fields .filter-group input {
+        width: 100%;
+      }
+
+      .turnos-history-actions .btn-table-action {
+        flex: 1 1 160px;
+      }
+
+      .hoy-status-picker {
+        justify-content: flex-start;
+        min-width: 0;
+      }
+    }
+
+
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 
 <body>
@@ -2739,13 +2898,17 @@
           <div id="pacientesSubtitulo" class="page-subtitle">Fichero general del consultorio, preparado para buscar, cargar y ordenar pacientes.</div>
         </div>
         <div class="page-title-actions">
-          <button class="btn-table-action btn-add-ficha" onclick="abrirAltaFichaPaciente()">+ Agregar ficha</button>
+          <button id="btnAgregarFichaPaciente" class="btn-table-action btn-add-ficha" onclick="abrirAltaFichaPaciente()">+ Agregar ficha</button>
+          <button id="btnExportarFichero" class="btn-table-action btn-export-data" onclick="exportarFicheroExcel()" style="display:none;">Descargar Excel</button>
         </div>
       </div>
 
       <div class="patients-mode-tabs">
         <button id="tabPacientesFichero" class="patients-mode-tab active" onclick="cambiarSubvistaPacientes('fichero')">
           Fichero <span id="tabFicheroCount" class="patients-tab-count">0</span>
+        </button>
+        <button id="tabPacientesTurnos" class="patients-mode-tab" onclick="cambiarSubvistaPacientes('turnos')">
+          Turnos <span id="tabTurnosCount" class="patients-tab-count">0</span>
         </button>
         <button id="tabPacientesRecordar" class="patients-mode-tab" onclick="cambiarSubvistaPacientes('recordar')">
           Para recordar <span id="tabRecordarCount" class="patients-tab-count">0</span>
@@ -2764,7 +2927,7 @@
         </div>
       </div>
 
-      <div class="patients-filter-card">
+      <div id="pacientesFilterCard" class="patients-filter-card">
         <div>
           <div class="patients-filter-fields">
             <div class="filter-group">
@@ -3149,6 +3312,9 @@
     let FILTRO_DNI_PACIENTES = '';
     let FILTRO_NOMBRE_PACIENTES = '';
     let SUBVISTA_PACIENTES = 'fichero';
+    let ULTIMA_LISTA_FICHERO_RENDERIZADA = [];
+    let ULTIMAS_COLUMNAS_FICHERO = [];
+    let ULTIMO_RANGO_TURNOS = { desde: '', hasta: '' };
     let MODO_FICHA_PACIENTE = 'alta';
     const DEFAULT_CONFIG_CLINICA = {
       // Se conserva la clave interna "tratamientos" para compatibilidad,
@@ -3275,6 +3441,9 @@
       PACIENTES_DB = [];
       TRATAMIENTOS_DB = {};
       SEGUIMIENTO_COMPACTO = {};
+      ULTIMA_LISTA_FICHERO_RENDERIZADA = [];
+      ULTIMAS_COLUMNAS_FICHERO = [];
+      ULTIMO_RANGO_TURNOS = { desde: '', hasta: '' };
       CLINICA_ID = '';
       USUARIO_ACTUAL = null;
       CLINICA_ACTUAL = null;
@@ -4472,7 +4641,7 @@
     }
 
     function cambiarSubvistaPacientes(tipo) {
-      SUBVISTA_PACIENTES = tipo === 'recordar' ? 'recordar' : 'fichero';
+      SUBVISTA_PACIENTES = tipo === 'recordar' ? 'recordar' : (tipo === 'turnos' ? 'turnos' : 'fichero');
       calcularYRenderizarPacientes();
     }
 
@@ -4551,6 +4720,364 @@
       if (tags.length === 0) return `<span class="treatment-pill empty">Sin motivos activos</span>`;
       return tags.map(key => `<span class="treatment-pill">${e(obtenerLabelMotivo(key))}</span>`).join('');
     }
+
+    function humanizarClaveCampo(key) {
+      const limpio = String(key || '').trim();
+      if (!limpio) return 'Dato extra';
+      return limpio
+        .replace(/[_\-]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    function obtenerColumnasExtraPacientes(lista) {
+      const columnas = new Map();
+      obtenerCamposPacienteConfigurados().forEach(c => {
+        if (c && c.key) columnas.set(c.key, c.label || humanizarClaveCampo(c.key));
+      });
+
+      (lista || []).forEach(p => {
+        const extra = normalizarDatosExtraPaciente(p.datosExtra || p.datos_extra || {});
+        Object.keys(extra).forEach(key => {
+          if (!columnas.has(key) && String(extra[key] || '').trim()) {
+            columnas.set(key, humanizarClaveCampo(key));
+          }
+        });
+      });
+
+      return Array.from(columnas.entries()).map(([key, label]) => ({ key, label }));
+    }
+
+    function obtenerTextoMotivosPaciente(pacienteId) {
+      const tags = motivosAArray(TRATAMIENTOS_DB[String(pacienteId || '')] || {});
+      if (tags.length === 0) return 'Sin motivos activos';
+      return tags.map(key => obtenerLabelMotivo(key)).join(', ');
+    }
+
+    function construirFilasFicheroExport(lista, columnasExtra) {
+      return (lista || []).map(p => {
+        const fila = {
+          'Paciente': construirNombreCompleto(p.nombre, p.apellido) || 'Sin nombre',
+          'DNI': p.dni || 'S/D',
+          'Teléfono': p.telefono || 'S/T',
+          'Visitas': p.cantVisitas || 0,
+          'Última visita': p.ultimaVisita ? convertirFechaLatina(p.ultimaVisita) : 'Sin visitas',
+          'Próximo turno': p.proximoTurno ? `${convertirFechaLatina(p.proximoTurno.fecha)} ${p.proximoTurno.hora || ''} hs` : '—',
+          'Motivos activos': obtenerTextoMotivosPaciente(p.id)
+        };
+
+        const extra = normalizarDatosExtraPaciente(p.datosExtra || {});
+        (columnasExtra || []).forEach(c => {
+          fila[c.label] = extra[c.key] || '';
+        });
+
+        return fila;
+      });
+    }
+
+    function ajustarAnchoColumnasExcel(ws, filas) {
+      const primera = filas && filas[0] ? Object.keys(filas[0]) : [];
+      ws['!cols'] = primera.map(k => {
+        const maxContenido = Math.max(
+          String(k || '').length,
+          ...filas.map(f => String(f[k] ?? '').length)
+        );
+        return { wch: Math.min(Math.max(maxContenido + 2, 12), 42) };
+      });
+    }
+
+    function exportarFicheroExcel() {
+      const lista = ULTIMA_LISTA_FICHERO_RENDERIZADA || [];
+      if (lista.length === 0) {
+        mostrarToast('No hay datos para exportar.');
+        return;
+      }
+
+      const columnasExtra = ULTIMAS_COLUMNAS_FICHERO || obtenerColumnasExtraPacientes(lista);
+      const filas = construirFilasFicheroExport(lista, columnasExtra);
+      const fecha = formatearFechaISO(new Date());
+      const nombreArchivo = `fichero_pacientes_${fecha}.xlsx`;
+
+      if (!window.XLSX || !XLSX.utils) {
+        descargarCSVDesdeFilas(filas, nombreArchivo.replace('.xlsx', '.csv'));
+        mostrarToast('No se pudo cargar el generador Excel. Descargué CSV como respaldo.');
+        return;
+      }
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(filas);
+      ajustarAnchoColumnasExcel(ws, filas);
+      XLSX.utils.book_append_sheet(wb, ws, 'Fichero');
+      XLSX.writeFile(wb, nombreArchivo);
+      mostrarToast('Excel del fichero descargado.');
+    }
+
+    function escaparCSV(valor) {
+      const txt = String(valor ?? '');
+      return `"${txt.replace(/"/g, '""')}"`;
+    }
+
+    function descargarCSVDesdeFilas(filas, nombreArchivo) {
+      if (!filas || filas.length === 0) {
+        mostrarToast('No hay datos para descargar.');
+        return;
+      }
+      const columnas = Object.keys(filas[0]);
+      const contenido = [
+        columnas.map(escaparCSV).join(','),
+        ...filas.map(f => columnas.map(c => escaparCSV(f[c])).join(','))
+      ].join('\n');
+
+      const blob = new Blob(['\ufeff' + contenido], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = nombreArchivo;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function agruparTurnosPorPacienteYRango(items, fechaISO) {
+      const horariosCfg = obtenerHorariosConfigurados();
+      const diaCfg = obtenerDiaConfigPorFecha(fechaISO);
+      const cfg = horariosCfg[diaCfg.key] || {};
+      const intervalo = [15, 20, 30, 45, 60].includes(Number(cfg.intervalo)) ? Number(cfg.intervalo) : 30;
+
+      const firmaPaciente = (t) => {
+        const pacienteId = String(t.pacienteId || '').trim();
+        if (pacienteId) return `pac:${pacienteId}`;
+        const nombre = normalizarNombrePaciente(t.nombre || '', t.apellido || '', t.nombre_completo || '').nombre_completo || 'paciente';
+        const telefono = String(t.telefono || '').trim();
+        return `nom:${nombre.toLowerCase()}|tel:${telefono}`;
+      };
+
+      const ordenados = [...(items || [])].sort((a, b) => minutosDesdeHora(String(a.hora || '')) - minutosDesdeHora(String(b.hora || '')));
+      const grupos = [];
+
+      ordenados.forEach((t) => {
+        const firma = firmaPaciente(t);
+        const minActual = minutosDesdeHora(String(t.hora || '')) || 0;
+        const ultimoGrupo = grupos[grupos.length - 1];
+
+        if (!ultimoGrupo) {
+          grupos.push({ base: t, turnos: [t], horaInicio: String(t.hora || ''), horaFin: horaDesdeMinutos(minActual + intervalo), esRango: false, firma, ultimoMinutoInicio: minActual });
+          return;
+        }
+
+        const esConsecutivo = minActual === (ultimoGrupo.ultimoMinutoInicio + intervalo);
+        const mismaPersona = ultimoGrupo.firma === firma;
+
+        if (esConsecutivo && mismaPersona) {
+          ultimoGrupo.turnos.push(t);
+          if (ultimoGrupo.base && ultimoGrupo.base.extension === true && t.extension !== true) ultimoGrupo.base = t;
+          ultimoGrupo.horaFin = horaDesdeMinutos(minActual + intervalo);
+          ultimoGrupo.esRango = true;
+          ultimoGrupo.ultimoMinutoInicio = minActual;
+          return;
+        }
+
+        grupos.push({ base: t, turnos: [t], horaInicio: String(t.hora || ''), horaFin: horaDesdeMinutos(minActual + intervalo), esRango: false, firma, ultimoMinutoInicio: minActual });
+      });
+
+      return grupos.map(g => {
+        const baseNoExtension = g.turnos.find(x => x.extension !== true);
+        return { base: baseNoExtension || g.base || g.turnos[0], turnos: g.turnos, horaInicio: g.horaInicio, horaFin: g.horaFin, esRango: g.esRango };
+      }).sort((a, b) => minutosDesdeHora(a.horaInicio) - minutosDesdeHora(b.horaInicio));
+    }
+
+    function obtenerFilasTurnosPorRango(desde, hasta) {
+      const fechaDesde = parsearFechaFlexible(desde) || formatearFechaISO(new Date());
+      const fechaHasta = parsearFechaFlexible(hasta) || fechaDesde;
+      const d = fechaDesde <= fechaHasta ? fechaDesde : fechaHasta;
+      const h = fechaDesde <= fechaHasta ? fechaHasta : fechaDesde;
+
+      const fechas = Array.from(new Set((BASE_DATOS || [])
+        .filter(t => normalizarFechaParaVistaHoy(t.fecha) >= d && normalizarFechaParaVistaHoy(t.fecha) <= h)
+        .map(t => normalizarFechaParaVistaHoy(t.fecha))))
+        .sort();
+
+      const filas = [];
+
+      fechas.forEach(fechaISO => {
+        const turnosFecha = (BASE_DATOS || [])
+          .filter(t => normalizarFechaParaVistaHoy(t.fecha) === fechaISO)
+          .sort((a, b) => String(a.hora || '').localeCompare(String(b.hora || '')));
+
+        agruparTurnosPorPacienteYRango(turnosFecha, fechaISO).forEach(grupo => {
+          const t = grupo.base;
+          const pacienteId = String(t.pacienteId || '');
+          const pacienteLocal = buscarPacienteLocalPorId(pacienteId) || {};
+          const nombres = normalizarNombrePaciente(
+            t.nombre || pacienteLocal.nombre || '',
+            t.apellido || pacienteLocal.apellido || '',
+            t.nombre_completo || pacienteLocal.nombre_completo || ''
+          );
+          const extrasPaciente = normalizarDatosExtraPaciente(pacienteLocal.datosExtra || pacienteLocal.datos_extra || {});
+          const extrasTurno = normalizarDatosExtraPaciente(t.datosExtra || t.datos_extra || {});
+
+          filas.push({
+            fecha: fechaISO,
+            desde: grupo.horaInicio,
+            hasta: grupo.horaFin,
+            horario: `${grupo.horaInicio} - ${grupo.horaFin}`,
+            nombre: nombres.nombre || nombres.nombre_completo || 'Paciente',
+            apellido: nombres.apellido || '',
+            nombreCompleto: nombres.nombre_completo || construirNombreCompleto(nombres.nombre, nombres.apellido) || 'Paciente',
+            telefono: t.telefono || pacienteLocal.telefono || '',
+            dni: t.dni || pacienteLocal.dni || '',
+            pacienteId,
+            confirmado: t.confirmado === true,
+            motivos: obtenerTextoMotivosPaciente(pacienteId),
+            datosExtra: { ...extrasPaciente, ...extrasTurno }
+          });
+        });
+      });
+
+      return filas;
+    }
+
+    function obtenerColumnasExtraTurnos(filas) {
+      const columnas = new Map();
+      obtenerCamposPacienteConfigurados().forEach(c => {
+        if (c && c.key) columnas.set(c.key, c.label || humanizarClaveCampo(c.key));
+      });
+      (filas || []).forEach(f => {
+        Object.keys(f.datosExtra || {}).forEach(key => {
+          if (!columnas.has(key) && String(f.datosExtra[key] || '').trim()) columnas.set(key, humanizarClaveCampo(key));
+        });
+      });
+      return Array.from(columnas.entries()).map(([key, label]) => ({ key, label }));
+    }
+
+    function construirFilasTurnosExport(filas, columnasExtra) {
+      return (filas || []).map(f => {
+        const fila = {
+          'Fecha': convertirFechaLatina(f.fecha),
+          'Horario desde': f.desde,
+          'Horario hasta': f.hasta,
+          'Nombre': f.nombre,
+          'Apellido': f.apellido,
+          'Teléfono': f.telefono || 'S/T',
+          'DNI': f.dni || 'S/D',
+          'Estado': f.confirmado ? 'Confirmado' : 'Pendiente',
+          'Motivos activos': f.motivos || 'Sin motivos activos'
+        };
+        (columnasExtra || []).forEach(c => {
+          fila[c.label] = (f.datosExtra || {})[c.key] || '';
+        });
+        return fila;
+      });
+    }
+
+    function obtenerRangoTurnosSeleccionado() {
+      const hoyStr = formatearFechaISO(new Date());
+      const desdeInput = document.getElementById('turnosRangoDesde');
+      const hastaInput = document.getElementById('turnosRangoHasta');
+      const desdeRaw = desdeInput ? desdeInput.value : ULTIMO_RANGO_TURNOS.desde;
+      const hastaRaw = hastaInput ? hastaInput.value : ULTIMO_RANGO_TURNOS.hasta;
+      let desde = parsearFechaFlexible(desdeRaw) || ULTIMO_RANGO_TURNOS.desde || hoyStr;
+      let hasta = parsearFechaFlexible(hastaRaw) || ULTIMO_RANGO_TURNOS.hasta || desde;
+      if (desde > hasta) [desde, hasta] = [hasta, desde];
+      ULTIMO_RANGO_TURNOS = { desde, hasta };
+      return ULTIMO_RANGO_TURNOS;
+    }
+
+    function actualizarRangoTurnos() {
+      obtenerRangoTurnosSeleccionado();
+      renderizarSubvistaTurnos();
+    }
+
+    function descargarTurnosCSV() {
+      const { desde, hasta } = obtenerRangoTurnosSeleccionado();
+      const filas = obtenerFilasTurnosPorRango(desde, hasta);
+      if (filas.length === 0) {
+        mostrarToast('No hay turnos en ese rango.');
+        return;
+      }
+      const columnasExtra = obtenerColumnasExtraTurnos(filas);
+      const filasExport = construirFilasTurnosExport(filas, columnasExtra);
+      descargarCSVDesdeFilas(filasExport, `turnos_${desde}_a_${hasta}.csv`);
+      mostrarToast('CSV de turnos descargado.');
+    }
+
+    function renderizarSubvistaTurnos() {
+      const board = document.getElementById('tablaPacientesBody');
+      if (!board) return;
+
+      const hoyStr = formatearFechaISO(new Date());
+      if (!ULTIMO_RANGO_TURNOS.desde || !ULTIMO_RANGO_TURNOS.hasta) {
+        ULTIMO_RANGO_TURNOS = { desde: hoyStr, hasta: hoyStr };
+      }
+
+      const { desde, hasta } = ULTIMO_RANGO_TURNOS;
+      const filas = obtenerFilasTurnosPorRango(desde, hasta);
+      const columnasExtra = obtenerColumnasExtraTurnos(filas);
+      const extrasHead = columnasExtra.map(c => `<th>${e(c.label)}</th>`).join('');
+
+      const rows = filas.map(f => {
+        const extrasCells = columnasExtra.map(c => `<td>${e((f.datosExtra || {})[c.key] || '—')}</td>`).join('');
+        return `
+          <tr>
+            <td>${e(convertirFechaLatina(f.fecha))}</td>
+            <td><strong>${e(f.horario)}</strong></td>
+            <td>${e(f.nombre)}</td>
+            <td>${e(f.apellido || '—')}</td>
+            <td><span class="fichero-phone">${e(f.telefono || 'S/T')}</span></td>
+            <td>${e(f.dni || 'S/D')}</td>
+            <td><span class="readonly-pill">${e(f.confirmado ? 'Confirmado' : 'Pendiente')}</span></td>
+            ${extrasCells}
+          </tr>`;
+      }).join('');
+
+      const rangoTexto = desde === hasta
+        ? `Mostrando ${filas.length} turno${filas.length === 1 ? '' : 's'} de ${desde === hoyStr ? 'hoy' : convertirFechaLatina(desde)}.`
+        : `Mostrando ${filas.length} turno${filas.length === 1 ? '' : 's'} entre ${convertirFechaLatina(desde)} y ${convertirFechaLatina(hasta)}.`;
+
+      board.innerHTML = `
+        <div class="turnos-history-panel">
+          <div class="turnos-history-controls">
+            <div class="turnos-history-fields">
+              <div class="filter-group">
+                <label>Desde</label>
+                <input type="date" id="turnosRangoDesde" class="filter-input" value="${e(desde)}" onchange="actualizarRangoTurnos()">
+              </div>
+              <div class="filter-group">
+                <label>Hasta</label>
+                <input type="date" id="turnosRangoHasta" class="filter-input" value="${e(hasta)}" onchange="actualizarRangoTurnos()">
+              </div>
+            </div>
+            <div class="turnos-history-actions">
+              <button class="btn-table-action" onclick="actualizarRangoTurnos()">Ver rango</button>
+              <button class="btn-table-action btn-export-data" onclick="descargarTurnosCSV()">Descargar CSV</button>
+            </div>
+          </div>
+          <div class="turnos-readonly-note">Vista estrictamente de solo lectura. Los datos se toman de los turnos y fichas ya cargadas en el sistema.</div>
+        </div>
+        <div class="turnos-range-info">${e(rangoTexto)}</div>
+        <div class="fichero-table-card">
+          <div class="fichero-table-scroll">
+            <table class="fichero-table">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Horario (desde/hasta)</th>
+                  <th>Nombre</th>
+                  <th>Apellido</th>
+                  <th>Teléfono</th>
+                  <th>DNI</th>
+                  <th>Estado</th>
+                  ${extrasHead}
+                </tr>
+              </thead>
+              <tbody>${rows || `<tr><td colspan="${7 + columnasExtra.length}">No hay turnos cargados para el rango seleccionado.</td></tr>`}</tbody>
+            </table>
+          </div>
+        </div>`;
+    }
+
 
     function calcularYRenderizarPacientes() {
       const hoy = new Date();
@@ -4643,21 +5170,16 @@
 
         const tieneTurnoFuturo = (p.turnosFuturos || []).length > 0;
         const sinTurnoActivo = !!p.ultimaVisita && !tieneTurnoFuturo;
-        const prioridadRecordar = sinTurnoActivo
-          ? ((diasTranscurridos !== null && diasTranscurridos >= 30) ? 'naranja' : 'amarillo')
-          : '';
-        const apareceEnRecordar = sinTurnoActivo;
+        const cumpleAlerta30Dias = sinTurnoActivo && diasTranscurridos !== null && diasTranscurridos >= 30;
+        const prioridadRecordar = cumpleAlerta30Dias ? 'amarillo' : '';
+        const apareceEnRecordar = cumpleAlerta30Dias;
 
         let estadoLabel = 'Al día';
         let badgeClase = 'badge-al-dia';
         let cardClase = 'normal';
 
-        if (prioridadRecordar === 'naranja') {
+        if (prioridadRecordar === 'amarillo') {
           estadoLabel = 'Contactar';
-          badgeClase = 'badge-para-recordar';
-          cardClase = 'critical';
-        } else if (prioridadRecordar === 'amarillo') {
-          estadoLabel = 'Sin turno futuro';
           badgeClase = 'badge-atencion';
           cardClase = 'warning';
         }
@@ -4695,22 +5217,40 @@
 
       const totalP = listaPacientes.length;
       const paraRecordarP = listaPacientes.filter(p => p.debeRecordar).length;
-      const accionesPendientesP = listaPacientes.filter(p => p.prioridadRecordar === 'naranja').length;
-      actualizarMetricas(totalP, accionesPendientesP, paraRecordarP);
+      const accionesPendientesP = paraRecordarP;
+      const turnosHoyP = obtenerFilasTurnosPorRango(hoyStr, hoyStr).length;
+      actualizarMetricas(totalP, accionesPendientesP, paraRecordarP, turnosHoyP);
 
       const titulo = document.getElementById('pacientesTitulo');
       const subtitulo = document.getElementById('pacientesSubtitulo');
-      const esFichero = SUBVISTA_PACIENTES !== 'recordar';
+      const esTurnos = SUBVISTA_PACIENTES === 'turnos';
+      const esRecordar = SUBVISTA_PACIENTES === 'recordar';
+      const esFichero = !esTurnos && !esRecordar;
 
-      if (titulo) titulo.innerText = esFichero ? 'Pacientes' : 'Para recordar';
+      if (titulo) titulo.innerText = esFichero ? 'Pacientes' : (esTurnos ? 'Turnos' : 'Para recordar');
       if (subtitulo) {
         subtitulo.innerText = esFichero
-          ? 'Fichero general estilo planilla: buscá, cargá y mantené datos de pacientes. Más adelante puede servir para importar o descargar información.'
-          : 'Lista de acción: pacientes sin turno futuro. Amarillo = seguimiento suave. Naranja = ya pasaron 30 días o más desde la última visita.';
+          ? 'Fichero general estilo planilla: buscá, cargá, exportá y mantené datos de pacientes.'
+          : (esTurnos
+            ? 'Tabla de solo lectura con turnos otorgados. Por defecto muestra hoy; podés elegir un rango y descargar CSV histórico.'
+            : 'Lista de acción: solo aparecen pacientes con 30 días o más desde su última visita y sin turno futuro reservado.');
       }
 
       document.getElementById('tabPacientesFichero')?.classList.toggle('active', esFichero);
-      document.getElementById('tabPacientesRecordar')?.classList.toggle('active', !esFichero);
+      document.getElementById('tabPacientesTurnos')?.classList.toggle('active', esTurnos);
+      document.getElementById('tabPacientesRecordar')?.classList.toggle('active', esRecordar);
+
+      const btnAgregarFicha = document.getElementById('btnAgregarFichaPaciente');
+      const btnExportarFichero = document.getElementById('btnExportarFichero');
+      const filterCard = document.getElementById('pacientesFilterCard');
+      if (btnAgregarFicha) btnAgregarFicha.style.display = esTurnos ? 'none' : '';
+      if (btnExportarFichero) btnExportarFichero.style.display = esFichero ? '' : 'none';
+      if (filterCard) filterCard.style.display = esTurnos ? 'none' : '';
+
+      if (esTurnos) {
+        renderizarSubvistaTurnos();
+        return;
+      }
 
       const filtroDni = String(FILTRO_DNI_PACIENTES || '').replace(/\D/g, '');
       const filtroNombre = normalizarTexto(FILTRO_NOMBRE_PACIENTES);
@@ -4728,12 +5268,7 @@
         ? listaPacientes
         : listaPacientes
             .filter(p => p.debeRecordar)
-            .sort((a, b) => {
-              const pa = a.prioridadRecordar === 'naranja' ? 2 : a.prioridadRecordar === 'amarillo' ? 1 : 0;
-              const pb = b.prioridadRecordar === 'naranja' ? 2 : b.prioridadRecordar === 'amarillo' ? 1 : 0;
-              if (pb !== pa) return pb - pa;
-              return (b.diasTranscurridos || 0) - (a.diasTranscurridos || 0);
-            });
+            .sort((a, b) => (b.diasTranscurridos || 0) - (a.diasTranscurridos || 0));
 
       const listaFiltrada = listaBase.filter(coincideFiltros);
 
@@ -4745,7 +5280,7 @@
         const baseTxt = esFichero ? 'fichas' : 'pacientes para recordar';
         filtroInfo.innerText = filtrosActivos.length
           ? `Filtro activo por ${filtrosActivos.join(' · ')}. Resultado: ${listaFiltrada.length} ${baseTxt}.`
-          : (esFichero ? 'Mostrando todas las fichas.' : `Mostrando ${listaFiltrada.length} pacientes sin turno futuro.`);
+          : (esFichero ? 'Mostrando todas las fichas.' : `Mostrando ${listaFiltrada.length} pacientes con alerta activa de 30 días o más.`);
       }
 
       const board = document.getElementById('tablaPacientesBody');
@@ -4773,7 +5308,7 @@
           board.innerHTML = `
             <div class="empty-state recordar-empty">
               <div class="empty-title">Todo al día.</div>
-              <div class="empty-text">No hay pacientes sin turno futuro para revisar ahora. Cuando alguien quede sin turno activo, aparecerá acá.</div>
+              <div class="empty-text">No hay pacientes con 30 días o más desde su última visita y sin turno futuro reservado.</div>
             </div>`;
         } else {
           board.innerHTML = `<div class="empty-state">No se encontró ningún paciente con esos filtros.</div>`;
@@ -4782,13 +5317,17 @@
       }
 
       if (esFichero) {
+        ULTIMA_LISTA_FICHERO_RENDERIZADA = [...listaFiltrada];
+        ULTIMAS_COLUMNAS_FICHERO = obtenerColumnasExtraPacientes(listaFiltrada);
+        const extraHead = ULTIMAS_COLUMNAS_FICHERO.map(c => `<th>${e(c.label)}</th>`).join('');
+
         const rows = listaFiltrada.map(p => {
           const nombreCompleto = nombrePaciente(p);
-          const nombreJson = JSON.stringify(nombreCompleto);
-          const telJson = JSON.stringify(p.telefono || '');
           const pacienteIdJson = JSON.stringify(p.id || '');
           const fechaVisitaLegible = p.ultimaVisita ? convertirFechaLatina(p.ultimaVisita) : 'Sin visitas';
           const motivosHtml = armarResumenTratamientos(p.id);
+          const extra = normalizarDatosExtraPaciente(p.datosExtra || {});
+          const extraCells = ULTIMAS_COLUMNAS_FICHERO.map(c => `<td>${e(extra[c.key] || '—')}</td>`).join('');
           const botonBorrar = ROL_USUARIO === 'admin'
             ? `<button class="btn-table-action btn-delete-ficha" onclick='borrarFichaPaciente(${pacienteIdJson}, event)'>Borrar</button>`
             : '';
@@ -4797,10 +5336,14 @@
             <tr>
               <td>
                 <div class="fichero-name">${e(nombreCompleto)}</div>
-                <div class="fichero-sub">Visitas: ${e(p.cantVisitas)} · Última: ${e(fechaVisitaLegible)}</div>
+                <div class="fichero-sub">${motivosHtml}</div>
               </td>
               <td>${e(p.dni || 'S/D')}</td>
               <td><span class="fichero-phone">${e(p.telefono || 'S/T')}</span></td>
+              <td>${e(p.cantVisitas || 0)}</td>
+              <td>${e(fechaVisitaLegible)}</td>
+              <td>${e(proximoTurnoTxt(p))}</td>
+              ${extraCells}
               <td>
                 <div class="fichero-actions">
                   <button class="btn-table-action btn-mini-blue" onclick='abrirEditarFichaPaciente(${pacienteIdJson})'>Editar</button>
@@ -4819,6 +5362,10 @@
                     <th>Paciente</th>
                     <th>DNI</th>
                     <th>Teléfono</th>
+                    <th>Visitas</th>
+                    <th>Última visita</th>
+                    <th>Próximo turno</th>
+                    ${extraHead}
                     <th style="text-align:right;">Acciones</th>
                   </tr>
                 </thead>
@@ -4839,7 +5386,7 @@
         const card = document.createElement('div');
         card.className = `patient-card recordar-card ${p.cardClase}`;
 
-        const etiquetaAccion = p.prioridadRecordar === 'naranja' ? 'Contactar ahora' : 'Sin turno futuro';
+        const etiquetaAccion = 'Contactar';
 
         card.innerHTML = `
           <div>
@@ -4865,7 +5412,7 @@
           <div>
             <div class="patient-label">Estado</div>
             <div class="patient-value"><span class="badge-status ${p.badgeClase}">${e(etiquetaAccion)}</span></div>
-            <div class="patient-small">${p.prioridadRecordar === 'naranja' ? 'Ya superó el umbral para contactarlo.' : 'Todavía no llegó al umbral, pero quedó sin turno activo.'}</div>
+            <div class="patient-small">Pasaron 30 días o más desde la última visita y no tiene turno futuro.</div>
           </div>
 
           <div class="patient-actions">
@@ -4880,15 +5427,17 @@
       });
     }
 
-    function actualizarMetricas(totalPacientes, accionesPendientes, totalAlertasRecordar) {
+    function actualizarMetricas(totalPacientes, accionesPendientes, totalAlertasRecordar, totalTurnosHoy = 0) {
       const total = document.getElementById('mTotalPacientes');
       const recordar = document.getElementById('mParaRecordar');
       const tabF = document.getElementById('tabFicheroCount');
+      const tabT = document.getElementById('tabTurnosCount');
       const tabR = document.getElementById('tabRecordarCount');
 
       if (total) total.innerText = totalPacientes;
       if (recordar) recordar.innerText = accionesPendientes;
       if (tabF) tabF.innerText = totalPacientes;
+      if (tabT) tabT.innerText = totalTurnosHoy;
       if (tabR) tabR.innerText = totalAlertasRecordar;
     }
 
@@ -6451,10 +7000,10 @@
               <div class="motivos-inline">${motivosHtml}</div>
             </div>
             <div class="hoy-actions">
-              <div class="hoy-status-picker" title="Marcador interno de la secretaria">
-                <button type="button" class="hoy-status-dot green ${colorMarca === 'green' ? 'active' : ''}" onclick="marcarColorTurnoHoy('${e(t.id)}', 'green')" aria-label="Marcar en verde"></button>
-                <button type="button" class="hoy-status-dot yellow ${colorMarca === 'yellow' ? 'active' : ''}" onclick="marcarColorTurnoHoy('${e(t.id)}', 'yellow')" aria-label="Marcar en amarillo"></button>
-                <button type="button" class="hoy-status-dot red ${colorMarca === 'red' ? 'active' : ''}" onclick="marcarColorTurnoHoy('${e(t.id)}', 'red')" aria-label="Marcar en rojo"></button>
+              <div class="hoy-status-picker" title="Estado interno del turno">
+                <button type="button" class="hoy-status-button green ${colorMarca === 'green' ? 'active' : ''}" onclick="marcarColorTurnoHoy('${e(t.id)}', 'green')">Confirmado</button>
+                <button type="button" class="hoy-status-button yellow ${colorMarca === 'yellow' ? 'active' : ''}" onclick="marcarColorTurnoHoy('${e(t.id)}', 'yellow')">Pendiente</button>
+                <button type="button" class="hoy-status-button red ${colorMarca === 'red' ? 'active' : ''}" onclick="marcarColorTurnoHoy('${e(t.id)}', 'red')">Cancelado</button>
               </div>
               <button class="btn-table-action btn-whatsapp" onclick="abrirWhatsAppTurno('${e(t.id)}', event)">WhatsApp</button>
               <button class="btn-table-action" onclick="copiarTextoRecordatorio('${e(t.id)}', event)">Copiar recordatorio</button>
