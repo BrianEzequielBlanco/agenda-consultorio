@@ -3041,6 +3041,8 @@
           type="text"
           id="formDni"
           class="form-control"
+          inputmode="numeric"
+          autocomplete="off"
           placeholder="Ej. 35123456"
           oninput="procesarEntradaDNI(this)"
         >
@@ -3059,7 +3061,7 @@
 
       <div class="form-group">
         <label>Teléfono celular</label>
-        <input type="text" id="formTelefono" class="form-control" placeholder="Ej. 1122334455">
+        <input type="tel" id="formTelefono" class="form-control" inputmode="tel" autocomplete="tel" placeholder="Ej. 1122334455">
       </div>
 
       <div id="formCamposExtraPaciente" class="extra-fields-grid"></div>
@@ -3122,6 +3124,8 @@
           type="text"
           id="editDni"
           class="form-control"
+          inputmode="numeric"
+          autocomplete="off"
           placeholder="Ej. 35123456"
           oninput="procesarEntradaDNIEditar(this)"
         >
@@ -3140,7 +3144,7 @@
 
       <div class="form-group">
         <label>Teléfono celular</label>
-        <input type="text" id="editTelefono" class="form-control" placeholder="Ej. 1122334455">
+        <input type="tel" id="editTelefono" class="form-control" inputmode="tel" autocomplete="tel" placeholder="Ej. 1122334455">
       </div>
 
       <div id="editCamposExtraPaciente" class="extra-fields-grid"></div>
@@ -3229,6 +3233,8 @@
           type="text"
           id="fichaDni"
           class="form-control"
+          inputmode="numeric"
+          autocomplete="off"
           placeholder="Ej. 35123456"
           oninput="procesarEntradaDNIFicha(this)"
         >
@@ -3247,7 +3253,7 @@
 
       <div class="form-group">
         <label>Teléfono celular</label>
-        <input type="text" id="fichaTelefono" class="form-control" placeholder="Ej. 1122334455">
+        <input type="tel" id="fichaTelefono" class="form-control" inputmode="tel" autocomplete="tel" placeholder="Ej. 1122334455">
       </div>
 
       <div id="fichaCamposExtraPaciente" class="extra-fields-grid"></div>
@@ -3880,6 +3886,7 @@
           categoria: 'Consulta',
           observacion: '',
           confirmado: t.confirmado === true,
+          estadoHoy: t.estado_hoy || '',
           timestamp: new Date(t.created_at).getTime(),
           extension: t.extension === true,
           parentId: t.parent_id || '',
@@ -4554,21 +4561,6 @@
       };
     }
 
-    function dividirNombreCompleto(valor) {
-      const limpio = String(valor || '').trim().replace(/\s+/g, ' ');
-      if (!limpio) return { nombre: '', apellido: '' };
-
-      const partes = limpio.split(' ');
-      if (partes.length === 1) {
-        return { nombre: partes[0], apellido: '' };
-      }
-
-      return {
-        nombre: partes[0],
-        apellido: partes.slice(1).join(' ')
-      };
-    }
-
     function normalizarTexto(valor) {
       return String(valor || '')
         .normalize('NFD')
@@ -4814,14 +4806,9 @@
       const columnas = [];
 
       configurados.forEach(campo => {
-        const existeValor = (lista || []).some(p => {
-          const extra = normalizarDatosExtraPaciente(p.datosExtra || {});
-          return !!extra[campo.key];
-        });
-        if (existeValor) {
-          columnas.push({ key: campo.key, label: campo.label });
-          usados.add(campo.key);
-        }
+        if (!campo?.key || usados.has(campo.key)) return;
+        columnas.push({ key: campo.key, label: campo.label });
+        usados.add(campo.key);
       });
 
       (lista || []).forEach(p => {
@@ -5021,7 +5008,13 @@
             paciente: nombres.nombre_completo || construirNombreCompleto(base.nombre, base.apellido) || 'Paciente',
             dni: String(base.dni || pacienteLocal.dni || '').replace(/\D/g, ''),
             telefono: base.telefono || pacienteLocal.telefono || '',
-            estado: base.confirmado ? 'Confirmado' : 'Sin confirmar',
+            estado: valorDbEstadoHoyAColor(base.estadoHoy || '') === 'green'
+              ? 'Confirmado'
+              : valorDbEstadoHoyAColor(base.estadoHoy || '') === 'yellow'
+                ? 'Pendiente'
+                : valorDbEstadoHoyAColor(base.estadoHoy || '') === 'red'
+                  ? 'Cancelado'
+                  : (base.confirmado ? 'Confirmado' : 'Sin estado'),
             tipo: g.turnos.length > 1 ? 'Turno extendido' : 'Turno',
             datosExtra
           });
@@ -5760,6 +5753,49 @@
       renderizarCalendarioCompleto();
       calcularYRenderizarPacientes();
 
+      const restaurarBorradoFicha = (mensaje) => {
+        PACIENTES_DB = backup.pacientes;
+        BASE_DATOS = backup.turnos;
+        TRATAMIENTOS_DB = backup.tratamientos;
+        SEGUIMIENTO_COMPACTO = backup.seguimiento;
+        renderizarCalendarioCompleto();
+        calcularYRenderizarPacientes();
+        alert(mensaje);
+      };
+
+      const { error: errTurnos } = await supabaseClient
+        .from('turnos')
+        .delete()
+        .eq('clinica_id', CLINICA_ID)
+        .eq('paciente_id', id);
+
+      if (errTurnos) {
+        restaurarBorradoFicha('Error borrando turnos del paciente: ' + errTurnos.message);
+        return;
+      }
+
+      const { error: errRecordatorios } = await supabaseClient
+        .from('recordatorios')
+        .delete()
+        .eq('clinica_id', CLINICA_ID)
+        .eq('paciente_id', id);
+
+      if (errRecordatorios) {
+        restaurarBorradoFicha('Error borrando recordatorios del paciente: ' + errRecordatorios.message);
+        return;
+      }
+
+      const { error: errTratamientos } = await supabaseClient
+        .from('tratamientos_pendientes')
+        .delete()
+        .eq('clinica_id', CLINICA_ID)
+        .eq('paciente_id', id);
+
+      if (errTratamientos) {
+        restaurarBorradoFicha('Error borrando motivos del paciente: ' + errTratamientos.message);
+        return;
+      }
+
       const { error: errPac } = await supabaseClient
         .from('pacientes')
         .delete()
@@ -5767,13 +5803,7 @@
         .eq('id', id);
 
       if (errPac) {
-        PACIENTES_DB = backup.pacientes;
-        BASE_DATOS = backup.turnos;
-        TRATAMIENTOS_DB = backup.tratamientos;
-        SEGUIMIENTO_COMPACTO = backup.seguimiento;
-        renderizarCalendarioCompleto();
-        calcularYRenderizarPacientes();
-        alert('Error borrando ficha: ' + errPac.message);
+        restaurarBorradoFicha('Error borrando ficha: ' + errPac.message);
         return;
       }
 
@@ -6735,30 +6765,6 @@
       abrirModal('modalEditarTurno');
     }
 
-    function abrirEditarTurno(id, event) {
-      if (event) event.stopPropagation();
-
-      const t = BASE_DATOS.find(item => item.id === id);
-      if (!t) return;
-
-      cerrarModales();
-
-      document.getElementById('editTurnoId').value = t.id;
-      document.getElementById('editDni').value = t.dni || '';
-      document.getElementById('editNombreCompleto').value = nombreCompletoTurno(t);
-      document.getElementById('editTelefono').value = t.telefono || '';
-      renderCamposPacienteFormulario('editCamposExtraPaciente', 'editExtra', t.datosExtra || {});
-
-      const hint = document.getElementById('editPacienteHint');
-      hint.className = 'patient-hint';
-      hint.innerText = '';
-
-      document.getElementById('modalEditarTurnoInfo').innerText =
-        `Editando turno del ${convertirFechaLatina(t.fecha)} a las ${t.hora} hs.`;
-
-      abrirModal('modalEditarTurno');
-    }
-
     async function guardarEdicionTurno() {
       const botonGuardar = document.getElementById('btnGuardarEdicionTurno');
       if (botonGuardar?.disabled) return;
@@ -7132,12 +7138,11 @@
 
       const texto = String(mensaje || '').trim();
       const params = new URLSearchParams();
-      params.set('phone', numero);
       if (texto) params.set('text', texto);
 
-      // Usamos el protocolo nativo de WhatsApp para evitar abrir una pestaña intermedia
-      // del navegador con api.whatsapp.com / web.whatsapp.com.
-      return `whatsapp://send?${params.toString()}`;
+      // URL universal: funciona mejor en PC y celular que el protocolo whatsapp://.
+      const query = params.toString();
+      return `https://wa.me/${numero}${query ? '?' + query : ''}`;
     }
 
     function abrirWhatsAppTelefono(telefono, mensaje, event) {
@@ -7160,10 +7165,11 @@
         }
 
         launcher.href = url;
-        launcher.removeAttribute('target');
+        launcher.target = '_blank';
+        launcher.rel = 'noopener';
         launcher.click();
 
-        mostrarToast('Abriendo WhatsApp. Si el navegador pregunta, elegí abrir la aplicación.');
+        mostrarToast('Abriendo WhatsApp.');
       } catch (err) {
         mostrarToast('No se pudo abrir WhatsApp.');
       }
@@ -7236,6 +7242,21 @@
     }
 
 
+    function colorEstadoHoyAValorDb(color) {
+      if (color === 'green') return 'confirmado';
+      if (color === 'yellow') return 'pendiente';
+      if (color === 'red') return 'cancelado';
+      return '';
+    }
+
+    function valorDbEstadoHoyAColor(valor) {
+      if (valor === 'confirmado') return 'green';
+      if (valor === 'pendiente') return 'yellow';
+      if (valor === 'cancelado') return 'red';
+      if (valor === 'green' || valor === 'yellow' || valor === 'red') return valor;
+      return '';
+    }
+
     function obtenerClaveColorHoy() {
       const clinicaId = String((CLINICA_ACTUAL && CLINICA_ACTUAL.id) || 'sin_clinica');
       return `consultorio_agenda_hoy_colores_${clinicaId}`;
@@ -7256,8 +7277,12 @@
     }
 
     function obtenerColorHoyTurno(turnoId) {
+      const id = String(turnoId || '');
+      const turno = BASE_DATOS.find(t => String(t.id || '') === id);
+      const colorDb = valorDbEstadoHoyAColor(turno?.estadoHoy || '');
+      if (colorDb) return colorDb;
       const data = obtenerColoresHoyGuardados();
-      return data[String(turnoId || '')] || '';
+      return data[id] || '';
     }
 
     function cerrarMenusEstadoHoy() {
@@ -7291,14 +7316,38 @@
       cerrarMenusEstadoHoy();
     }
 
-    function marcarColorTurnoHoy(turnoId, color) {
+    async function marcarColorTurnoHoy(turnoId, color) {
       const id = String(turnoId || '');
       if (!id) return;
+
+      const turno = BASE_DATOS.find(t => String(t.id || '') === id);
+      const colorActual = obtenerColorHoyTurno(id);
+      const nuevoColor = colorActual === color ? '' : color;
+      const nuevoEstadoDb = colorEstadoHoyAValorDb(nuevoColor);
+      const estadoAnteriorDb = turno?.estadoHoy || '';
+
+      if (turno) turno.estadoHoy = nuevoEstadoDb;
+
       const data = obtenerColoresHoyGuardados();
-      data[id] = data[id] === color ? '' : color;
-      if (!data[id]) delete data[id];
+      if (nuevoColor) data[id] = nuevoColor;
+      else delete data[id];
       guardarColoresHoyGuardados(data);
       renderizarHoy();
+
+      const { error } = await supabaseClient
+        .from('turnos')
+        .update({ estado_hoy: nuevoEstadoDb })
+        .eq('id', id)
+        .eq('clinica_id', CLINICA_ID);
+
+      if (error) {
+        if (turno) turno.estadoHoy = estadoAnteriorDb;
+        if (colorActual) data[id] = colorActual;
+        else delete data[id];
+        guardarColoresHoyGuardados(data);
+        renderizarHoy();
+        alert('No se pudo guardar el estado del turno. Aplicá primero la migración SQL v69. Detalle: ' + error.message);
+      }
     }
 
     async function renderizarHoy() {
