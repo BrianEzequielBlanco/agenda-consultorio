@@ -4682,21 +4682,15 @@
 
         const tieneTurnoFuturo = (p.turnosFuturos || []).length > 0;
         const sinTurnoActivo = !!p.ultimaVisita && !tieneTurnoFuturo;
-        const prioridadRecordar = sinTurnoActivo
-          ? ((diasTranscurridos !== null && diasTranscurridos >= 30) ? 'naranja' : 'amarillo')
-          : '';
-        const apareceEnRecordar = sinTurnoActivo;
+        const apareceEnRecordar = sinTurnoActivo && diasTranscurridos !== null && diasTranscurridos >= 30;
+        const prioridadRecordar = apareceEnRecordar ? 'amarillo' : '';
 
         let estadoLabel = 'Al día';
         let badgeClase = 'badge-al-dia';
         let cardClase = 'normal';
 
-        if (prioridadRecordar === 'naranja') {
-          estadoLabel = 'Contactar';
-          badgeClase = 'badge-para-recordar';
-          cardClase = 'critical';
-        } else if (prioridadRecordar === 'amarillo') {
-          estadoLabel = 'Sin turno futuro';
+        if (apareceEnRecordar) {
+          estadoLabel = 'Sin turno 30+ días';
           badgeClase = 'badge-atencion';
           cardClase = 'warning';
         }
@@ -4734,7 +4728,7 @@
 
       const totalP = listaPacientes.length;
       const paraRecordarP = listaPacientes.filter(p => p.debeRecordar).length;
-      const accionesPendientesP = listaPacientes.filter(p => p.prioridadRecordar === 'naranja').length;
+      const accionesPendientesP = paraRecordarP;
       actualizarMetricas(totalP, accionesPendientesP, paraRecordarP);
 
       const titulo = document.getElementById('pacientesTitulo');
@@ -4745,7 +4739,7 @@
       if (subtitulo) {
         subtitulo.innerText = esFichero
           ? 'Fichero general estilo planilla: buscá, cargá y mantené datos de pacientes. Más adelante puede servir para importar o descargar información.'
-          : 'Lista de acción: pacientes sin turno futuro. Amarillo = seguimiento suave. Naranja = ya pasaron 30 días o más desde la última visita.';
+          : 'Lista de acción: solo pacientes con 30 días o más sin venir y sin turno futuro.';
       }
 
       document.getElementById('tabPacientesFichero')?.classList.toggle('active', esFichero);
@@ -4767,12 +4761,7 @@
         ? listaPacientes
         : listaPacientes
             .filter(p => p.debeRecordar)
-            .sort((a, b) => {
-              const pa = a.prioridadRecordar === 'naranja' ? 2 : a.prioridadRecordar === 'amarillo' ? 1 : 0;
-              const pb = b.prioridadRecordar === 'naranja' ? 2 : b.prioridadRecordar === 'amarillo' ? 1 : 0;
-              if (pb !== pa) return pb - pa;
-              return (b.diasTranscurridos || 0) - (a.diasTranscurridos || 0);
-            });
+            .sort((a, b) => (b.diasTranscurridos || 0) - (a.diasTranscurridos || 0));
 
       const listaFiltrada = listaBase.filter(coincideFiltros);
 
@@ -4784,7 +4773,7 @@
         const baseTxt = esFichero ? 'fichas' : 'pacientes para recordar';
         filtroInfo.innerText = filtrosActivos.length
           ? `Filtro activo por ${filtrosActivos.join(' · ')}. Resultado: ${listaFiltrada.length} ${baseTxt}.`
-          : (esFichero ? 'Mostrando todas las fichas.' : `Mostrando ${listaFiltrada.length} pacientes sin turno futuro.`);
+          : (esFichero ? 'Mostrando todas las fichas.' : `Mostrando ${listaFiltrada.length} pacientes con 30 días o más sin turno futuro.`);
       }
 
       const board = document.getElementById('tablaPacientesBody');
@@ -4812,7 +4801,7 @@
           board.innerHTML = `
             <div class="empty-state recordar-empty">
               <div class="empty-title">Todo al día.</div>
-              <div class="empty-text">No hay pacientes sin turno futuro para revisar ahora. Cuando alguien quede sin turno activo, aparecerá acá.</div>
+              <div class="empty-text">No hay pacientes con 30 días o más sin turno futuro. Cuando alguien cumpla esa condición, aparecerá acá.</div>
             </div>`;
         } else {
           board.innerHTML = `<div class="empty-state">No se encontró ningún paciente con esos filtros.</div>`;
@@ -4876,9 +4865,9 @@
         const pacienteIdJson = JSON.stringify(p.id || '');
 
         const card = document.createElement('div');
-        card.className = `patient-card recordar-card ${p.cardClase}`;
+        card.className = `patient-card recordar-card warning`;
 
-        const etiquetaAccion = p.prioridadRecordar === 'naranja' ? 'Contactar ahora' : 'Sin turno futuro';
+        const etiquetaAccion = 'Sin turno 30+ días';
 
         card.innerHTML = `
           <div>
@@ -4904,7 +4893,7 @@
           <div>
             <div class="patient-label">Estado</div>
             <div class="patient-value"><span class="badge-status ${p.badgeClase}">${e(etiquetaAccion)}</span></div>
-            <div class="patient-small">${p.prioridadRecordar === 'naranja' ? 'Ya superó el umbral para contactarlo.' : 'Todavía no llegó al umbral, pero quedó sin turno activo.'}</div>
+            <div class="patient-small">Pasaron 30 días o más desde la última visita y no tiene turno futuro.</div>
           </div>
 
           <div class="patient-actions">
