@@ -2778,7 +2778,7 @@
           <div id="pacientesSubtitulo" class="page-subtitle">Fichero general del consultorio, preparado para buscar, cargar y ordenar pacientes.</div>
         </div>
         <div class="page-title-actions">
-          <button class="btn-table-action btn-add-ficha" onclick="abrirAltaFichaPaciente()">+ Agregar ficha</button>
+          <button id="btnAgregarFichaPacientes" class="btn-table-action btn-add-ficha" onclick="abrirAltaFichaPaciente()">+ Agregar ficha</button>
         </div>
       </div>
 
@@ -4744,6 +4744,8 @@
 
       document.getElementById('tabPacientesFichero')?.classList.toggle('active', esFichero);
       document.getElementById('tabPacientesRecordar')?.classList.toggle('active', !esFichero);
+      const btnAgregarFichaPacientes = document.getElementById('btnAgregarFichaPacientes');
+      if (btnAgregarFichaPacientes) btnAgregarFichaPacientes.style.display = esFichero ? 'inline-flex' : 'none';
 
       const filtroDni = String(FILTRO_DNI_PACIENTES || '').replace(/\D/g, '');
       const filtroNombre = normalizarTexto(FILTRO_NOMBRE_PACIENTES);
@@ -4893,7 +4895,7 @@
           <div>
             <div class="patient-label">Estado</div>
             <div class="patient-value"><span class="badge-status ${p.badgeClase}">${e(etiquetaAccion)}</span></div>
-            <div class="patient-small">Pasaron 30 días o más desde la última visita y no tiene turno futuro.</div>
+            <div class="patient-small">Pasaron 30+ días y no tiene turno futuro.</div>
           </div>
 
           <div class="patient-actions">
