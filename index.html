@@ -2553,6 +2553,39 @@
       white-space: nowrap;
     }
 
+    .quick-cancel-turn-btn {
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      border: 1px solid #f3b37a;
+      background: linear-gradient(180deg, #fff4e8 0%, #ffe6cf 100%);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #dc2626;
+      font-size: 14px;
+      font-weight: 900;
+      line-height: 1;
+      cursor: pointer;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.10);
+      opacity: 0;
+      transform: translateY(-2px);
+      pointer-events: none;
+      transition: opacity 0.18s ease, transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .time-slot.booked:hover .quick-cancel-turn-btn,
+    .time-slot.booked:focus-within .quick-cancel-turn-btn {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .quick-cancel-turn-btn:hover {
+      background: linear-gradient(180deg, #ffe9d2 0%, #ffd8b1 100%);
+      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.14);
+    }
+
     .booked-body {
       font-size: 14px;
       font-weight: 800;
@@ -3305,6 +3338,7 @@
     let FECHA_HOY_SELECCIONADA = '';
     let HOY_RENDER_TOKEN = 0;
     let ID_TURNO_SELECCIONADO = null;
+    let IDS_TURNOS_CANCELACION = [];
     let VISTA_ACTUAL = 'turnos';
     let DRAG_TURNO_ID = null;
     let FILTRO_DNI_PACIENTES = '';
@@ -6353,6 +6387,7 @@
                 <span>🕒 ${e(horarioLabel)}</span>
                 <div class="booked-header-right">
                   <span class="booked-tag">${e(tipoTurnoLabel)}</span>
+                  <button type="button" class="quick-cancel-turn-btn" title="Cancelar turno" aria-label="Cancelar turno" onclick='prepararCancelacionRapidaTurno(${JSON.stringify(String(turnoBaseVisual.id || ''))}, event)'>×</button>
                 </div>
               </div>
               <div class="booked-body">${e(nombreCompleto)}</div>
@@ -6919,37 +6954,78 @@
     }
 
     function eliminarTurnoActual() {
+      IDS_TURNOS_CANCELACION = ID_TURNO_SELECCIONADO ? [String(ID_TURNO_SELECCIONADO)] : [];
+      const textoConfirmacion = document.querySelector('#modalConfirmarCancelacion .confirm-text');
+      if (textoConfirmacion) {
+        textoConfirmacion.innerText = '¿Seguro que querés cancelar este turno?';
+      }
       document.getElementById('modalDetalle').classList.remove('active');
       liberarScrollSiNoHayModal();
+      abrirModal('modalConfirmarCancelacion');
+    }
+
+    function prepararCancelacionRapidaTurno(idTurnoBase, event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+
+      const turno = BASE_DATOS.find(item => String(item.id || '') === String(idTurnoBase || ''));
+      if (!turno) return;
+
+      const cadena = obtenerCadenaTurnoExtendido(turno);
+      const ids = (cadena.length ? cadena : [turno]).map(item => String(item.id || '')).filter(Boolean);
+      IDS_TURNOS_CANCELACION = ids;
+      ID_TURNO_SELECCIONADO = ids[0] || null;
+
+      const textoConfirmacion = document.querySelector('#modalConfirmarCancelacion .confirm-text');
+      if (textoConfirmacion) {
+        textoConfirmacion.innerText = ids.length > 1
+          ? '¿Seguro que querés cancelar este turno extendido y todas sus extensiones?'
+          : '¿Seguro que querés cancelar este turno?';
+      }
+
       abrirModal('modalConfirmarCancelacion');
     }
 
     function cerrarConfirmacion() {
       document.getElementById('modalConfirmarCancelacion').classList.remove('active');
       ID_TURNO_SELECCIONADO = null;
+      IDS_TURNOS_CANCELACION = [];
+      const textoConfirmacion = document.querySelector('#modalConfirmarCancelacion .confirm-text');
+      if (textoConfirmacion) {
+        textoConfirmacion.innerText = '¿Seguro que querés cancelar este turno?';
+      }
       liberarScrollSiNoHayModal();
       liberarScrollSiNoHayModal();
     }
 
     async function ejecutarEliminacionConfirmada() {
-      if (!ID_TURNO_SELECCIONADO) return;
+      const idsABorrar = (Array.isArray(IDS_TURNOS_CANCELACION) && IDS_TURNOS_CANCELACION.length)
+        ? IDS_TURNOS_CANCELACION.map(id => String(id))
+        : (ID_TURNO_SELECCIONADO ? [String(ID_TURNO_SELECCIONADO)] : []);
 
-      const idABorrar = ID_TURNO_SELECCIONADO;
+      if (!idsABorrar.length) return;
 
       document.getElementById('modalConfirmarCancelacion').classList.remove('active');
       ID_TURNO_SELECCIONADO = null;
+      IDS_TURNOS_CANCELACION = [];
+      const textoConfirmacion = document.querySelector('#modalConfirmarCancelacion .confirm-text');
+      if (textoConfirmacion) {
+        textoConfirmacion.innerText = '¿Seguro que querés cancelar este turno?';
+      }
       liberarScrollSiNoHayModal();
       liberarScrollSiNoHayModal();
 
       const backup = [...BASE_DATOS];
-      BASE_DATOS = BASE_DATOS.filter(item => item.id !== idABorrar);
+      BASE_DATOS = BASE_DATOS.filter(item => !idsABorrar.includes(String(item.id)));
       renderizarCalendarioCompleto();
       calcularYRenderizarPacientes();
 
       const { error } = await supabaseClient
         .from('turnos')
         .delete()
-        .eq('id', idABorrar)
+        .in('id', idsABorrar)
         .eq('clinica_id', CLINICA_ID);
 
       if (error) {
@@ -6960,7 +7036,7 @@
         return;
       }
 
-      mostrarToast('Turno cancelado.');
+      mostrarToast(idsABorrar.length > 1 ? 'Turno extendido cancelado.' : 'Turno cancelado.');
     }
 
     function normalizarTelefonoWhatsAppArgentina(telefono) {
