@@ -2525,6 +2525,7 @@
       display: flex;
       flex-direction: column;
       justify-content: flex-start;
+      position: relative;
     }
 
     .booked-header {
@@ -2554,6 +2555,10 @@
     }
 
     .quick-cancel-turn-btn {
+      position: absolute;
+      top: 30px;
+      right: 10px;
+      z-index: 4;
       width: 22px;
       height: 22px;
       border-radius: 999px;
@@ -2584,6 +2589,10 @@
     .quick-cancel-turn-btn:hover {
       background: linear-gradient(180deg, #ffe9d2 0%, #ffd8b1 100%);
       box-shadow: 0 2px 4px rgba(15, 23, 42, 0.14);
+    }
+
+    .time-slot.booked.extension-group .quick-cancel-turn-btn {
+      top: 31px;
     }
 
     .booked-body {
@@ -6387,9 +6396,9 @@
                 <span>🕒 ${e(horarioLabel)}</span>
                 <div class="booked-header-right">
                   <span class="booked-tag">${e(tipoTurnoLabel)}</span>
-                  <button type="button" class="quick-cancel-turn-btn" title="Cancelar turno" aria-label="Cancelar turno" onclick='prepararCancelacionRapidaTurno(${JSON.stringify(String(turnoBaseVisual.id || ''))}, event)'>×</button>
                 </div>
               </div>
+              <button type="button" class="quick-cancel-turn-btn" title="Cancelar turno" aria-label="Cancelar turno" onclick='prepararCancelacionRapidaTurno(${JSON.stringify(String(turnoBaseVisual.id || ''))}, event)'>×</button>
               <div class="booked-body">${e(nombreCompleto)}</div>
               <div class="booked-meta">
                 <span class="booked-phone">📞 ${e(turnoBaseVisual.telefono || 'S/T')}</span>
