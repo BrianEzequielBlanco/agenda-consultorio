@@ -4179,6 +4179,41 @@
     }
 
 
+
+    /* =====================================================
+       V84: fix definitivo barra mobile de día
+       La barra NO aparece en login.
+       Solo aparece si:
+       - body tiene app-authenticated
+       - body tiene mobile-view-turnos
+       - #mobileDayNavV82 tiene active
+       ===================================================== */
+
+    #mobileDayNavV82,
+    .mobile-day-nav-v82 {
+      display: none !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+
+    @media (max-width: 980px) {
+      body.app-authenticated.mobile-view-turnos #mobileDayNavV82.active {
+        display: flex !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+      }
+
+      body:not(.app-authenticated) #mobileDayNavV82,
+      body:not(.app-authenticated) .mobile-day-nav-v82,
+      body.app-authenticated:not(.mobile-view-turnos) #mobileDayNavV82,
+      body.app-authenticated:not(.mobile-view-turnos) .mobile-day-nav-v82 {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+      }
+    }
+
+
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -4376,7 +4411,7 @@
     </main>
   </div>
 
-  <nav id="mobileDayNavV82" class="mobile-day-nav-v82 active" aria-label="Navegación de día móvil">
+  <nav id="mobileDayNavV82" class="mobile-day-nav-v82" aria-label="Navegación de día móvil">
     <button class="mobile-day-nav-btn" type="button" onclick="navegarSemana(-1)" aria-label="Día anterior">◀</button>
     <button class="mobile-day-nav-btn mobile-day-nav-today" type="button" onclick="irHoy()">Ir a hoy</button>
     <button class="mobile-day-nav-btn" type="button" onclick="navegarSemana(1)" aria-label="Día siguiente">▶</button>
@@ -4893,6 +4928,7 @@
 
     function mostrarPantallaLogin(mensaje) {
       document.body.classList.remove('app-authenticated', 'mobile-view-turnos', 'mobile-view-hoy', 'mobile-view-pacientes');
+      document.getElementById('mobileDayNavV82')?.classList.remove('active');
       const err = document.getElementById('authError');
       if (err) {
         err.innerText = mensaje || '';
@@ -4905,6 +4941,7 @@
     }
 
     function limpiarEstadoApp() {
+      document.getElementById('mobileDayNavV82')?.classList.remove('active');
       BASE_DATOS = [];
       PACIENTES_DB = [];
       TRATAMIENTOS_DB = {};
@@ -5007,7 +5044,7 @@
         label.title = `Clínica activa: ${CLINICA_ACTUAL.nombre || CLINICA_ID}`;
       }
 
-      document.body.classList.add('app-authenticated')
+      document.body.classList.add('app-authenticated');
       sincronizarClaseVistaMobile();
       localStorage.setItem('agenda_consultorio_session_day', obtenerClaveDiaLocal());
       programarCierreAutomaticoMedianoche();
@@ -5950,9 +5987,13 @@
 
 
     function sincronizarClaseVistaMobile() {
-      document.body.classList.toggle('mobile-view-turnos', VISTA_ACTUAL === 'turnos');
-      document.body.classList.toggle('mobile-view-hoy', VISTA_ACTUAL === 'hoy');
-      document.body.classList.toggle('mobile-view-pacientes', VISTA_ACTUAL === 'pacientes');
+      const appLogueada = document.body.classList.contains('app-authenticated');
+      document.body.classList.toggle('mobile-view-turnos', appLogueada && VISTA_ACTUAL === 'turnos');
+      document.body.classList.toggle('mobile-view-hoy', appLogueada && VISTA_ACTUAL === 'hoy');
+      document.body.classList.toggle('mobile-view-pacientes', appLogueada && VISTA_ACTUAL === 'pacientes');
+
+      const navDia = document.getElementById('mobileDayNavV82');
+      if (navDia) navDia.classList.toggle('active', appLogueada && VISTA_ACTUAL === 'turnos');
     }
 
     function cambiarVista(vista) {
@@ -9189,7 +9230,8 @@
       document.getElementById('mobileNavAgendaV79')?.classList.toggle('active', esAgenda);
       document.getElementById('mobileNavHoyV79')?.classList.toggle('active', esHoy);
       document.getElementById('mobileNavPacientesV79')?.classList.toggle('active', esPacientes);
-      document.getElementById('mobileDayNavV82')?.classList.toggle('active', esAgenda);
+      const appLogueada = document.body.classList.contains('app-authenticated');
+      document.getElementById('mobileDayNavV82')?.classList.toggle('active', appLogueada && esAgenda);
 
       const clinicText = document.getElementById('sessionClinicLabel')?.innerText || CLINICA_ACTUAL?.nombre || 'Clínica activa';
       const clinicBox = document.getElementById('mobileMenuClinicV79');
