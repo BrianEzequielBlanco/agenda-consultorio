@@ -3025,6 +3025,656 @@
     }
 
 
+
+    /* =====================================================
+       V79 MOBILE APP CONTROLADO
+       Objetivo: celular usable sin tocar la lógica de turnos/Supabase.
+       - PC queda igual.
+       - En celular se separan navegación principal y acciones secundarias.
+       - Fichero usa cards reales generadas desde los mismos datos.
+       ===================================================== */
+
+    .mobile-menu-toggle-v79,
+    #mobileMenuOverlayV79,
+    #mobileMenuPanelV79,
+    #mobileBottomNavV79,
+    .fichero-mobile-cards {
+      display: none;
+    }
+
+    @media (max-width: 980px) {
+      body.app-authenticated {
+        overflow: hidden;
+      }
+
+      body:not(.app-authenticated) #mobileBottomNavV79,
+      body:not(.app-authenticated) .mobile-menu-toggle-v79,
+      body:not(.app-authenticated) #mobileMenuOverlayV79,
+      body:not(.app-authenticated) #mobileMenuPanelV79 {
+        display: none !important;
+      }
+
+      /* Header mobile: una sola fila limpia */
+      .app-header {
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        padding: 8px 12px !important;
+        min-height: 54px;
+        gap: 10px !important;
+      }
+
+      .header-left {
+        flex: 1 1 auto !important;
+        width: auto !important;
+        min-width: 0 !important;
+        gap: 0 !important;
+      }
+
+      .app-logo {
+        font-size: 18px !important;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .navigation-controls,
+      .header-right {
+        display: none !important;
+      }
+
+      .mobile-menu-toggle-v79 {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        min-width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: #fff;
+        color: var(--text);
+        font-size: 22px;
+        line-height: 1;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(15,23,42,0.06);
+      }
+
+      #mobileMenuOverlayV79.active {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.36);
+        z-index: 999;
+      }
+
+      #mobileMenuPanelV79 {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: min(310px, 86vw);
+        height: 100vh;
+        height: 100dvh;
+        background: #fff;
+        border-left: 1px solid var(--border);
+        box-shadow: -14px 0 32px rgba(15, 23, 42, 0.18);
+        z-index: 1000;
+        padding: 16px;
+        transform: translateX(105%);
+        transition: transform .18s ease;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      #mobileMenuPanelV79.active {
+        display: block;
+        transform: translateX(0);
+      }
+
+      .mobile-menu-v79-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding-bottom: 12px;
+        margin-bottom: 12px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .mobile-menu-v79-title {
+        font-size: 16px;
+        font-weight: 900;
+        color: var(--text);
+      }
+
+      .mobile-menu-v79-close {
+        width: 36px;
+        height: 36px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: #fff;
+        font-size: 22px;
+        cursor: pointer;
+      }
+
+      .mobile-menu-v79-clinic {
+        border: 1px solid #dbe5f3;
+        background: #f8fafc;
+        border-radius: 14px;
+        padding: 10px 12px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.35;
+        margin-bottom: 12px;
+      }
+
+      .mobile-menu-v79-section {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        font-weight: 900;
+        color: #64748b;
+        margin: 14px 0 7px;
+      }
+
+      .mobile-menu-v79-item {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: #fff;
+        padding: 12px 13px;
+        margin-top: 8px;
+        text-align: left;
+        font-family: var(--font);
+        font-size: 14px;
+        font-weight: 800;
+        color: var(--text);
+        cursor: pointer;
+      }
+
+      .mobile-menu-v79-item:hover,
+      .mobile-menu-v79-item:focus {
+        background: var(--blue-light);
+        border-color: #b4d1f9;
+        color: var(--blue-hover);
+        outline: none;
+      }
+
+      .mobile-menu-v79-item.danger {
+        color: var(--red);
+        border-color: #f3b5b2;
+        background: #fffafa;
+      }
+
+      /* Barra inferior: navegación principal al alcance del dedo */
+      #mobileBottomNavV79 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 90;
+        min-height: 62px;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        background: rgba(255, 255, 255, 0.98);
+        border-top: 1px solid #dbe5f3;
+        box-shadow: 0 -10px 24px rgba(15, 23, 42, 0.08);
+      }
+
+      .mobile-bottom-v79-btn {
+        appearance: none;
+        border: 0;
+        background: transparent;
+        color: #64748b;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        min-height: 62px;
+        font-family: var(--font);
+        font-size: 11.5px;
+        font-weight: 800;
+        cursor: pointer;
+      }
+
+      .mobile-bottom-v79-icon {
+        font-size: 18px;
+        line-height: 1;
+      }
+
+      .mobile-bottom-v79-btn.active {
+        color: var(--blue);
+        background: linear-gradient(180deg, #eff6ff 0%, #ffffff 64%);
+      }
+
+      .main-container {
+        min-height: 0;
+        padding-bottom: 66px;
+      }
+
+      .grid-container,
+      .hoy-container,
+      .pacientes-container {
+        padding-bottom: 86px !important;
+      }
+
+      /* Agenda mobile: toolbar simple y sin elementos cortados */
+      .agenda-toolbar {
+        position: sticky;
+        top: 54px;
+        z-index: 70;
+        padding: 8px 10px !important;
+        background: rgba(255,255,255,0.97);
+        backdrop-filter: blur(8px);
+        overflow: visible !important;
+      }
+
+      .agenda-toolbar-inner {
+        width: 100% !important;
+        min-width: 0 !important;
+        gap: 8px !important;
+        justify-content: space-between !important;
+      }
+
+      .agenda-toolbar-left {
+        min-width: 0 !important;
+        flex: 1 1 auto;
+      }
+
+      .agenda-toolbar-right {
+        min-width: 0 !important;
+        flex: 0 0 auto;
+        gap: 6px !important;
+      }
+
+      .agenda-toolbar-date {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 160px;
+        height: 38px;
+        font-size: 14px !important;
+      }
+
+      #ctrlExportTurnos,
+      #currentMonthLabel {
+        display: none !important;
+      }
+
+      #ctrlHoy {
+        min-width: 52px !important;
+        padding-inline: 10px !important;
+      }
+
+      #ctrlPrev,
+      #ctrlNext {
+        width: 38px !important;
+        min-width: 38px !important;
+        height: 38px !important;
+        padding: 0 !important;
+      }
+
+      .calendar-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+      }
+
+      .day-column {
+        width: 100% !important;
+        border-radius: 16px !important;
+      }
+
+      .day-header {
+        padding: 10px 8px !important;
+      }
+
+      .day-slots {
+        padding: 9px !important;
+        gap: 7px !important;
+      }
+
+      .time-slot {
+        min-height: 44px !important;
+        font-size: 14px !important;
+      }
+
+      .time-slot.booked {
+        min-height: 92px !important;
+        padding: 9px 10px !important;
+      }
+
+      .time-slot.booked.extension-group {
+        min-height: 124px !important;
+      }
+
+      .booked-body {
+        font-size: 14px !important;
+      }
+
+      .extension-remove-btn {
+        min-height: 28px;
+        padding-inline: 10px;
+      }
+
+      /* Hoy mobile: fecha y acciones ordenadas */
+      .hoy-container {
+        padding: 12px !important;
+      }
+
+      .hoy-container .page-title-row {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+        align-items: stretch !important;
+      }
+
+      .hoy-date-controls {
+        width: 100% !important;
+        display: grid !important;
+        grid-template-columns: 40px minmax(0, 1fr) 40px 58px !important;
+        gap: 8px !important;
+        align-items: center !important;
+      }
+
+      .hoy-date-pill {
+        width: 100% !important;
+        min-width: 0 !important;
+        justify-content: space-between !important;
+      }
+
+      .hoy-date-display {
+        width: 100% !important;
+        min-width: 0 !important;
+        font-size: 16px !important;
+      }
+
+      .hoy-today-btn {
+        min-width: 0 !important;
+        padding-inline: 8px !important;
+        height: 40px !important;
+      }
+
+      .hoy-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+      }
+
+      .hoy-summary-card {
+        padding: 12px !important;
+        border-radius: 14px !important;
+      }
+
+      .hoy-card {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+        padding: 14px !important;
+      }
+
+      .hoy-time {
+        width: fit-content !important;
+        text-align: left !important;
+        font-size: 18px !important;
+        padding: 8px 12px !important;
+      }
+
+      .hoy-actions {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+        justify-content: stretch !important;
+      }
+
+      .hoy-status-picker {
+        grid-column: 1 / -1;
+        width: 100% !important;
+        min-width: 0 !important;
+        margin-right: 0 !important;
+      }
+
+      .hoy-status-pill,
+      .hoy-actions .btn-table-action {
+        width: 100% !important;
+        min-height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .hoy-status-menu {
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+      }
+
+      /* Pacientes mobile: controles y tabs con respiración */
+      .pacientes-container {
+        padding: 12px !important;
+      }
+
+      .pacientes-container .page-title-row {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+        align-items: stretch !important;
+      }
+
+      .pacientes-container .page-title-actions {
+        display: none !important;
+      }
+
+      .patients-mode-tabs {
+        display: flex;
+        overflow-x: auto;
+        gap: 8px;
+        padding-bottom: 3px;
+        scrollbar-width: none;
+      }
+
+      .patients-mode-tabs::-webkit-scrollbar { display: none; }
+
+      .patients-mode-tab {
+        flex: 0 0 auto;
+      }
+
+      .metrics-panel {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px !important;
+      }
+
+      .metric-card {
+        padding: 14px !important;
+      }
+
+      .metric-val {
+        font-size: 28px !important;
+      }
+
+      .patients-filter-card {
+        padding: 12px !important;
+      }
+
+      .patients-filter-fields {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+        width: 100% !important;
+      }
+
+      .filter-input,
+      .filter-input-wide {
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+
+      .patients-filter-fields .btn-table-action {
+        width: 100%;
+        min-height: 40px;
+      }
+
+      .recordar-card {
+        grid-template-columns: 1fr !important;
+      }
+
+      .recordar-card .patient-actions {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+      }
+
+      .recordar-card .patient-actions .btn-table-action {
+        width: 100%;
+        min-height: 40px;
+      }
+
+      /* Fichero mobile: cards reales, no tabla aplastada */
+      .fichero-table-scroll {
+        display: none !important;
+      }
+
+      .fichero-table-card {
+        border: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        overflow: visible !important;
+      }
+
+      .fichero-mobile-cards {
+        display: flex !important;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .fichero-mobile-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 14px;
+        box-shadow: 0 1px 4px rgba(15,23,42,0.05);
+      }
+
+      .fichero-mobile-head {
+        border-bottom: 1px solid #eef2f7;
+        padding-bottom: 9px;
+        margin-bottom: 9px;
+      }
+
+      .fichero-mobile-name {
+        font-size: 14px;
+        font-weight: 900;
+        color: var(--text);
+        margin-bottom: 4px;
+      }
+
+      .fichero-mobile-sub {
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.35;
+      }
+
+      .fichero-mobile-data {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 5px 0;
+        font-size: 13px;
+        border-bottom: 1px solid #f1f5f9;
+      }
+
+      .fichero-mobile-data span {
+        color: var(--muted);
+        font-weight: 800;
+      }
+
+      .fichero-mobile-data strong {
+        text-align: right;
+        font-weight: 800;
+        color: var(--text);
+        overflow-wrap: anywhere;
+      }
+
+      .fichero-mobile-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        margin-top: 10px;
+      }
+
+      .fichero-mobile-actions .btn-table-action {
+        min-height: 38px;
+      }
+
+      /* Modales mobile: estilo app y sin zoom raro */
+      .modal-overlay {
+        padding: 8px !important;
+        align-items: flex-start !important;
+      }
+
+      .modal-card,
+      .modal-card.config-modal-card,
+      #modalFichaPaciente .modal-card,
+      #modalConfiguracion .config-modal-card {
+        width: 100% !important;
+        max-width: 520px !important;
+        max-height: calc(100dvh - 16px) !important;
+        overflow-y: auto !important;
+        border-radius: 18px !important;
+      }
+
+      .modal-actions {
+        position: sticky;
+        bottom: -1px;
+        z-index: 8;
+        background: #fff;
+        border-top: 1px solid rgba(218,220,224,0.72);
+        padding-top: 12px;
+        box-shadow: 0 -8px 18px rgba(255,255,255,.92);
+      }
+    }
+
+    @media (max-width: 560px) {
+      .app-logo {
+        font-size: 17px !important;
+      }
+
+      .agenda-toolbar-inner {
+        gap: 6px !important;
+      }
+
+      .agenda-toolbar-date {
+        max-width: 144px;
+      }
+
+      #ctrlHoy {
+        min-width: 46px !important;
+        padding-inline: 8px !important;
+      }
+
+      #ctrlPrev,
+      #ctrlNext {
+        width: 34px !important;
+        min-width: 34px !important;
+      }
+
+      .hoy-date-controls {
+        grid-template-columns: 38px minmax(0, 1fr) 38px 54px !important;
+        gap: 6px !important;
+      }
+
+      .hoy-actions,
+      .recordar-card .patient-actions {
+        grid-template-columns: 1fr !important;
+      }
+
+      .metrics-panel {
+        grid-template-columns: 1fr !important;
+      }
+
+      .mobile-menu-v79-item {
+        min-height: 44px;
+      }
+    }
+
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -3078,6 +3728,8 @@
       </div>
     </div>
 
+    <button id="mobileMenuToggleV79" class="mobile-menu-toggle-v79" type="button" onclick="toggleMobileMenuV79(event)" aria-label="Abrir menú">☰</button>
+
     <div class="header-right">
       <button id="btnConfig" class="btn-nav btn-config" onclick="abrirConfiguracion()" style="display:none;">Configuración</button>
       <button class="btn-nav btn-support" onclick="abrirSoporteWhatsApp(event)">Soporte</button>
@@ -3087,6 +3739,26 @@
       <input type="date" id="mobileDatepicker" class="mobile-date-input-inline" onchange="seleccionarFechaManual(this.value)" aria-label="Seleccionar fecha">
     </div>
   </header>
+
+  <div id="mobileMenuOverlayV79" onclick="cerrarMobileMenuV79()"></div>
+  <aside id="mobileMenuPanelV79" aria-hidden="true">
+    <div class="mobile-menu-v79-head">
+      <div class="mobile-menu-v79-title">Menú</div>
+      <button class="mobile-menu-v79-close" type="button" onclick="cerrarMobileMenuV79()" aria-label="Cerrar menú">×</button>
+    </div>
+    <div id="mobileMenuClinicV79" class="mobile-menu-v79-clinic">Cargando clínica...</div>
+
+    <div class="mobile-menu-v79-section">Acciones</div>
+    <button id="mobileMenuExportTurnosV79" class="mobile-menu-v79-item" type="button" onclick="cerrarMobileMenuV79(); abrirModalExportarTurnos();">📋 Exportar turnos</button>
+    <button id="mobileMenuExportFicheroV79" class="mobile-menu-v79-item" type="button" onclick="cerrarMobileMenuV79(); exportarFicheroActual();">📄 Exportar CSV</button>
+    <button id="mobileMenuImportFicheroV79" class="mobile-menu-v79-item" type="button" onclick="cerrarMobileMenuV79(); document.getElementById('inputImportarFichero')?.click();">📥 Importar fichas</button>
+    <button id="mobileMenuAgregarFichaV79" class="mobile-menu-v79-item" type="button" onclick="cerrarMobileMenuV79(); abrirAltaFichaPaciente();">➕ Agregar ficha</button>
+
+    <div class="mobile-menu-v79-section">Sistema</div>
+    <button id="mobileMenuConfigV79" class="mobile-menu-v79-item" type="button" onclick="cerrarMobileMenuV79(); abrirConfiguracion();">⚙️ Configuración</button>
+    <button class="mobile-menu-v79-item" type="button" onclick="cerrarMobileMenuV79(); abrirSoporteWhatsApp();">💬 Soporte</button>
+    <button class="mobile-menu-v79-item danger" type="button" onclick="cerrarMobileMenuV79(); cerrarSesion();">🚪 Salir</button>
+  </aside>
 
   <div class="agenda-toolbar" id="agendaToolbar">
     <div class="agenda-toolbar-inner">
@@ -3199,6 +3871,21 @@
       <div id="tablaPacientesBody" class="patients-board"></div>
     </main>
   </div>
+
+  <nav id="mobileBottomNavV79" aria-label="Navegación principal móvil">
+    <button id="mobileNavAgendaV79" class="mobile-bottom-v79-btn active" type="button" onclick="cambiarVistaMobileV79('turnos')">
+      <span class="mobile-bottom-v79-icon">📅</span>
+      <span>Agenda</span>
+    </button>
+    <button id="mobileNavHoyV79" class="mobile-bottom-v79-btn" type="button" onclick="cambiarVistaMobileV79('hoy')">
+      <span class="mobile-bottom-v79-icon">🕒</span>
+      <span>Hoy</span>
+    </button>
+    <button id="mobileNavPacientesV79" class="mobile-bottom-v79-btn" type="button" onclick="cambiarVistaMobileV79('pacientes')">
+      <span class="mobile-bottom-v79-icon">👤</span>
+      <span>Pacientes</span>
+    </button>
+  </nav>
 
   <div id="modalAlta" class="modal-overlay">
     <div class="modal-card">
@@ -4783,6 +5470,7 @@
 
       if (esPacientes) calcularYRenderizarPacientes();
       if (esHoy) renderizarHoy();
+      actualizarMobileShellV79();
     }
 
     function buscarPacienteLocalPorDni(dni) {
@@ -4903,6 +5591,7 @@
     function cambiarSubvistaPacientes(tipo) {
       SUBVISTA_PACIENTES = tipo === 'recordar' ? 'recordar' : 'fichero';
       calcularYRenderizarPacientes();
+      actualizarMobileShellV79();
     }
 
     function abrirEditarFichaPaciente(pacienteId) {
@@ -5785,8 +6474,34 @@
             </tr>`;
         }).join('');
 
+        const mobileCards = listaFiltrada.map(p => {
+          const nombreCompleto = nombrePaciente(p);
+          const pacienteIdJson = JSON.stringify(p.id || '');
+          const fechaVisitaLegible = p.ultimaVisita ? convertirFechaLatina(p.ultimaVisita) : 'Sin visitas';
+          const extra = normalizarDatosExtraPaciente(p.datosExtra || {});
+          const botonBorrar = ROL_USUARIO === 'admin'
+            ? `<button class="btn-table-action btn-delete-ficha" onclick='borrarFichaPaciente(${pacienteIdJson}, event)'>Borrar</button>`
+            : '';
+
+          return `
+            <div class="fichero-mobile-card">
+              <div class="fichero-mobile-head">
+                <div class="fichero-mobile-name">${e(nombreCompleto)}</div>
+                <div class="fichero-mobile-sub">Visitas: ${e(p.cantVisitas)} · Última: ${e(fechaVisitaLegible)}</div>
+              </div>
+              <div class="fichero-mobile-data"><span>DNI</span><strong>${e(p.dni || 'S/D')}</strong></div>
+              <div class="fichero-mobile-data"><span>Teléfono</span><strong>${e(p.telefono || 'S/T')}</strong></div>
+              ${extraColsFichero.map(c => `<div class="fichero-mobile-data"><span>${e(c.label)}</span><strong>${e(extra[c.key] || '—')}</strong></div>`).join('')}
+              <div class="fichero-mobile-actions">
+                <button class="btn-table-action btn-mini-blue" onclick='abrirEditarFichaPaciente(${pacienteIdJson})'>Editar</button>
+                ${botonBorrar}
+              </div>
+            </div>`;
+        }).join('');
+
         board.innerHTML = `
           <div class="fichero-table-card">
+            <div class="fichero-mobile-cards">${mobileCards}</div>
             <div class="fichero-table-scroll">
               <table class="fichero-table">
                 <thead>
@@ -7912,6 +8627,79 @@
 
       ID_TURNO_SELECCIONADO = null;
     }
+
+
+    /* =====================================================
+       V79: capa mobile controlada
+       No toca lógica de turnos ni consultas. Solo coordina UI móvil.
+       ===================================================== */
+    function cerrarMobileMenuV79() {
+      const menu = document.getElementById('mobileMenuPanelV79');
+      const overlay = document.getElementById('mobileMenuOverlayV79');
+      if (menu) {
+        menu.classList.remove('active');
+        menu.setAttribute('aria-hidden', 'true');
+      }
+      if (overlay) overlay.classList.remove('active');
+    }
+
+    function toggleMobileMenuV79(event) {
+      if (event) event.stopPropagation();
+      const menu = document.getElementById('mobileMenuPanelV79');
+      const overlay = document.getElementById('mobileMenuOverlayV79');
+      if (!menu || !overlay) return;
+      const abrir = !menu.classList.contains('active');
+      actualizarMobileShellV79();
+      menu.classList.toggle('active', abrir);
+      overlay.classList.toggle('active', abrir);
+      menu.setAttribute('aria-hidden', abrir ? 'false' : 'true');
+    }
+
+    function cambiarVistaMobileV79(vista) {
+      cambiarVista(vista);
+      cerrarMobileMenuV79();
+      actualizarMobileShellV79();
+    }
+
+    function actualizarMobileShellV79() {
+      const esAgenda = VISTA_ACTUAL === 'turnos';
+      const esHoy = VISTA_ACTUAL === 'hoy';
+      const esPacientes = VISTA_ACTUAL === 'pacientes';
+      const esFichero = esPacientes && SUBVISTA_PACIENTES !== 'recordar';
+
+      document.getElementById('mobileNavAgendaV79')?.classList.toggle('active', esAgenda);
+      document.getElementById('mobileNavHoyV79')?.classList.toggle('active', esHoy);
+      document.getElementById('mobileNavPacientesV79')?.classList.toggle('active', esPacientes);
+
+      const clinicText = document.getElementById('sessionClinicLabel')?.innerText || CLINICA_ACTUAL?.nombre || 'Clínica activa';
+      const clinicBox = document.getElementById('mobileMenuClinicV79');
+      if (clinicBox) clinicBox.innerText = clinicText;
+
+      const setDisplay = (id, visible) => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = visible ? 'block' : 'none';
+      };
+
+      setDisplay('mobileMenuExportTurnosV79', esAgenda);
+      setDisplay('mobileMenuExportFicheroV79', esFichero);
+      setDisplay('mobileMenuImportFicheroV79', esFichero);
+      setDisplay('mobileMenuAgregarFichaV79', esFichero);
+      setDisplay('mobileMenuConfigV79', ROL_USUARIO === 'admin');
+    }
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') cerrarMobileMenuV79();
+    });
+
+    document.addEventListener('click', (event) => {
+      const menu = document.getElementById('mobileMenuPanelV79');
+      const toggle = document.getElementById('mobileMenuToggleV79');
+      if (!menu || !menu.classList.contains('active')) return;
+      if (menu.contains(event.target) || toggle?.contains(event.target)) return;
+      cerrarMobileMenuV79();
+    });
+
+    window.addEventListener('resize', () => actualizarMobileShellV79());
 
   </script>
 </body>
