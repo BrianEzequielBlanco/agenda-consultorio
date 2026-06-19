@@ -1409,7 +1409,7 @@
       transform: translateY(-50%);
       width: 36px;
       height: 36px;
-      border-radius: 9px;
+      border-radius: 999px;
       border: 1px solid var(--border);
       background: #fff;
       color: var(--text);
@@ -1755,29 +1755,38 @@
       .app-header {
         flex-direction: column;
         align-items: stretch;
-        padding: 10px 12px;
+        padding: 8px 12px;
+        gap: 6px;
       }
 
       .header-left {
         width: 100%;
-        gap: 10px;
+        gap: 8px;
       }
 
       .app-logo {
-        font-size: 20px;
+        font-size: 18px;
       }
 
+      /* Scrollbar oculto y desplazamiento suave en móviles */
       .navigation-controls,
       .header-right {
         width: 100%;
         display: flex;
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        overflow-y: hidden;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
         gap: 8px;
         padding-bottom: 4px;
-        scrollbar-width: thin;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
         -webkit-overflow-scrolling: touch;
+        align-items: center;
+      }
+
+      .navigation-controls::-webkit-scrollbar,
+      .header-right::-webkit-scrollbar {
+        display: none;
       }
 
       .navigation-controls > *,
@@ -1786,34 +1795,64 @@
       }
 
       .btn-nav {
-        padding: 8px 12px;
+        padding: 7px 11px;
         font-size: 13px;
+        height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
       }
 
       .current-month-label {
-        font-size: 15px;
+        font-size: 14px;
         white-space: nowrap;
         align-self: center;
       }
 
+      /* Barra de fecha con navegación más limpia en móvil */
       .agenda-toolbar {
-        padding: 8px 12px;
+        padding: 6px 12px;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+
+      .agenda-toolbar::-webkit-scrollbar {
+        display: none;
       }
 
       .agenda-toolbar-inner {
-        width: max-content;
-        min-width: max-content;
-        gap: 12px;
+        width: 100%;
+        min-width: 100%;
+        gap: 8px;
+        justify-content: space-between;
       }
 
       .agenda-toolbar-left,
       .agenda-toolbar-right {
-        gap: 8px;
+        gap: 6px;
       }
 
       .agenda-toolbar-date {
-        width: 148px;
-        min-width: 148px;
+        width: 120px;
+        min-width: 120px;
+        padding: 6px 8px;
+        font-size: 13px;
+      }
+
+      #agendaToolbar .btn-nav {
+        height: 32px;
+        font-size: 12px;
+        padding: 0 10px;
+      }
+
+      #agendaToolbar #ctrlHoy {
+        padding-inline: 8px;
+        min-width: 50px;
+      }
+
+      #agendaToolbar #ctrlExportTurnos {
+        padding-inline: 8px;
+        min-width: 100px;
       }
 
       .main-container {
@@ -1831,38 +1870,40 @@
       .pacientes-container {
         width: 100%;
         min-height: calc(100vh - 116px);
-        padding: 12px;
+        padding: 10px;
         overflow: visible;
       }
 
+      /* Forzar 1 sola columna del día al 100% en móviles */
       .calendar-grid {
         grid-template-columns: 1fr !important;
-        gap: 14px;
+        gap: 12px;
       }
 
       .day-column {
-        border-radius: 18px;
+        border-radius: 14px;
+        width: 100%;
       }
 
       .day-header {
         position: sticky;
         top: 0;
         z-index: 20;
-        padding: 12px 8px;
+        padding: 10px 8px;
       }
 
       .day-slots {
-        padding: 10px;
-        gap: 8px;
+        padding: 8px;
+        gap: 6px;
       }
 
       .time-slot {
-        min-height: 44px;
+        min-height: 42px;
         font-size: 13px;
       }
 
       .time-slot.booked {
-        min-height: 104px;
+        min-height: 96px;
       }
 
       .booked-actions-row {
@@ -1891,16 +1932,19 @@
 
       .filter-group,
       .filter-input {
-        width: 100%;
+        width: 100% !important;
+        max-width: 100% !important;
       }
 
       .patients-filter-fields {
         display: grid;
         grid-template-columns: 1fr;
+        gap: 8px;
       }
 
       .metrics-panel {
         grid-template-columns: 1fr;
+        gap: 12px;
       }
 
       .patient-card {
@@ -1912,35 +1956,62 @@
       .patient-actions {
         justify-content: flex-start;
         flex-wrap: wrap;
+        width: 100%;
+        gap: 6px;
       }
 
+      .patient-actions .btn-table-action {
+        flex: 1 1 calc(50% - 4px);
+        text-align: center;
+        padding: 10px 6px;
+        font-size: 12px;
+      }
+
+      /* Control del tamaño y comportamiento de modales en celular */
       .modal-overlay {
-        align-items: flex-start;
-        justify-content: center;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        padding: 10px;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 8px;
+        overflow-y: hidden !important;
       }
 
       .modal-card,
       .modal-card.config-modal-card,
-      #modalFichaPaciente .modal-card {
-        width: 100%;
-        max-width: 680px;
-        max-height: none;
-        margin: 8px auto 18px;
-        padding: 18px;
+      #modalFichaPaciente .modal-card,
+      #modalConfiguracion .config-modal-card {
+        width: 100% !important;
+        max-width: 500px !important;
+        max-height: calc(100vh - 24px) !important;
+        max-height: calc(100dvh - 24px) !important;
+        overflow-y: auto !important;
+        margin: auto !important;
+        padding: 16px !important;
+        border-radius: 16px;
       }
 
       .modal-actions {
         flex-wrap: wrap;
         justify-content: stretch;
+        gap: 8px;
       }
 
       .modal-actions .btn-action,
       .modal-actions .btn-nav,
       .modal-actions button {
         flex: 1 1 auto;
+        min-height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Prevenir zoom de sistema al clickear inputs en iOS/Android */
+      .form-control,
+      .filter-input,
+      .input-date,
+      .date-combo-input,
+      .hoy-date-display {
+        font-size: 16px !important;
       }
 
       .treatment-control,
@@ -1949,110 +2020,103 @@
       }
     }
 
+    @media (max-width: 768px) {
+      .user-session-pill {
+        display: none !important;
+      }
+    }
+
     @media (max-width: 560px) {
       .app-header {
-        padding: 9px 10px;
+        padding: 6px 10px;
       }
 
       .app-logo {
-        font-size: 19px;
-      }
-
-      .user-session-pill {
-        display: none;
+        font-size: 17px;
       }
 
       .btn-nav {
-        padding: 7px 10px;
-        font-size: 12.5px;
+        padding: 6px 9px;
+        font-size: 12px;
+        height: 32px;
       }
 
       .btn-arrow {
-        width: 36px;
-        min-width: 36px;
+        width: 32px;
+        min-width: 32px;
         padding-left: 0;
         padding-right: 0;
       }
 
       .grid-container,
       .pacientes-container {
-        padding: 10px 8px;
+        padding: 8px 6px;
       }
 
       .calendar-grid {
-        gap: 12px;
+        gap: 10px;
       }
 
       .day-column {
-        border-radius: 16px;
+        border-radius: 12px;
       }
 
       .day-header {
-        padding: 10px 8px;
+        padding: 8px 6px;
       }
 
       .day-number {
-        height: 30px;
-        min-width: 42px;
-        font-size: 14px;
-      }
-
-      .time-slot {
-        border-radius: 10px;
-      }
-
-      .time-slot.booked {
-        min-height: 116px;
-      }
-
-      .booked-body {
-        font-size: 14px;
-      }
-
-      .btn-card-action {
-        width: 30px;
-        height: 30px;
-      }
-
-      .page-title {
-        font-size: 21px;
-      }
-
-      .page-subtitle {
+        height: 28px;
+        min-width: 38px;
         font-size: 13px;
       }
 
+      .time-slot {
+        border-radius: 8px;
+        min-height: 38px;
+      }
+
+      .time-slot.booked {
+        min-height: 100px;
+      }
+
+      .booked-body {
+        font-size: 13px;
+      }
+
+      .btn-card-action {
+        width: 28px;
+        height: 28px;
+      }
+
+      .page-title {
+        font-size: 20px;
+      }
+
+      .page-subtitle {
+        font-size: 12px;
+      }
+
       .metric-val {
-        font-size: 28px;
+        font-size: 26px;
       }
 
       .patients-filter-card,
       .metric-card,
       .patient-card,
       .sidebar-card {
-        border-radius: 14px;
-      }
-
-      .patient-actions .btn-table-action {
-        flex: 1 1 140px;
-        text-align: center;
+        border-radius: 12px;
       }
 
       .modal-card,
       .modal-card.config-modal-card,
       #modalFichaPaciente .modal-card {
-        padding: 15px;
-        border-radius: 16px;
+        padding: 12px !important;
+        border-radius: 14px !important;
       }
 
       .modal-title {
-        font-size: 20px;
-      }
-
-      .form-control,
-      .filter-input,
-      .input-date {
-        font-size: 16px; /* evita zoom automático de iOS/Android */
+        font-size: 18px;
       }
 
       .config-day-row {
@@ -2067,7 +2131,7 @@
       .treatment-control,
       #modalFichaPaciente .treatment-control {
         grid-template-columns: 1fr 38px 72px 38px;
-        gap: 7px;
+        gap: 6px;
       }
     }
 
@@ -2084,26 +2148,20 @@
         display: none !important;
       }
 
-      .header-right {
-        flex-wrap: wrap !important;
-        overflow-x: visible !important;
-        align-items: center;
-        gap: 8px;
-      }
-
       .mobile-month-label {
         display: inline-flex !important;
         align-items: center;
         justify-content: center;
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 700;
         color: var(--text);
-        padding: 8px 10px;
+        padding: 6px 10px;
         border: 1px solid var(--border);
         border-radius: 999px;
         background: #fff;
         white-space: nowrap;
         flex: 0 0 auto;
+        height: 34px;
       }
 
       .mobile-calendar-btn {
@@ -2111,7 +2169,8 @@
         align-items: center;
         justify-content: center;
         min-width: 42px;
-        padding: 8px 10px;
+        padding: 6px 10px;
+        height: 34px;
       }
 
       .mobile-date-input-inline {
@@ -2128,16 +2187,18 @@
 
     @media (max-width: 560px) {
       .app-header {
-        padding: 9px 10px;
-      }
-
-      .header-right {
-        padding-bottom: 0 !important;
+        padding: 8px 10px;
       }
 
       .mobile-month-label {
-        font-size: 13px;
-        padding: 8px 9px;
+        font-size: 12px;
+        padding: 6px 8px;
+        height: 32px;
+      }
+      
+      .mobile-calendar-btn {
+        height: 32px;
+        min-width: 36px;
       }
     }
 
@@ -2196,11 +2257,9 @@
         justify-content: center !important;
         height: 100vh;
         height: 100dvh;
-        max-height: 100vh;
-        max-height: 100dvh;
         padding: 8px;
-        overflow-y: auto !important;
-        touch-action: pan-y;
+        overflow-y: hidden !important;
+        touch-action: none;
       }
 
       .modal-card,
@@ -2208,11 +2267,11 @@
       #modalFichaPaciente .modal-card,
       #modalConfiguracion .config-modal-card {
         width: 100% !important;
-        max-width: 680px !important;
-        max-height: calc(100vh - 16px) !important;
-        max-height: calc(100dvh - 16px) !important;
+        max-width: 480px !important;
+        max-height: calc(100vh - 24px) !important;
+        max-height: calc(100dvh - 24px) !important;
         overflow-y: auto !important;
-        margin: 0 auto 10px !important;
+        margin: auto !important;
         padding: 16px !important;
       }
 
@@ -2243,10 +2302,10 @@
       .modal-card.config-modal-card,
       #modalFichaPaciente .modal-card,
       #modalConfiguracion .config-modal-card {
-        max-height: calc(100vh - 12px) !important;
-        max-height: calc(100dvh - 12px) !important;
+        max-height: calc(100vh - 16px) !important;
+        max-height: calc(100dvh - 16px) !important;
         padding: 14px !important;
-        border-radius: 15px !important;
+        border-radius: 14px !important;
       }
 
       #modalConfiguracion .modal-actions .btn-action {
@@ -2591,11 +2650,34 @@
       .hoy-summary-value { font-size: 24px; }
       .hoy-card { grid-template-columns: 1fr; align-items: stretch; }
       .hoy-time { text-align: left; width: fit-content; }
-      .hoy-actions { justify-content: stretch; }
-      .hoy-status-picker { width: 100%; margin-right: 0; min-width: 0; }
-      .hoy-status-pill { width: 100%; padding: 10px 12px; }
+      
+      /* Distribución apilada y ordenada de botones de acción en celular */
+      .hoy-actions {
+        display: flex;
+        flex-wrap: wrap;
+        width: 100%;
+        gap: 8px;
+      }
+      .hoy-actions .btn-table-action {
+        flex: 1 1 calc(50% - 4px);
+        min-height: 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+      }
+      .hoy-status-picker {
+        flex: 1 1 100%;
+        width: 100%;
+        margin-right: 0;
+        min-width: 0;
+      }
+      .hoy-status-pill {
+        width: 100%;
+        padding: 10px 12px;
+        height: 38px;
+      }
       .hoy-status-menu { left: 0; right: auto; width: 100%; }
-      .hoy-actions .btn-table-action { flex: 1; }
       .hoy-date-controls { justify-content: stretch; }
       .hoy-date-controls .input-date { flex: 1; min-width: 160px; }
       .motivo-toggle-grid { grid-template-columns: 1fr; }
@@ -2943,346 +3025,6 @@
     }
 
 
-    /* =====================================================
-       V78 seguro: experiencia móvil sin tocar escritorio
-       - Mantiene PC intacta.
-       - En celular agrega navegación inferior y menú simple.
-       - Limpia header/toolbar y evita botones apretados.
-       ===================================================== */
-    .mobile-more-menu,
-    .mobile-bottom-nav {
-      display: none;
-    }
-
-    @media (max-width: 760px) {
-      body.app-authenticated {
-        padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px));
-      }
-
-      .app-header {
-        flex-direction: row !important;
-        align-items: center !important;
-        justify-content: space-between !important;
-        gap: 8px !important;
-        padding: 8px 10px !important;
-        min-height: 54px;
-      }
-
-      .header-left {
-        width: auto !important;
-        flex: 1 1 auto !important;
-        gap: 0 !important;
-        min-width: 0;
-      }
-
-      .app-logo {
-        font-size: 18px !important;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 190px;
-      }
-
-      .navigation-controls {
-        display: none !important;
-      }
-
-      .header-right {
-        width: auto !important;
-        flex: 0 0 auto !important;
-        margin-left: 0 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: flex-end !important;
-        gap: 6px !important;
-        flex-wrap: nowrap !important;
-        overflow: visible !important;
-        padding-bottom: 0 !important;
-      }
-
-      .header-right > .btn-config,
-      .header-right > .btn-support,
-      .header-right > button[onclick="cerrarSesion()"] {
-        display: none !important;
-      }
-
-      .mobile-month-label {
-        display: inline-flex !important;
-        max-width: 92px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        font-size: 12px !important;
-        padding: 7px 8px !important;
-      }
-
-      .mobile-calendar-btn {
-        display: inline-flex !important;
-        min-width: 38px !important;
-        height: 34px !important;
-        padding: 7px 9px !important;
-      }
-
-      .mobile-more-menu {
-        display: block;
-        position: relative;
-        flex: 0 0 auto;
-      }
-
-      .mobile-more-menu summary {
-        list-style: none;
-        width: 38px;
-        height: 34px;
-        border: 1px solid var(--border);
-        border-radius: 999px;
-        background: #fff;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 900;
-        cursor: pointer;
-        user-select: none;
-      }
-
-      .mobile-more-menu summary::-webkit-details-marker { display: none; }
-
-      .mobile-more-panel {
-        position: absolute;
-        right: 0;
-        top: calc(100% + 8px);
-        width: 230px;
-        background: #fff;
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        box-shadow: 0 18px 38px rgba(15, 23, 42, 0.18);
-        padding: 8px;
-        z-index: 120;
-      }
-
-      .mobile-more-panel .btn-nav {
-        width: 100%;
-        justify-content: flex-start;
-        border-radius: 12px;
-        margin: 4px 0;
-        padding: 11px 12px;
-        font-size: 14px;
-        text-align: left;
-      }
-
-      .agenda-toolbar {
-        padding: 7px 10px !important;
-        overflow-x: visible !important;
-      }
-
-      .agenda-toolbar-inner {
-        min-width: 0 !important;
-        width: 100% !important;
-        gap: 8px !important;
-        justify-content: flex-end !important;
-      }
-
-      .agenda-toolbar-left,
-      #ctrlExportTurnos,
-      #currentMonthLabel {
-        display: none !important;
-      }
-
-      .agenda-toolbar-right {
-        width: 100% !important;
-        min-width: 0 !important;
-        justify-content: flex-end !important;
-        gap: 7px !important;
-      }
-
-      #ctrlHoy {
-        min-width: 72px !important;
-      }
-
-      .grid-container,
-      .pacientes-container,
-      .hoy-container {
-        padding: 10px !important;
-      }
-
-      .calendar-grid {
-        grid-template-columns: 1fr !important;
-        gap: 12px !important;
-      }
-
-      .day-column {
-        border-radius: 18px !important;
-      }
-
-      .day-header {
-        position: sticky;
-        top: 0;
-        z-index: 12;
-        padding: 12px 8px !important;
-      }
-
-      .day-slots {
-        padding: 10px !important;
-        gap: 9px !important;
-      }
-
-      .time-slot {
-        min-height: 46px !important;
-        font-size: 14px !important;
-      }
-
-      .time-slot.booked {
-        min-height: 92px !important;
-        padding: 10px 12px !important;
-      }
-
-      .time-slot.booked.extension-group {
-        min-height: 126px !important;
-      }
-
-      .booked-header {
-        font-size: 12px !important;
-      }
-
-      .booked-body {
-        font-size: 16px !important;
-        margin-top: 8px !important;
-      }
-
-      .booked-phone {
-        font-size: 13px !important;
-      }
-
-      .booked-tag {
-        font-size: 10px !important;
-      }
-
-      .quick-cancel-turn-btn {
-        width: 28px !important;
-        height: 28px !important;
-      }
-
-      .page-title-row {
-        align-items: stretch !important;
-        gap: 10px !important;
-      }
-
-      .page-title-actions {
-        width: 100%;
-        justify-content: flex-start;
-      }
-
-      .hoy-card {
-        grid-template-columns: 74px 1fr !important;
-        gap: 10px !important;
-        padding: 12px !important;
-      }
-
-      .hoy-time {
-        font-size: 18px !important;
-        padding: 10px 6px !important;
-      }
-
-      .hoy-actions {
-        grid-column: 1 / -1;
-        justify-content: stretch !important;
-        display: grid !important;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px !important;
-      }
-
-      .hoy-actions .btn-table-action,
-      .hoy-status-picker {
-        width: 100%;
-        min-width: 0;
-      }
-
-      .hoy-status-picker {
-        grid-column: 1 / -1;
-      }
-
-      .hoy-status-menu {
-        left: 0;
-        right: auto;
-        width: 100%;
-      }
-
-      .patients-mode-tabs {
-        overflow-x: auto;
-        padding-bottom: 3px;
-      }
-
-      .metrics-panel {
-        grid-template-columns: 1fr 1fr !important;
-        gap: 10px !important;
-      }
-
-      .metric-card {
-        padding: 14px !important;
-      }
-
-      .patient-card,
-      .recordar-card {
-        grid-template-columns: 1fr !important;
-        gap: 10px !important;
-        padding: 14px !important;
-      }
-
-      .patient-actions {
-        justify-content: stretch !important;
-        display: grid !important;
-        grid-template-columns: 1fr 1fr;
-      }
-
-      .patient-actions .btn-table-action {
-        width: 100%;
-        text-align: center;
-      }
-
-      .fichero-table-wrap {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-      }
-
-      .mobile-bottom-nav {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 90;
-        background: rgba(255,255,255,0.98);
-        border-top: 1px solid #dbe5f3;
-        box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.08);
-        padding-bottom: env(safe-area-inset-bottom, 0px);
-      }
-
-      .mobile-bottom-item {
-        border: 0;
-        background: transparent;
-        color: #64748b;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 3px;
-        padding: 9px 6px 10px;
-        font-family: var(--font);
-        font-size: 11.5px;
-        font-weight: 800;
-        cursor: pointer;
-      }
-
-      .mobile-bottom-item-icon {
-        font-size: 18px;
-        line-height: 1;
-      }
-
-      .mobile-bottom-item.active-view {
-        color: var(--blue);
-      }
-    }
-
-
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -3343,15 +3085,6 @@
       <span id="mobileCurrentMonthLabel" class="mobile-month-label" title="Mes visible">Junio 2026</span>
       <button id="mobileCalendarBtn" class="btn-nav mobile-calendar-btn" onclick="abrirSelectorFechaMovil(event)" title="Elegir fecha">📅</button>
       <input type="date" id="mobileDatepicker" class="mobile-date-input-inline" onchange="seleccionarFechaManual(this.value)" aria-label="Seleccionar fecha">
-      <details class="mobile-more-menu" id="mobileMoreMenu">
-        <summary aria-label="Más opciones">☰</summary>
-        <div class="mobile-more-panel">
-          <button class="btn-nav" onclick="document.getElementById('mobileMoreMenu')?.removeAttribute('open'); abrirModalExportarTurnos();">Exportar turnos</button>
-          <button id="btnConfigMobile" class="btn-nav btn-config" onclick="document.getElementById('mobileMoreMenu')?.removeAttribute('open'); abrirConfiguracion();" style="display:none;">Configuración</button>
-          <button class="btn-nav btn-support" onclick="document.getElementById('mobileMoreMenu')?.removeAttribute('open'); abrirSoporteWhatsApp(event);">Soporte</button>
-          <button class="btn-nav" onclick="document.getElementById('mobileMoreMenu')?.removeAttribute('open'); cerrarSesion();">Salir</button>
-        </div>
-      </details>
     </div>
   </header>
 
@@ -3466,12 +3199,6 @@
       <div id="tablaPacientesBody" class="patients-board"></div>
     </main>
   </div>
-
-  <nav class="mobile-bottom-nav" aria-label="Navegación principal móvil">
-    <button id="mobileNavTurnos" class="mobile-bottom-item active-view" onclick="cambiarVista('turnos')"><span class="mobile-bottom-item-icon">📅</span><span>Agenda</span></button>
-    <button id="mobileNavHoy" class="mobile-bottom-item" onclick="cambiarVista('hoy')"><span class="mobile-bottom-item-icon">🕒</span><span>Hoy</span></button>
-    <button id="mobileNavPacientes" class="mobile-bottom-item" onclick="cambiarVista('pacientes')"><span class="mobile-bottom-item-icon">👤</span><span>Pacientes</span></button>
-  </nav>
 
   <div id="modalAlta" class="modal-overlay">
     <div class="modal-card">
@@ -3943,11 +3670,6 @@
     document.addEventListener('click', (event) => {
       if (!event.target.closest('.hoy-status-picker')) {
         cerrarMenusEstadoHoy();
-      }
-
-      const menu = document.getElementById('mobileMoreMenu');
-      if (menu && menu.open && !event.target.closest('#mobileMoreMenu')) {
-        menu.removeAttribute('open');
       }
     });
 
@@ -4422,17 +4144,8 @@
     }
 
     function aplicarEstadoBotonConfiguracion() {
-      const visible = ROL_USUARIO === 'admin';
       const btn = document.getElementById('btnConfig');
-      const btnMobile = document.getElementById('btnConfigMobile');
-      if (btn) btn.style.display = visible ? 'inline-block' : 'none';
-      if (btnMobile) btnMobile.style.display = visible ? 'block' : 'none';
-    }
-
-    function sincronizarNavegacionMovil() {
-      document.getElementById('mobileNavTurnos')?.classList.toggle('active-view', VISTA_ACTUAL === 'turnos');
-      document.getElementById('mobileNavHoy')?.classList.toggle('active-view', VISTA_ACTUAL === 'hoy');
-      document.getElementById('mobileNavPacientes')?.classList.toggle('active-view', VISTA_ACTUAL === 'pacientes');
+      if (btn) btn.style.display = ROL_USUARIO === 'admin' ? 'inline-block' : 'none';
     }
 
     function obtenerTratamientosConfigurados() {
@@ -5067,8 +4780,6 @@
       const mobileCalendarBtn = document.getElementById('mobileCalendarBtn');
       if (mobileMonth) mobileMonth.style.display = esTurnos ? '' : 'none';
       if (mobileCalendarBtn) mobileCalendarBtn.style.display = esTurnos ? '' : 'none';
-
-      sincronizarNavegacionMovil();
 
       if (esPacientes) calcularYRenderizarPacientes();
       if (esHoy) renderizarHoy();
