@@ -4003,6 +4003,150 @@
     }
 
 
+
+    /* =====================================================
+       V82: controles de día mobile reales
+       En vez de intentar mover los botones desktop de la toolbar,
+       se crea una barra mobile propia con IDs únicos.
+       ===================================================== */
+    .mobile-day-nav-v82 {
+      display: none;
+    }
+
+    @media (max-width: 980px) {
+      body {
+        --mobile-bottom-nav-height-v82: 62px;
+        --mobile-day-nav-height-v82: 58px;
+      }
+
+      .grid-container,
+      .hoy-container,
+      .pacientes-container {
+        padding-bottom: calc(var(--mobile-bottom-nav-height-v82) + var(--mobile-day-nav-height-v82) + 20px + env(safe-area-inset-bottom, 0px)) !important;
+      }
+
+      /* La toolbar de Agenda queda solo para el calendario/fecha. */
+      #agendaToolbar .agenda-toolbar-inner {
+        justify-content: center !important;
+      }
+
+      #agendaToolbar .agenda-toolbar-left {
+        width: min(100%, 260px) !important;
+        max-width: 260px !important;
+        flex: 0 1 260px !important;
+        margin: 0 auto !important;
+      }
+
+      #agendaToolbar .agenda-toolbar-date {
+        width: 100% !important;
+        max-width: none !important;
+        min-width: 0 !important;
+        height: 42px !important;
+        text-align: center !important;
+        font-weight: 800 !important;
+        border-radius: 13px !important;
+        background: #ffffff !important;
+      }
+
+      /* Ocultamos los controles desktop en móvil para que no queden flotando ni dependan de la toolbar. */
+      #agendaToolbar .agenda-toolbar-right {
+        display: none !important;
+      }
+
+      .mobile-day-nav-v82.active {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: calc(var(--mobile-bottom-nav-height-v82) + env(safe-area-inset-bottom, 0px));
+        z-index: 160;
+        height: var(--mobile-day-nav-height-v82);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 8px 14px;
+        background: rgba(255, 255, 255, 0.99);
+        border-top: 1px solid #dbe5f3;
+        box-shadow: 0 -8px 22px rgba(15, 23, 42, 0.10);
+        backdrop-filter: blur(10px);
+      }
+
+      .mobile-day-nav-btn {
+        height: 42px;
+        border: 1px solid #d7dee8;
+        background: #ffffff;
+        color: #111827;
+        border-radius: 14px;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+        font-weight: 900;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        user-select: none;
+      }
+
+      .mobile-day-nav-btn:not(.mobile-day-nav-today) {
+        width: 64px;
+        min-width: 64px;
+        font-size: 17px;
+      }
+
+      .mobile-day-nav-today {
+        width: min(42vw, 136px);
+        min-width: 108px;
+        padding: 0 16px;
+        font-size: 13px;
+      }
+
+      .mobile-day-nav-btn:active {
+        transform: translateY(1px) scale(0.99);
+      }
+
+      /* Solo se muestra en Agenda. JS le saca .active en Hoy/Pacientes. */
+      .mobile-day-nav-v82:not(.active) {
+        display: none !important;
+      }
+
+      #mobileBottomNavV79 {
+        z-index: 170 !important;
+      }
+    }
+
+    @media (max-width: 560px) {
+      body {
+        --mobile-day-nav-height-v82: 56px;
+      }
+
+      #agendaToolbar .agenda-toolbar-left {
+        width: min(100%, 235px) !important;
+        max-width: 235px !important;
+        flex-basis: 235px !important;
+      }
+
+      #agendaToolbar .agenda-toolbar-date {
+        height: 40px !important;
+        font-size: 14px !important;
+      }
+
+      .mobile-day-nav-v82.active {
+        gap: 8px;
+        padding: 7px 12px;
+      }
+
+      .mobile-day-nav-btn:not(.mobile-day-nav-today) {
+        width: 58px;
+        min-width: 58px;
+        height: 40px;
+      }
+
+      .mobile-day-nav-today {
+        min-width: 98px;
+        height: 40px;
+      }
+    }
+
+
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -4199,6 +4343,12 @@
       <div id="tablaPacientesBody" class="patients-board"></div>
     </main>
   </div>
+
+  <nav id="mobileDayNavV82" class="mobile-day-nav-v82 active" aria-label="Navegación de día móvil">
+    <button class="mobile-day-nav-btn" type="button" onclick="navegarSemana(-1)" aria-label="Día anterior">◀</button>
+    <button class="mobile-day-nav-btn mobile-day-nav-today" type="button" onclick="irHoy()">Ir a hoy</button>
+    <button class="mobile-day-nav-btn" type="button" onclick="navegarSemana(1)" aria-label="Día siguiente">▶</button>
+  </nav>
 
   <nav id="mobileBottomNavV79" aria-label="Navegación principal móvil">
     <button id="mobileNavAgendaV79" class="mobile-bottom-v79-btn active" type="button" onclick="cambiarVistaMobileV79('turnos')">
@@ -8998,6 +9148,7 @@
       document.getElementById('mobileNavAgendaV79')?.classList.toggle('active', esAgenda);
       document.getElementById('mobileNavHoyV79')?.classList.toggle('active', esHoy);
       document.getElementById('mobileNavPacientesV79')?.classList.toggle('active', esPacientes);
+      document.getElementById('mobileDayNavV82')?.classList.toggle('active', esAgenda);
 
       const clinicText = document.getElementById('sessionClinicLabel')?.innerText || CLINICA_ACTUAL?.nombre || 'Clínica activa';
       const clinicBox = document.getElementById('mobileMenuClinicV79');
