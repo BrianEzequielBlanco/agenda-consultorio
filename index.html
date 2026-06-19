@@ -7818,8 +7818,12 @@
     function irHoy() {
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
+
+      // La agenda es operativa: al ir a hoy, HOY debe quedar como primera columna,
+      // igual que cuando se inicia sesión. Los días anteriores se ven navegando hacia atrás.
       FECHA_MOVIL_ACTUAL = new Date(hoy);
-      FECHA_LUNES_ACTUAL = obtenerLunesDeSemana(hoy);
+      FECHA_LUNES_ACTUAL = new Date(hoy);
+
       sincronizarDatepickers(formatearFechaISO(hoy));
       renderizarCalendarioCompleto();
     }
@@ -8679,6 +8683,11 @@
       } finally {
         if (botonGuardar) botonGuardar.disabled = false;
       }
+    }
+
+    function abrirEditarTurnoActual() {
+      if (!ID_TURNO_SELECCIONADO) return;
+      abrirEditarTurno(ID_TURNO_SELECCIONADO);
     }
 
     function abrirReprogramarTurnoActual() {
