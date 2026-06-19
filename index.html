@@ -2943,6 +2943,283 @@
     }
 
 
+    /* =====================================================
+       V78: mejoras de usabilidad para celular
+       - Menú hamburguesa para acciones secundarias.
+       - Navegación inferior fija.
+       - Tira de días compacta en Agenda móvil.
+       - Toolbar de agenda más limpia en pantallas chicas.
+       ===================================================== */
+    .mobile-menu-btn,
+    .mobile-menu-overlay,
+    .mobile-menu-panel,
+    .mobile-bottom-nav,
+    .mobile-week-strip {
+      display: none;
+    }
+
+    .mobile-menu-overlay.active {
+      display: block;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.28);
+      z-index: 79;
+    }
+
+    .mobile-menu-panel.active {
+      display: block;
+      position: fixed;
+      top: 66px;
+      right: 10px;
+      width: min(290px, calc(100vw - 20px));
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 18px 38px rgba(15, 23, 42, 0.18);
+      padding: 12px;
+      z-index: 80;
+    }
+
+    .mobile-menu-title {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .45px;
+      margin-bottom: 6px;
+    }
+
+    .mobile-menu-clinic {
+      font-size: 12.5px;
+      color: var(--text-soft);
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 9px 10px;
+      margin-bottom: 10px;
+      line-height: 1.35;
+    }
+
+    .mobile-menu-item {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      text-align: left;
+      margin-top: 8px;
+      cursor: pointer;
+    }
+
+    .mobile-menu-item:first-of-type { margin-top: 0; }
+    .mobile-menu-item:active { transform: scale(0.995); }
+    .mobile-menu-item.danger { color: var(--danger); border-color: #fecaca; background: #fff5f5; }
+
+    .mobile-week-strip {
+      gap: 8px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 2px 1px 8px;
+      margin-bottom: 8px;
+      scrollbar-width: none;
+    }
+    .mobile-week-strip::-webkit-scrollbar { display: none; }
+
+    .mobile-week-chip {
+      border: 1px solid #dbe5f3;
+      background: #ffffff;
+      color: var(--text);
+      border-radius: 14px;
+      min-width: 68px;
+      padding: 9px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      flex: 0 0 auto;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+      cursor: pointer;
+    }
+    .mobile-week-chip-day {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--muted);
+      letter-spacing: .45px;
+      text-transform: uppercase;
+    }
+    .mobile-week-chip-date {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .mobile-week-chip.active {
+      background: #eaf3ff;
+      border-color: #9ec5ff;
+      box-shadow: inset 0 0 0 1px rgba(37, 99, 235, .06);
+    }
+    .mobile-week-chip.active .mobile-week-chip-day,
+    .mobile-week-chip.active .mobile-week-chip-date {
+      color: #1d4ed8;
+    }
+
+    .mobile-bottom-nav {
+      display: none;
+    }
+
+    .mobile-bottom-item {
+      border: 0;
+      background: transparent;
+      color: #64748b;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 9px 6px 11px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .mobile-bottom-item-icon {
+      font-size: 18px;
+      line-height: 1;
+    }
+    .mobile-bottom-item.active-view {
+      color: var(--blue);
+    }
+
+    @media (max-width: 980px) {
+      body.app-authenticated {
+        padding-bottom: 74px;
+      }
+
+      .app-header {
+        position: sticky;
+        top: 0;
+        z-index: 42;
+        background: rgba(245, 247, 251, 0.96);
+        backdrop-filter: blur(10px);
+      }
+
+      .header-left {
+        min-width: 0;
+        flex: 1;
+      }
+
+      .navigation-controls {
+        display: none !important;
+      }
+
+      .header-right {
+        gap: 6px !important;
+      }
+
+      .header-right > .btn-config,
+      .header-right > .btn-support,
+      .header-right > button[onclick="cerrarSesion()"] {
+        display: none !important;
+      }
+
+      .mobile-menu-btn {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        min-width: 42px;
+        padding: 8px 11px;
+      }
+
+      .agenda-toolbar {
+        position: sticky;
+        top: 66px;
+        z-index: 34;
+        background: rgba(245, 247, 251, 0.98);
+        backdrop-filter: blur(8px);
+        border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+      }
+
+      .agenda-toolbar-inner {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+
+      .agenda-toolbar-left {
+        display: none;
+      }
+
+      .agenda-toolbar-right {
+        width: 100%;
+        justify-content: space-between;
+        gap: 8px;
+        flex-wrap: nowrap;
+      }
+
+      #ctrlExportTurnos {
+        display: none !important;
+      }
+
+      #currentMonthLabel {
+        display: none !important;
+      }
+
+      .mobile-week-strip {
+        display: flex;
+      }
+
+      .grid-container {
+        padding-top: 8px;
+      }
+
+      .mobile-bottom-nav {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 45;
+        background: rgba(255,255,255,0.98);
+        border-top: 1px solid #dbe5f3;
+        box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.08);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+    }
+
+    @media (max-width: 560px) {
+      .app-logo {
+        font-size: 17px;
+      }
+
+      .mobile-month-label {
+        max-width: 108px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .agenda-toolbar {
+        top: 60px;
+      }
+
+      .agenda-toolbar-right {
+        gap: 6px;
+      }
+
+      .agenda-toolbar-right .btn-nav,
+      .agenda-toolbar-right .btn-table-action {
+        padding: 8px 10px;
+        font-size: 12px;
+      }
+
+      .mobile-week-chip {
+        min-width: 63px;
+        padding: 8px 9px;
+      }
+    }
+
+
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -3003,8 +3280,19 @@
       <span id="mobileCurrentMonthLabel" class="mobile-month-label" title="Mes visible">Junio 2026</span>
       <button id="mobileCalendarBtn" class="btn-nav mobile-calendar-btn" onclick="abrirSelectorFechaMovil(event)" title="Elegir fecha">📅</button>
       <input type="date" id="mobileDatepicker" class="mobile-date-input-inline" onchange="seleccionarFechaManual(this.value)" aria-label="Seleccionar fecha">
+      <button id="mobileMenuBtn" class="btn-nav mobile-menu-btn" onclick="toggleMobileMenu(event)" title="Más opciones">☰</button>
     </div>
   </header>
+
+  <div id="mobileMenuOverlay" class="mobile-menu-overlay" onclick="cerrarMobileMenu()"></div>
+  <div id="mobileMenuPanel" class="mobile-menu-panel" aria-hidden="true">
+    <div class="mobile-menu-title">Accesos rápidos</div>
+    <div id="mobileMenuClinic" class="mobile-menu-clinic">Cargando clínica...</div>
+    <button id="mobileMenuExportTurnos" class="mobile-menu-item" onclick="cerrarMobileMenu(); abrirModalExportarTurnos();">Exportar turnos</button>
+    <button id="mobileMenuConfig" class="mobile-menu-item" onclick="cerrarMobileMenu(); abrirConfiguracion();">Configuración</button>
+    <button class="mobile-menu-item" onclick="cerrarMobileMenu(); abrirSoporteWhatsApp();">Soporte</button>
+    <button class="mobile-menu-item danger" onclick="cerrarMobileMenu(); cerrarSesion();">Salir</button>
+  </div>
 
   <div class="agenda-toolbar" id="agendaToolbar">
     <div class="agenda-toolbar-inner">
@@ -3023,6 +3311,7 @@
 
   <div class="main-container">
     <main class="grid-container" id="appGridTurnos">
+      <div id="mobileWeekStrip" class="mobile-week-strip"></div>
       <div id="calendarGrid" class="calendar-grid"></div>
     </main>
 
@@ -3117,6 +3406,12 @@
       <div id="tablaPacientesBody" class="patients-board"></div>
     </main>
   </div>
+
+  <nav class="mobile-bottom-nav" aria-label="Navegación principal móvil">
+    <button id="mobileNavTurnos" class="mobile-bottom-item active-view" onclick="cambiarVista('turnos')"><span class="mobile-bottom-item-icon">📅</span><span>Agenda</span></button>
+    <button id="mobileNavHoy" class="mobile-bottom-item" onclick="cambiarVista('hoy')"><span class="mobile-bottom-item-icon">🕒</span><span>Hoy</span></button>
+    <button id="mobileNavPacientes" class="mobile-bottom-item" onclick="cambiarVista('pacientes')"><span class="mobile-bottom-item-icon">👤</span><span>Pacientes</span></button>
+  </nav>
 
   <div id="modalAlta" class="modal-overlay">
     <div class="modal-card">
@@ -3578,8 +3873,11 @@
       if (!document.body.classList.contains('app-authenticated')) return;
       clearTimeout(AGENDA_RESIZE_TIMER);
       AGENDA_RESIZE_TIMER = setTimeout(() => {
+        actualizarAccesosMoviles();
         if (VISTA_ACTUAL === 'turnos') {
           renderizarCalendarioCompleto();
+        } else {
+          renderizarSemanaMovil();
         }
       }, 180);
     });
@@ -3589,6 +3887,13 @@
       if (!event.target.closest('.hoy-status-picker')) {
         cerrarMenusEstadoHoy();
       }
+      if (!event.target.closest('.mobile-menu-panel') && !event.target.closest('.mobile-menu-btn')) {
+        cerrarMobileMenu();
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') cerrarMobileMenu();
     });
 
     async function inicializarSesionSegura() {
@@ -4698,6 +5003,10 @@
       const mobileCalendarBtn = document.getElementById('mobileCalendarBtn');
       if (mobileMonth) mobileMonth.style.display = esTurnos ? '' : 'none';
       if (mobileCalendarBtn) mobileCalendarBtn.style.display = esTurnos ? '' : 'none';
+
+      actualizarAccesosMoviles();
+      renderizarSemanaMovil();
+      cerrarMobileMenu();
 
       if (esPacientes) calcularYRenderizarPacientes();
       if (esHoy) renderizarHoy();
@@ -6117,6 +6426,65 @@
       if (mobile) mobile.innerText = textoMobile;
     }
 
+    function cerrarMobileMenu() {
+      document.getElementById('mobileMenuOverlay')?.classList.remove('active');
+      document.getElementById('mobileMenuPanel')?.classList.remove('active');
+    }
+
+    function toggleMobileMenu(event) {
+      if (event) event.stopPropagation();
+      const panel = document.getElementById('mobileMenuPanel');
+      const overlay = document.getElementById('mobileMenuOverlay');
+      if (!panel || !overlay) return;
+      const abrir = !panel.classList.contains('active');
+      panel.classList.toggle('active', abrir);
+      overlay.classList.toggle('active', abrir);
+      panel.setAttribute('aria-hidden', abrir ? 'false' : 'true');
+      actualizarAccesosMoviles();
+    }
+
+    function actualizarAccesosMoviles() {
+      const sessionLabel = document.getElementById('sessionClinicLabel');
+      const clinicBox = document.getElementById('mobileMenuClinic');
+      if (clinicBox) clinicBox.innerText = sessionLabel ? sessionLabel.innerText : 'Clínica activa';
+
+      const exportBtn = document.getElementById('mobileMenuExportTurnos');
+      if (exportBtn) exportBtn.style.display = VISTA_ACTUAL === 'turnos' ? 'block' : 'none';
+
+      const configBtn = document.getElementById('mobileMenuConfig');
+      if (configBtn) configBtn.style.display = (ROL_ACTUAL === 'admin') ? 'block' : 'none';
+
+      document.getElementById('mobileNavTurnos')?.classList.toggle('active-view', VISTA_ACTUAL === 'turnos');
+      document.getElementById('mobileNavHoy')?.classList.toggle('active-view', VISTA_ACTUAL === 'hoy');
+      document.getElementById('mobileNavPacientes')?.classList.toggle('active-view', VISTA_ACTUAL === 'pacientes');
+    }
+
+    function renderizarSemanaMovil() {
+      const strip = document.getElementById('mobileWeekStrip');
+      if (!strip) return;
+
+      if (!esVistaMovilAgenda() || VISTA_ACTUAL !== 'turnos') {
+        strip.innerHTML = '';
+        strip.style.display = 'none';
+        return;
+      }
+
+      const inicioSemana = obtenerLunesDeSemana(new Date(FECHA_MOVIL_ACTUAL));
+      const dias = obtenerDiasVisiblesSemana(inicioSemana);
+      const activa = formatearFechaISO(FECHA_MOVIL_ACTUAL);
+
+      strip.style.display = 'flex';
+      strip.innerHTML = dias.map(dia => {
+        const fechaISO = dia.fechaISO;
+        const activo = fechaISO === activa;
+        return `
+          <button class="mobile-week-chip ${activo ? 'active' : ''}" onclick="seleccionarFechaManual('${fechaISO}')">
+            <span class="mobile-week-chip-day">${e(dia.abrev)}</span>
+            <span class="mobile-week-chip-date">${String(dia.fecha.getDate()).padStart(2, '0')}/${String(dia.fecha.getMonth() + 1).padStart(2, '0')}</span>
+          </button>`;
+      }).join('');
+    }
+
     function sincronizarDatepickers(fechaISO) {
       const d1 = document.getElementById('datepicker');
       const d2 = document.getElementById('mobileDatepicker');
@@ -6493,6 +6861,8 @@
 
     function renderizarCalendarioCompleto() {
       actualizarEtiquetasMes();
+      renderizarSemanaMovil();
+      actualizarAccesosMoviles();
 
       const grid = document.getElementById('calendarGrid');
       grid.innerHTML = '';
