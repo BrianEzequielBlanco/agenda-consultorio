@@ -4214,6 +4214,65 @@
     }
 
 
+
+    /* =====================================================
+       V85: Hoy mobile - botones en 2 columnas
+       Corrige la regla mobile que los forzaba a una sola columna.
+       Solo afecta la solapa Hoy en pantallas chicas.
+       ===================================================== */
+    @media (max-width: 980px) {
+      .hoy-actions {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+        width: 100% !important;
+        justify-content: stretch !important;
+        align-items: stretch !important;
+      }
+
+      .hoy-status-picker {
+        grid-column: 1 / -1 !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        margin-right: 0 !important;
+      }
+
+      .hoy-status-pill {
+        width: 100% !important;
+        min-height: 40px !important;
+      }
+
+      .hoy-actions .btn-table-action {
+        width: 100% !important;
+        min-width: 0 !important;
+        min-height: 40px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        white-space: normal !important;
+        line-height: 1.15 !important;
+      }
+
+      .hoy-status-menu {
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+      }
+    }
+
+    @media (max-width: 340px) {
+      .hoy-actions {
+        gap: 7px !important;
+      }
+
+      .hoy-actions .btn-table-action {
+        font-size: 11px !important;
+        padding-inline: 8px !important;
+      }
+    }
+
+
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
