@@ -4297,6 +4297,95 @@
     }
 
 
+
+    /* V87: Fichero - buscador compacto sin afectar Para recordar */
+    body.pacientes-subvista-fichero .patients-filter-card {
+      padding: 12px 14px !important;
+      margin-bottom: 14px !important;
+      align-items: flex-start !important;
+      justify-content: flex-start !important;
+      min-height: auto !important;
+    }
+
+    body.pacientes-subvista-fichero .patients-filter-card > div {
+      width: auto !important;
+      max-width: 760px !important;
+    }
+
+    body.pacientes-subvista-fichero .patients-filter-fields {
+      display: flex !important;
+      align-items: flex-end !important;
+      justify-content: flex-start !important;
+      gap: 10px !important;
+      flex-wrap: nowrap !important;
+    }
+
+    body.pacientes-subvista-fichero .filter-group-global {
+      flex: 0 0 420px !important;
+      width: 420px !important;
+      max-width: 420px !important;
+    }
+
+    body.pacientes-subvista-fichero .filter-input-global {
+      width: 100% !important;
+      height: 40px !important;
+    }
+
+    body.pacientes-subvista-fichero .patients-filter-fields .btn-table-action {
+      height: 40px !important;
+      white-space: nowrap !important;
+      margin: 0 !important;
+      align-self: flex-end !important;
+    }
+
+    body.pacientes-subvista-fichero #filtroPacientesInfo {
+      margin-top: 7px !important;
+      font-size: 12px !important;
+    }
+
+    @media (min-width: 981px) {
+      body.pacientes-subvista-fichero .patients-filter-card {
+        width: fit-content !important;
+        max-width: min(760px, calc(100vw - 44px)) !important;
+      }
+    }
+
+    @media (max-width: 980px) {
+      body.pacientes-subvista-fichero .patients-filter-card {
+        width: 100% !important;
+        padding: 12px !important;
+        border-radius: 14px !important;
+      }
+
+      body.pacientes-subvista-fichero .patients-filter-card > div {
+        width: 100% !important;
+        max-width: none !important;
+      }
+
+      body.pacientes-subvista-fichero .patients-filter-fields {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 9px !important;
+      }
+
+      body.pacientes-subvista-fichero .filter-group-global {
+        width: 100% !important;
+        max-width: none !important;
+        flex: 1 1 auto !important;
+      }
+
+      body.pacientes-subvista-fichero .filter-input-global {
+        width: 100% !important;
+        height: 42px !important;
+      }
+
+      body.pacientes-subvista-fichero .patients-filter-fields .btn-table-action {
+        width: 100% !important;
+        height: 40px !important;
+      }
+    }
+
+
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -7005,6 +7094,9 @@
       const titulo = document.getElementById('pacientesTitulo');
       const subtitulo = document.getElementById('pacientesSubtitulo');
       const esFichero = SUBVISTA_PACIENTES !== 'recordar';
+
+      document.body.classList.toggle('pacientes-subvista-fichero', esFichero);
+      document.body.classList.toggle('pacientes-subvista-recordar', !esFichero);
 
       if (titulo) titulo.innerText = esFichero ? 'Pacientes' : 'Para recordar';
       if (subtitulo) {
