@@ -4147,6 +4147,38 @@
     }
 
 
+
+    /* =====================================================
+       V83: ocultar controles de día mobile en login
+       Solo se muestran cuando:
+       - la app está autenticada;
+       - estamos en la vista Agenda.
+       ===================================================== */
+
+    .mobile-day-controls,
+    #mobileDayControls,
+    #mobileAgendaDayControls,
+    .mobile-agenda-day-controls {
+      display: none !important;
+    }
+
+    @media (max-width: 980px) {
+      body.app-authenticated.mobile-view-turnos .mobile-day-controls,
+      body.app-authenticated.mobile-view-turnos #mobileDayControls,
+      body.app-authenticated.mobile-view-turnos #mobileAgendaDayControls,
+      body.app-authenticated.mobile-view-turnos .mobile-agenda-day-controls {
+        display: flex !important;
+      }
+
+      body:not(.app-authenticated) .mobile-day-controls,
+      body:not(.app-authenticated) #mobileDayControls,
+      body:not(.app-authenticated) #mobileAgendaDayControls,
+      body:not(.app-authenticated) .mobile-agenda-day-controls {
+        display: none !important;
+      }
+    }
+
+
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -4860,7 +4892,7 @@
     }
 
     function mostrarPantallaLogin(mensaje) {
-      document.body.classList.remove('app-authenticated');
+      document.body.classList.remove('app-authenticated', 'mobile-view-turnos', 'mobile-view-hoy', 'mobile-view-pacientes');
       const err = document.getElementById('authError');
       if (err) {
         err.innerText = mensaje || '';
@@ -4975,7 +5007,8 @@
         label.title = `Clínica activa: ${CLINICA_ACTUAL.nombre || CLINICA_ID}`;
       }
 
-      document.body.classList.add('app-authenticated');
+      document.body.classList.add('app-authenticated')
+      sincronizarClaseVistaMobile();
       localStorage.setItem('agenda_consultorio_session_day', obtenerClaveDiaLocal());
       programarCierreAutomaticoMedianoche();
 
@@ -5915,8 +5948,16 @@
         .trim();
     }
 
+
+    function sincronizarClaseVistaMobile() {
+      document.body.classList.toggle('mobile-view-turnos', VISTA_ACTUAL === 'turnos');
+      document.body.classList.toggle('mobile-view-hoy', VISTA_ACTUAL === 'hoy');
+      document.body.classList.toggle('mobile-view-pacientes', VISTA_ACTUAL === 'pacientes');
+    }
+
     function cambiarVista(vista) {
       VISTA_ACTUAL = vista;
+      sincronizarClaseVistaMobile();
       const esTurnos = vista === 'turnos';
       const esHoy = vista === 'hoy';
       const esPacientes = vista === 'pacientes';
