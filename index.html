@@ -2916,6 +2916,15 @@
       color: var(--red);
     }
 
+    body.pacientes-subvista-resultados .metric-card-recordar {
+      border-left-color: #16a34a;
+    }
+
+    body.pacientes-subvista-resultados .metric-card-recordar .metric-lbl,
+    body.pacientes-subvista-resultados .metric-card-recordar .metric-val {
+      color: #15803d;
+    }
+
     .filter-input-wide {
       width: 300px;
     }
@@ -4620,7 +4629,7 @@
 
     .resultados-summary {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 12px;
       margin-bottom: 14px;
     }
@@ -4785,10 +4794,6 @@
       .resultados-summary {
         grid-template-columns: 1fr 1fr;
         gap: 10px;
-      }
-
-      .resultado-kpi:last-child {
-        grid-column: 1 / -1;
       }
 
       .resultados-card {
@@ -7868,12 +7873,8 @@
             <div class="resultado-kpi-value">${e(resultados.enviados)}</div>
           </div>
           <div class="resultado-kpi good">
-            <div class="resultado-kpi-label">Sacaron turno después</div>
+            <div class="resultado-kpi-label">Recuperados</div>
             <div class="resultado-kpi-value">${e(resultados.recuperados)}</div>
-          </div>
-          <div class="resultado-kpi warn">
-            <div class="resultado-kpi-label">Tasa de recuperación</div>
-            <div class="resultado-kpi-value">${e(resultados.tasa)}%</div>
           </div>
         </div>`;
 
