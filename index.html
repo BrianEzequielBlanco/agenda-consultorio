@@ -4569,6 +4569,237 @@
     */
 
 
+
+    /* =====================================================
+       V94: Resultados de recordatorios
+       Mide si un paciente sacó turno después de Marcar recordado.
+       ===================================================== */
+    body.pacientes-subvista-resultados .patients-filter-card {
+      padding: 12px 14px !important;
+      margin-bottom: 14px !important;
+      align-items: flex-start !important;
+      justify-content: flex-start !important;
+      min-height: auto !important;
+    }
+
+    body.pacientes-subvista-resultados .patients-filter-card > div {
+      width: auto !important;
+      max-width: 760px !important;
+    }
+
+    body.pacientes-subvista-resultados .patients-filter-fields {
+      display: flex !important;
+      align-items: flex-end !important;
+      justify-content: flex-start !important;
+      gap: 10px !important;
+      flex-wrap: nowrap !important;
+    }
+
+    body.pacientes-subvista-resultados .filter-group-global {
+      flex: 0 0 420px !important;
+      width: 420px !important;
+      max-width: 420px !important;
+    }
+
+    body.pacientes-subvista-resultados .filter-input-global {
+      width: 100% !important;
+      height: 40px !important;
+    }
+
+    body.pacientes-subvista-resultados .patients-filter-fields .btn-table-action {
+      height: 40px !important;
+      white-space: nowrap !important;
+      margin: 0 !important;
+      align-self: flex-end !important;
+    }
+
+    body.pacientes-subvista-resultados #filtroPacientesInfo {
+      margin-top: 7px !important;
+      font-size: 12px !important;
+    }
+
+    .resultados-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .resultado-kpi {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px 16px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .resultado-kpi-label {
+      text-transform: uppercase;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--muted);
+      letter-spacing: .03em;
+      margin-bottom: 8px;
+    }
+
+    .resultado-kpi-value {
+      font-size: 30px;
+      line-height: 1;
+      font-weight: 900;
+      color: var(--ink);
+    }
+
+    .resultado-kpi.good .resultado-kpi-value {
+      color: #047857;
+    }
+
+    .resultado-kpi.warn .resultado-kpi-value {
+      color: #b45309;
+    }
+
+    .resultados-card {
+      display: grid;
+      grid-template-columns: minmax(220px, 1.5fr) minmax(120px, .8fr) minmax(150px, .9fr) minmax(150px, .9fr) minmax(130px, .8fr);
+      gap: 18px;
+      align-items: center;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-left: 5px solid #facc15;
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .resultados-card.recuperado {
+      border-left-color: #22c55e;
+      background: linear-gradient(90deg, rgba(236,253,245,.9), #fff 48%);
+    }
+
+    .resultado-paciente {
+      font-size: 14px;
+      font-weight: 900;
+      color: var(--ink);
+      margin-bottom: 4px;
+    }
+
+    .resultado-sub {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .resultado-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      color: var(--muted);
+      font-weight: 900;
+      margin-bottom: 5px;
+    }
+
+    .resultado-value {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .badge-resultado-recuperado {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 7px 10px;
+      background: #dcfce7;
+      border: 1px solid #86efac;
+      color: #047857;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .badge-resultado-pendiente {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 7px 10px;
+      background: #fef3c7;
+      border: 1px solid #fde68a;
+      color: #92400e;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .resultados-error {
+      border: 1px solid #fecaca;
+      background: #fff1f2;
+      color: #991b1b;
+      border-radius: 14px;
+      padding: 14px 16px;
+      font-weight: 700;
+    }
+
+    @media (min-width: 981px) {
+      body.pacientes-subvista-resultados .patients-filter-card {
+        width: fit-content !important;
+        max-width: min(760px, calc(100vw - 44px)) !important;
+      }
+    }
+
+    @media (max-width: 980px) {
+      body.pacientes-subvista-resultados .patients-filter-card {
+        width: 100% !important;
+        padding: 12px !important;
+        border-radius: 14px !important;
+      }
+
+      body.pacientes-subvista-resultados .patients-filter-card > div {
+        width: 100% !important;
+        max-width: none !important;
+      }
+
+      body.pacientes-subvista-resultados .patients-filter-fields {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 9px !important;
+      }
+
+      body.pacientes-subvista-resultados .filter-group-global {
+        width: 100% !important;
+        max-width: none !important;
+        flex: 1 1 auto !important;
+      }
+
+      body.pacientes-subvista-resultados .filter-input-global {
+        width: 100% !important;
+        height: 42px !important;
+      }
+
+      body.pacientes-subvista-resultados .patients-filter-fields .btn-table-action {
+        width: 100% !important;
+        height: 40px !important;
+      }
+
+      .resultados-summary {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .resultado-kpi:last-child {
+        grid-column: 1 / -1;
+      }
+
+      .resultados-card {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 14px;
+      }
+    }
+
+
+
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -4725,16 +4956,19 @@
         <button id="tabPacientesRecordar" class="patients-mode-tab" onclick="cambiarSubvistaPacientes('recordar')">
           Para recordar <span id="tabRecordarCount" class="patients-tab-count">0</span>
         </button>
+        <button id="tabPacientesResultados" class="patients-mode-tab" onclick="cambiarSubvistaPacientes('resultados')">
+          Resultados <span id="tabResultadosCount" class="patients-tab-count">0</span>
+        </button>
       </div>
 
       <div class="metrics-panel">
         <div class="metric-card">
-          <div class="metric-lbl">Fichas de pacientes</div>
+          <div id="mTotalPacientesLabel" class="metric-lbl">Fichas de pacientes</div>
           <div id="mTotalPacientes" class="metric-val">0</div>
         </div>
 
         <div class="metric-card metric-card-recordar">
-          <div class="metric-lbl">Acciones pendientes</div>
+          <div id="mParaRecordarLabel" class="metric-lbl">Acciones pendientes</div>
           <div id="mParaRecordar" class="metric-val">0</div>
         </div>
       </div>
@@ -5150,6 +5384,8 @@
     let BASE_DATOS = [];
     let HORAS_PERMITIDAS = [];
     let SEGUIMIENTO_COMPACTO = {};
+    let RECORDATORIOS_HISTORIAL = [];
+    let RESULTADOS_RECORDATORIOS_ERROR = '';
     let PACIENTES_DB = [];
     let TRATAMIENTOS_DB = {};
     let CONFIG_CLINICA = null;
@@ -5685,6 +5921,30 @@
         });
       } else {
         console.warn('No se pudieron cargar recordatorios:', errorRecordatorios.message);
+      }
+
+      RESULTADOS_RECORDATORIOS_ERROR = '';
+      RECORDATORIOS_HISTORIAL = [];
+
+      const { data: historialRecordatorios, error: errorHistorialRecordatorios } = await supabaseClient
+        .from('recordatorios_historial')
+        .select('id, clinica_id, paciente_id, fecha_recordatorio, ultima_visita_previa, created_at')
+        .eq('clinica_id', CLINICA_ID)
+        .order('fecha_recordatorio', { ascending: false })
+        .order('created_at', { ascending: false });
+
+      if (!errorHistorialRecordatorios) {
+        RECORDATORIOS_HISTORIAL = (historialRecordatorios || []).map(r => ({
+          id: r.id,
+          clinicaId: r.clinica_id,
+          pacienteId: r.paciente_id,
+          fechaRecordatorio: r.fecha_recordatorio,
+          ultimaVisitaPrevia: r.ultima_visita_previa || '',
+          createdAt: r.created_at ? new Date(r.created_at).getTime() : 0
+        }));
+      } else {
+        RESULTADOS_RECORDATORIOS_ERROR = errorHistorialRecordatorios.message || 'No se pudo cargar el historial de recordatorios.';
+        console.warn('No se pudo cargar recordatorios_historial:', errorHistorialRecordatorios.message);
       }
 
       const { data: tratamientos, error: errorTratamientos } = await supabaseClient
@@ -6506,7 +6766,9 @@
     }
 
     function cambiarSubvistaPacientes(tipo) {
-      SUBVISTA_PACIENTES = tipo === 'recordar' ? 'recordar' : 'fichero';
+      SUBVISTA_PACIENTES = tipo === 'recordar'
+        ? 'recordar'
+        : (tipo === 'resultados' ? 'resultados' : 'fichero');
       calcularYRenderizarPacientes();
       actualizarMobileShellV79();
     }
@@ -7493,6 +7755,182 @@
       }
     }
 
+    function obtenerUltimaVisitaPacienteAntesDe(pacienteId, fechaLimiteISO) {
+      const id = String(pacienteId || '');
+      const fechaLimite = String(fechaLimiteISO || '');
+      const fechas = BASE_DATOS
+        .filter(t => String(t.pacienteId || '') === id && t.extension !== true && (!fechaLimite || String(t.fecha || '') <= fechaLimite))
+        .map(t => String(t.fecha || ''))
+        .filter(Boolean)
+        .sort();
+
+      return fechas.length ? fechas[fechas.length - 1] : '';
+    }
+
+    function buscarPrimerTurnoPosteriorARecordatorio(pacienteId, fechaRecordatorio, createdAtRecordatorio) {
+      const id = String(pacienteId || '');
+      const fechaBase = String(fechaRecordatorio || '');
+      const recTs = Number(createdAtRecordatorio || 0);
+
+      const candidatos = BASE_DATOS
+        .filter(t => String(t.pacienteId || '') === id && t.extension !== true)
+        .filter(t => {
+          const fechaTurno = String(t.fecha || '');
+          if (!fechaTurno || !fechaBase) return false;
+          if (fechaTurno < fechaBase) return false;
+
+          // Si tenemos created_at en ambos lados, medimos "sacó turno después"
+          // por creación real del turno. Si falta alguno, usamos la fecha del turno como respaldo.
+          const turnoTs = Number(t.timestamp || 0);
+          if (recTs && turnoTs) return turnoTs > recTs;
+          return fechaTurno >= fechaBase;
+        })
+        .sort((a, b) => {
+          const f = String(a.fecha || '').localeCompare(String(b.fecha || ''));
+          if (f !== 0) return f;
+          return String(a.hora || '').localeCompare(String(b.hora || ''));
+        });
+
+      return candidatos[0] || null;
+    }
+
+    function calcularResultadosRecordatorios() {
+      const pacientesPorId = new Map((PACIENTES_DB || []).map(p => [String(p.id || ''), p]));
+      const filas = (RECORDATORIOS_HISTORIAL || []).map(r => {
+        const paciente = pacientesPorId.get(String(r.pacienteId || '')) || {};
+        const primerTurno = buscarPrimerTurnoPosteriorARecordatorio(r.pacienteId, r.fechaRecordatorio, r.createdAt);
+        const recuperado = !!primerTurno;
+        const nombres = normalizarNombrePaciente(paciente.nombre, paciente.apellido, paciente.nombre_completo);
+        const nombre = construirNombreCompleto(nombres.nombre, nombres.apellido) || 'Paciente sin nombre';
+
+        return {
+          id: r.id,
+          pacienteId: String(r.pacienteId || ''),
+          paciente,
+          nombre,
+          dni: paciente.dni || '',
+          telefono: paciente.telefono || '',
+          fechaRecordatorio: r.fechaRecordatorio || '',
+          ultimaVisitaPrevia: r.ultimaVisitaPrevia || '',
+          createdAt: r.createdAt || 0,
+          recuperado,
+          nuevoTurno: primerTurno
+        };
+      });
+
+      const enviados = filas.length;
+      const recuperados = filas.filter(f => f.recuperado).length;
+      const pendientes = enviados - recuperados;
+      const tasa = enviados ? Math.round((recuperados * 100) / enviados) : 0;
+
+      filas.sort((a, b) => {
+        if (a.recuperado !== b.recuperado) return a.recuperado ? -1 : 1;
+        const fr = String(b.fechaRecordatorio || '').localeCompare(String(a.fechaRecordatorio || ''));
+        if (fr !== 0) return fr;
+        return (b.createdAt || 0) - (a.createdAt || 0);
+      });
+
+      return { enviados, recuperados, pendientes, tasa, filas };
+    }
+
+    function filtrarResultadosRecordatorios(filas, filtroGlobal, filtroGlobalNumeros) {
+      if (!filtroGlobal && !filtroGlobalNumeros) return filas;
+
+      return filas.filter(f => {
+        const textoGeneral = normalizarTexto(`${f.nombre} ${f.dni || ''} ${f.telefono || ''} ${f.fechaRecordatorio || ''} ${f.nuevoTurno?.fecha || ''}`);
+        const textoNumerico = `${f.dni || ''} ${f.telefono || ''}`.replace(/\D/g, '');
+        const coincideTexto = filtroGlobal ? textoGeneral.includes(filtroGlobal) : false;
+        const coincideNumero = filtroGlobalNumeros ? textoNumerico.includes(filtroGlobalNumeros) : false;
+        return coincideTexto || coincideNumero;
+      });
+    }
+
+    function renderizarResultadosRecordatorios(board, filtroGlobal, filtroGlobalNumeros) {
+      if (!board) return;
+
+      if (RESULTADOS_RECORDATORIOS_ERROR) {
+        board.innerHTML = `
+          <div class="resultados-error">
+            No se pudo cargar la solapa Resultados. Es probable que falte ejecutar la migración SQL v94.
+            <br><br>
+            Detalle: ${e(RESULTADOS_RECORDATORIOS_ERROR)}
+          </div>`;
+        return;
+      }
+
+      const resultados = calcularResultadosRecordatorios();
+      const filasFiltradas = filtrarResultadosRecordatorios(resultados.filas, filtroGlobal, filtroGlobalNumeros);
+
+      const resumenHtml = `
+        <div class="resultados-summary">
+          <div class="resultado-kpi">
+            <div class="resultado-kpi-label">Recordatorios enviados</div>
+            <div class="resultado-kpi-value">${e(resultados.enviados)}</div>
+          </div>
+          <div class="resultado-kpi good">
+            <div class="resultado-kpi-label">Sacaron turno después</div>
+            <div class="resultado-kpi-value">${e(resultados.recuperados)}</div>
+          </div>
+          <div class="resultado-kpi warn">
+            <div class="resultado-kpi-label">Tasa de recuperación</div>
+            <div class="resultado-kpi-value">${e(resultados.tasa)}%</div>
+          </div>
+        </div>`;
+
+      if (resultados.enviados === 0) {
+        board.innerHTML = resumenHtml + `
+          <div class="empty-state recordar-empty">
+            <div class="empty-title">Todavía no hay resultados.</div>
+            <div class="empty-text">Cuando marques pacientes como recordados, aparecerán acá. Si luego sacan un turno, se contarán como recuperados.</div>
+          </div>`;
+        return;
+      }
+
+      if (filasFiltradas.length === 0) {
+        board.innerHTML = resumenHtml + `<div class="empty-state">No se encontró ningún resultado con ese filtro.</div>`;
+        return;
+      }
+
+      const rows = filasFiltradas.map(f => {
+        const nuevoTurnoTxt = f.nuevoTurno
+          ? `${convertirFechaLatina(f.nuevoTurno.fecha)} ${f.nuevoTurno.hora || ''} hs`
+          : '—';
+        const estadoHtml = f.recuperado
+          ? `<span class="badge-resultado-recuperado">Recuperado</span>`
+          : `<span class="badge-resultado-pendiente">Sin turno nuevo</span>`;
+
+        return `
+          <div class="resultados-card ${f.recuperado ? 'recuperado' : ''}">
+            <div>
+              <div class="resultado-paciente">${e(f.nombre)}</div>
+              <div class="resultado-sub">DNI: ${e(f.dni || 'S/D')} · Tel: ${e(f.telefono || 'S/T')}</div>
+            </div>
+
+            <div>
+              <div class="resultado-label">Recordado el</div>
+              <div class="resultado-value">${e(f.fechaRecordatorio ? convertirFechaLatina(f.fechaRecordatorio) : '—')}</div>
+            </div>
+
+            <div>
+              <div class="resultado-label">Última visita previa</div>
+              <div class="resultado-value">${e(f.ultimaVisitaPrevia ? convertirFechaLatina(f.ultimaVisitaPrevia) : '—')}</div>
+            </div>
+
+            <div>
+              <div class="resultado-label">Nuevo turno</div>
+              <div class="resultado-value">${e(nuevoTurnoTxt)}</div>
+            </div>
+
+            <div>
+              <div class="resultado-label">Resultado</div>
+              <div class="resultado-value">${estadoHtml}</div>
+            </div>
+          </div>`;
+      }).join('');
+
+      board.innerHTML = resumenHtml + rows;
+    }
+
     function obtenerDiasUmbralRecordatorio() {
       const cfg = CONFIG_CLINICA || {};
       const candidatos = [
@@ -7672,20 +8110,28 @@
 
       const titulo = document.getElementById('pacientesTitulo');
       const subtitulo = document.getElementById('pacientesSubtitulo');
-      const esFichero = SUBVISTA_PACIENTES !== 'recordar';
+      const esRecordar = SUBVISTA_PACIENTES === 'recordar';
+      const esResultados = SUBVISTA_PACIENTES === 'resultados';
+      const esFichero = !esRecordar && !esResultados;
 
       document.body.classList.toggle('pacientes-subvista-fichero', esFichero);
-      document.body.classList.toggle('pacientes-subvista-recordar', !esFichero);
+      document.body.classList.toggle('pacientes-subvista-recordar', esRecordar);
+      document.body.classList.toggle('pacientes-subvista-resultados', esResultados);
 
-      if (titulo) titulo.innerText = esFichero ? 'Pacientes' : 'Para recordar';
+      if (titulo) {
+        titulo.innerText = esFichero ? 'Pacientes' : (esResultados ? 'Resultados' : 'Para recordar');
+      }
       if (subtitulo) {
         subtitulo.innerText = esFichero
           ? 'Fichero general estilo planilla: buscá, cargá y mantené datos de pacientes. Más adelante puede servir para importar o descargar información.'
-          : 'Lista de acción: solo pacientes que superaron el umbral de recordatorio y no tienen turno futuro.';
+          : (esResultados
+              ? 'Medí cuántos pacientes sacaron turno después de ser marcados como recordados.'
+              : 'Lista de acción: solo pacientes que superaron el umbral de recordatorio y no tienen turno futuro.');
       }
 
       document.getElementById('tabPacientesFichero')?.classList.toggle('active', esFichero);
-      document.getElementById('tabPacientesRecordar')?.classList.toggle('active', !esFichero);
+      document.getElementById('tabPacientesRecordar')?.classList.toggle('active', esRecordar);
+      document.getElementById('tabPacientesResultados')?.classList.toggle('active', esResultados);
       const btnAgregarFichaPacientes = document.getElementById('btnAgregarFichaPacientes');
       const btnExportarFichero = document.getElementById('btnExportarFichero');
       const btnImportarFichero = document.getElementById('btnImportarFichero');
@@ -7715,9 +8161,11 @@
 
       const listaBase = esFichero
         ? listaPacientes
-        : listaPacientes
-            .filter(p => p.debeRecordar)
-            .sort((a, b) => (b.diasTranscurridos || 0) - (a.diasTranscurridos || 0));
+        : (esResultados
+            ? []
+            : listaPacientes
+                .filter(p => p.debeRecordar)
+                .sort((a, b) => (b.diasTranscurridos || 0) - (a.diasTranscurridos || 0)));
 
       const listaFiltrada = listaBase.filter(coincideFiltros);
       if (esFichero) ULTIMA_LISTA_FICHERO = [...listaFiltrada];
@@ -7726,10 +8174,18 @@
       if (filtroInfo) {
         const hayFiltro = !!(filtroGlobal || filtroGlobalNumeros);
         const textoFiltro = String(FILTRO_GLOBAL_PACIENTES || '').trim();
-        const baseTxt = esFichero ? 'fichas' : 'pacientes para recordar';
-        filtroInfo.innerText = hayFiltro
-          ? `Filtro activo: "${textoFiltro}". Resultado: ${listaFiltrada.length} ${baseTxt}.`
-          : (esFichero ? 'Mostrando todas las fichas.' : `Mostrando ${listaFiltrada.length} pacientes con ${diasUmbralRecordatorio} días o más desde última visita/recordatorio y sin turno futuro.`);
+        if (esResultados) {
+          const resultadosTmp = calcularResultadosRecordatorios();
+          const filtradosTmp = filtrarResultadosRecordatorios(resultadosTmp.filas, filtroGlobal, filtroGlobalNumeros);
+          filtroInfo.innerText = hayFiltro
+            ? `Filtro activo: "${textoFiltro}". Resultado: ${filtradosTmp.length} recordatorios.`
+            : `Mostrando ${resultadosTmp.enviados} recordatorios enviados y ${resultadosTmp.recuperados} pacientes recuperados.`;
+        } else {
+          const baseTxt = esFichero ? 'fichas' : 'pacientes para recordar';
+          filtroInfo.innerText = hayFiltro
+            ? `Filtro activo: "${textoFiltro}". Resultado: ${listaFiltrada.length} ${baseTxt}.`
+            : (esFichero ? 'Mostrando todas las fichas.' : `Mostrando ${listaFiltrada.length} pacientes con ${diasUmbralRecordatorio} días o más desde última visita/recordatorio y sin turno futuro.`);
+        }
       }
 
       const board = document.getElementById('tablaPacientesBody');
@@ -7751,6 +8207,11 @@
         if (!p.proximoTurno) return '—';
         return `${convertirFechaLatina(p.proximoTurno.fecha)} ${p.proximoTurno.hora || ''} hs`;
       };
+
+      if (esResultados) {
+        renderizarResultadosRecordatorios(board, filtroGlobal, filtroGlobalNumeros);
+        return;
+      }
 
       if (listaFiltrada.length === 0) {
         if (!esFichero && !filtroGlobal && !filtroGlobalNumeros) {
@@ -7897,13 +8358,29 @@
     function actualizarMetricas(totalPacientes, accionesPendientes, totalAlertasRecordar) {
       const total = document.getElementById('mTotalPacientes');
       const recordar = document.getElementById('mParaRecordar');
+      const totalLabel = document.getElementById('mTotalPacientesLabel');
+      const recordarLabel = document.getElementById('mParaRecordarLabel');
       const tabF = document.getElementById('tabFicheroCount');
       const tabR = document.getElementById('tabRecordarCount');
+      const tabResultados = document.getElementById('tabResultadosCount');
+      const resultados = calcularResultadosRecordatorios();
+      const esResultados = SUBVISTA_PACIENTES === 'resultados';
 
-      if (total) total.innerText = totalPacientes;
-      if (recordar) recordar.innerText = accionesPendientes;
+      if (esResultados) {
+        if (totalLabel) totalLabel.innerText = 'Recordatorios enviados';
+        if (recordarLabel) recordarLabel.innerText = 'Recuperados';
+        if (total) total.innerText = resultados.enviados;
+        if (recordar) recordar.innerText = resultados.recuperados;
+      } else {
+        if (totalLabel) totalLabel.innerText = 'Fichas de pacientes';
+        if (recordarLabel) recordarLabel.innerText = 'Acciones pendientes';
+        if (total) total.innerText = totalPacientes;
+        if (recordar) recordar.innerText = accionesPendientes;
+      }
+
       if (tabF) tabF.innerText = totalPacientes;
       if (tabR) tabR.innerText = totalAlertasRecordar;
+      if (tabResultados) tabResultados.innerText = resultados.recuperados;
     }
 
     function convertirFechaLatina(fechaISO) {
@@ -7959,6 +8436,28 @@
         return;
       }
 
+      const ultimaVisitaPrevia = obtenerUltimaVisitaPacienteAntesDe(id, hoyStr) || null;
+
+      const { data: historialInsertado, error: errorHistorial } = await supabaseClient
+        .from('recordatorios_historial')
+        .insert({
+          clinica_id: CLINICA_ID,
+          paciente_id: id,
+          fecha_recordatorio: hoyStr,
+          ultima_visita_previa: ultimaVisitaPrevia
+        })
+        .select('id, clinica_id, paciente_id, fecha_recordatorio, ultima_visita_previa, created_at')
+        .single();
+
+      if (errorHistorial) {
+        alert(
+          'No se pudo guardar el resultado del recordatorio.\n\n' +
+          'Es probable que falte ejecutar la migración SQL v94 de Resultados.\n\n' +
+          'Detalle: ' + errorHistorial.message
+        );
+        return;
+      }
+
       const { error } = await supabaseClient
         .from('recordatorios')
         .upsert({
@@ -7971,13 +8470,32 @@
         });
 
       if (error) {
+        if (historialInsertado?.id) {
+          await supabaseClient
+            .from('recordatorios_historial')
+            .delete()
+            .eq('id', historialInsertado.id);
+        }
+
         alert('Error guardando recordatorio: ' + error.message);
         return;
       }
 
       SEGUIMIENTO_COMPACTO[id] = { ultimoRecordatorio: hoyStr, estado: 'Recordatorio enviado' };
+
+      if (historialInsertado) {
+        RECORDATORIOS_HISTORIAL.unshift({
+          id: historialInsertado.id,
+          clinicaId: historialInsertado.clinica_id,
+          pacienteId: historialInsertado.paciente_id,
+          fechaRecordatorio: historialInsertado.fecha_recordatorio,
+          ultimaVisitaPrevia: historialInsertado.ultima_visita_previa || '',
+          createdAt: historialInsertado.created_at ? new Date(historialInsertado.created_at).getTime() : Date.now()
+        });
+      }
+
       calcularYRenderizarPacientes();
-      mostrarToast(`Recordatorio marcado. El paciente volverá a aparecer si pasan ${obtenerDiasUmbralRecordatorio()} días sin turno nuevo.`);
+      mostrarToast(`Recordatorio marcado. Si el paciente saca turno después, contará como recuperado.`);
     }
 
     async function borrarFichaPaciente(pacienteId, event) {
