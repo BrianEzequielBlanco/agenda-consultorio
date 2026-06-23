@@ -4561,6 +4561,14 @@
     }
 
 
+
+    /* V93:
+       Importar turnos: si el archivo no trae Estado o viene vacío,
+       se guarda estado_hoy = 'pendiente' para respetar NOT NULL.
+       Visualmente equivale a Recordatorio enviado / pendiente.
+    */
+
+
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -7198,7 +7206,7 @@
             fecha: item.fecha,
             hora: item.slots[0],
             confirmado: item.confirmado === true,
-            estado_hoy: item.estadoHoy || null,
+            estado_hoy: item.estadoHoy || 'pendiente',
             extension: false,
             parent_id: null
           };
@@ -7223,7 +7231,7 @@
               fecha: item.fecha,
               hora,
               confirmado: item.confirmado === true,
-              estado_hoy: item.estadoHoy || null,
+              estado_hoy: item.estadoHoy || 'pendiente',
               extension: true,
               parent_id: turnoBase.id
             }));
