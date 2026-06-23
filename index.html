@@ -7866,17 +7866,9 @@
       const resultados = calcularResultadosRecordatorios();
       const filasFiltradas = filtrarResultadosRecordatorios(resultados.filas, filtroGlobal, filtroGlobalNumeros);
 
-      const resumenHtml = `
-        <div class="resultados-summary">
-          <div class="resultado-kpi">
-            <div class="resultado-kpi-label">Recordatorios enviados</div>
-            <div class="resultado-kpi-value">${e(resultados.enviados)}</div>
-          </div>
-          <div class="resultado-kpi good">
-            <div class="resultado-kpi-label">Recuperados</div>
-            <div class="resultado-kpi-value">${e(resultados.recuperados)}</div>
-          </div>
-        </div>`;
+      // Las métricas de Resultados ya se muestran arriba en los dos bloques principales.
+      // No las repetimos dentro de la lista para evitar duplicación visual.
+      const resumenHtml = '';
 
       if (resultados.enviados === 0) {
         board.innerHTML = resumenHtml + `
