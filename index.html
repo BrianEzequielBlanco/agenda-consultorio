@@ -4544,6 +4544,23 @@
     }
 
 
+    /* V92: importar turnos desde Agenda */
+    #agendaToolbar #ctrlImportTurnos {
+      white-space: nowrap;
+      word-break: keep-all;
+      line-height: 1;
+      padding-inline: 12px;
+      min-width: 110px;
+      flex: 0 0 auto;
+    }
+
+    @media (max-width: 980px) {
+      #ctrlImportTurnos {
+        display: none !important;
+      }
+    }
+
+
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -4626,6 +4643,7 @@
 
     <div class="mobile-menu-v79-section">Acciones</div>
     <button id="mobileMenuExportTurnosV79" class="mobile-menu-v79-item" type="button" onclick="cerrarMobileMenuV79(); abrirModalExportarTurnos();">📋 Exportar turnos</button>
+    <button id="mobileMenuImportTurnosV92" class="mobile-menu-v79-item" type="button" onclick="cerrarMobileMenuV79(); document.getElementById('inputImportarTurnos')?.click();">📥 Importar turnos</button>
     <button id="mobileMenuExportFicheroV79" class="mobile-menu-v79-item" type="button" onclick="cerrarMobileMenuV79(); exportarFicheroActual();">📄 Exportar CSV</button>
     <button id="mobileMenuImportFicheroV79" class="mobile-menu-v79-item" type="button" onclick="cerrarMobileMenuV79(); document.getElementById('inputImportarFichero')?.click();">📥 Importar fichas</button>
     <button id="mobileMenuAgregarFichaV79" class="mobile-menu-v79-item" type="button" onclick="cerrarMobileMenuV79(); abrirAltaFichaPaciente();">➕ Agregar ficha</button>
@@ -4642,7 +4660,9 @@
         <input type="date" id="datepicker" class="input-date agenda-toolbar-date" onchange="seleccionarFechaManual(this.value)">
       </div>
       <div class="agenda-toolbar-right">
+        <button class="btn-nav" id="ctrlImportTurnos" onclick="document.getElementById('inputImportarTurnos')?.click()">Importar turnos</button>
         <button class="btn-nav" id="ctrlExportTurnos" onclick="abrirModalExportarTurnos()">Exportar turnos</button>
+        <input id="inputImportarTurnos" class="hidden-file-input" type="file" accept=".csv,.xlsx,.xls" onchange="importarTurnosDesdeArchivo(this.files && this.files[0]); this.value='';">
         <button class="btn-nav" id="ctrlHoy" onclick="irHoy()">Ir a hoy</button>
         <button class="btn-nav btn-arrow" id="ctrlPrev" onclick="navegarSemana(-1)">◀</button>
         <button class="btn-nav btn-arrow" id="ctrlNext" onclick="navegarSemana(1)">▶</button>
@@ -6861,6 +6881,392 @@
       descargarCSV(`turnos_${desde}_a_${hasta}.csv`, headers, rows);
       cerrarModales();
       mostrarToast('Turnos exportados en CSV.');
+    }
+
+    function obtenerHeadersBaseTurnosImport() {
+      return [
+        'Fecha',
+        'Desde',
+        'Hasta',
+        'Paciente',
+        'Nombre',
+        'Apellido',
+        'DNI',
+        'Teléfono',
+        'Estado',
+        'Tipo'
+      ];
+    }
+
+    function indiceHeaderImport(headers, aliases) {
+      const normalizados = headers.map(h => normalizarHeaderImport(h));
+      const buscados = aliases.map(a => normalizarHeaderImport(a));
+      return normalizados.findIndex(h => buscados.includes(h));
+    }
+
+    function armarMapaHeadersTurnosImport(headers) {
+      const mapa = {
+        fecha: indiceHeaderImport(headers, ['Fecha']),
+        desde: indiceHeaderImport(headers, ['Desde', 'Hora desde', 'Inicio', 'Hora inicio']),
+        hasta: indiceHeaderImport(headers, ['Hasta', 'Hora hasta', 'Fin', 'Hora fin']),
+        paciente: indiceHeaderImport(headers, ['Paciente', 'Nombre completo']),
+        nombre: indiceHeaderImport(headers, ['Nombre']),
+        apellido: indiceHeaderImport(headers, ['Apellido']),
+        dni: indiceHeaderImport(headers, ['DNI', 'Documento']),
+        telefono: indiceHeaderImport(headers, ['Teléfono', 'Telefono', 'Celular']),
+        estado: indiceHeaderImport(headers, ['Estado']),
+        tipo: indiceHeaderImport(headers, ['Tipo'])
+      };
+
+      const usados = new Set(Object.values(mapa).filter(i => i >= 0));
+      const extras = [];
+      headers.forEach((h, idx) => {
+        const label = String(h || '').trim();
+        if (!label || usados.has(idx)) return;
+        const key = slugCampoPaciente(label);
+        if (!key || extras.some(e => e.key === key)) return;
+        extras.push({ key, label, idx });
+      });
+
+      return { mapa, extras };
+    }
+
+    function validarHeadersTurnosImport(headers) {
+      const { mapa } = armarMapaHeadersTurnosImport(headers);
+      const faltantes = [];
+      if (mapa.fecha < 0) faltantes.push('Fecha');
+      if (mapa.desde < 0) faltantes.push('Desde');
+      if (mapa.paciente < 0 && mapa.nombre < 0) faltantes.push('Paciente o Nombre');
+      if (mapa.dni < 0) faltantes.push('DNI');
+
+      if (faltantes.length) {
+        return {
+          ok: false,
+          mensaje: 'Faltan columnas obligatorias para importar turnos: ' + faltantes.join(', ') + '.\n\n' +
+            'Formato recomendado:\n' + obtenerHeadersBaseTurnosImport().join(' | ') +
+            '\n\nConsejo: exportá turnos desde la agenda y usá ese mismo archivo como plantilla.'
+        };
+      }
+
+      return { ok: true };
+    }
+
+    function parsearFechaImportTurnos(valor) {
+      if (valor instanceof Date && !Number.isNaN(valor.getTime())) {
+        return formatearFechaISO(valor);
+      }
+
+      if (typeof valor === 'number' && Number.isFinite(valor)) {
+        if (window.XLSX && XLSX.SSF && typeof XLSX.SSF.parse_date_code === 'function') {
+          const p = XLSX.SSF.parse_date_code(valor);
+          if (p && p.y && p.m && p.d) {
+            return `${String(p.y).padStart(4, '0')}-${String(p.m).padStart(2, '0')}-${String(p.d).padStart(2, '0')}`;
+          }
+        }
+
+        // Respaldo para fechas seriales de Excel.
+        if (valor > 20000 && valor < 80000) {
+          const ms = Math.round((valor - 25569) * 86400 * 1000);
+          const d = new Date(ms);
+          if (!Number.isNaN(d.getTime())) {
+            return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+          }
+        }
+      }
+
+      const texto = String(valor || '').trim();
+      return parsearFechaFlexible(texto);
+    }
+
+    function normalizarHoraImportTurnos(valor) {
+      if (valor instanceof Date && !Number.isNaN(valor.getTime())) {
+        return `${String(valor.getHours()).padStart(2, '0')}:${String(valor.getMinutes()).padStart(2, '0')}`;
+      }
+
+      if (typeof valor === 'number' && Number.isFinite(valor)) {
+        if (valor >= 0 && valor < 1) {
+          const minutos = Math.round(valor * 24 * 60);
+          return horaDesdeMinutos(minutos);
+        }
+
+        if (valor >= 0 && valor < 24) {
+          const h = Math.floor(valor);
+          const m = Math.round((valor - h) * 60);
+          return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        }
+      }
+
+      const texto = String(valor || '').trim().toLowerCase();
+      const match = texto.match(/(\d{1,2})\s*[:h\.]\s*(\d{2})/);
+      if (match) {
+        const h = Number(match[1]);
+        const m = Number(match[2]);
+        if (h >= 0 && h <= 23 && m >= 0 && m <= 59) {
+          return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        }
+      }
+
+      const soloHora = texto.match(/^(\d{1,2})$/);
+      if (soloHora) {
+        const h = Number(soloHora[1]);
+        if (h >= 0 && h <= 23) return `${String(h).padStart(2, '0')}:00`;
+      }
+
+      return '';
+    }
+
+    function estadoImportTurno(valor) {
+      const txt = normalizarTexto(valor);
+      if (!txt) return { confirmado: false, estadoHoy: '' };
+
+      if (txt.includes('asist') || txt.includes('confirm')) {
+        return { confirmado: true, estadoHoy: 'confirmado' };
+      }
+
+      if (txt.includes('recordatorio') || txt.includes('pend')) {
+        return { confirmado: false, estadoHoy: 'pendiente' };
+      }
+
+      if (txt.includes('ausente') || txt.includes('cancel')) {
+        return { confirmado: false, estadoHoy: 'cancelado' };
+      }
+
+      return { confirmado: false, estadoHoy: '' };
+    }
+
+    function obtenerSlotsTurnoImportado(fechaISO, desde, hasta) {
+      const intervalo = obtenerIntervaloFechaAgenda(fechaISO) || 30;
+      const ini = minutosDesdeHora(desde);
+      let fin = minutosDesdeHora(hasta);
+
+      if (ini === null) return [];
+      if (fin === null || fin <= ini) fin = ini + intervalo;
+
+      const slots = [];
+      let guard = 0;
+      for (let min = ini; min < fin && guard < 96; min += intervalo, guard++) {
+        slots.push(horaDesdeMinutos(min));
+      }
+
+      return slots;
+    }
+
+    function obtenerValorFilaImport(row, idx) {
+      if (idx === undefined || idx === null || idx < 0) return '';
+      return row[idx] ?? '';
+    }
+
+    function construirTurnosImportadosDesdeFilas(filas) {
+      const headers = (filas[0] || []).map(v => String(v || '').trim());
+      const validacion = validarHeadersTurnosImport(headers);
+      if (!validacion.ok) {
+        return { errores: [validacion.mensaje], items: [] };
+      }
+
+      const { mapa, extras } = armarMapaHeadersTurnosImport(headers);
+      const errores = [];
+      const items = [];
+      const ocupadosImportacion = new Set();
+
+      filas.slice(1).forEach((row, idx) => {
+        const nroFila = idx + 2;
+        const vacia = !row || row.every(v => String(v || '').trim() === '');
+        if (vacia) return;
+
+        const fecha = parsearFechaImportTurnos(obtenerValorFilaImport(row, mapa.fecha));
+        const desde = normalizarHoraImportTurnos(obtenerValorFilaImport(row, mapa.desde));
+        const hasta = normalizarHoraImportTurnos(obtenerValorFilaImport(row, mapa.hasta));
+
+        const pacienteTxt = String(obtenerValorFilaImport(row, mapa.paciente) || '').trim();
+        let nombre = String(obtenerValorFilaImport(row, mapa.nombre) || '').trim();
+        let apellido = String(obtenerValorFilaImport(row, mapa.apellido) || '').trim();
+        if (!nombre && pacienteTxt) {
+          const dividido = dividirNombreCompleto(pacienteTxt);
+          nombre = dividido.nombre;
+          apellido = apellido || dividido.apellido;
+        }
+
+        const dni = String(obtenerValorFilaImport(row, mapa.dni) || '').replace(/\D/g, '');
+        const telefono = String(obtenerValorFilaImport(row, mapa.telefono) || '').trim();
+        const estado = estadoImportTurno(obtenerValorFilaImport(row, mapa.estado));
+        const tipo = String(obtenerValorFilaImport(row, mapa.tipo) || '').trim();
+
+        const datosExtra = {};
+        extras.forEach(col => {
+          const valor = String(obtenerValorFilaImport(row, col.idx) || '').trim();
+          if (valor) datosExtra[col.key] = valor;
+        });
+
+        if (!fecha) errores.push(`Fila ${nroFila}: fecha inválida.`);
+        if (!desde) errores.push(`Fila ${nroFila}: horario Desde inválido.`);
+        if (!dni) errores.push(`Fila ${nroFila}: DNI obligatorio.`);
+        if (!nombre) errores.push(`Fila ${nroFila}: nombre o paciente obligatorio.`);
+
+        const slots = fecha && desde ? obtenerSlotsTurnoImportado(fecha, desde, hasta) : [];
+        if (fecha && desde && slots.length === 0) errores.push(`Fila ${nroFila}: no se pudieron calcular horarios del turno.`);
+
+        slots.forEach(hora => {
+          const key = `${fecha}|${hora}`;
+          if (ocupadosImportacion.has(key)) {
+            errores.push(`Fila ${nroFila}: el horario ${convertirFechaLatina(fecha)} ${hora} se repite dentro del archivo.`);
+          }
+          ocupadosImportacion.add(key);
+
+          const ocupadoExistente = BASE_DATOS.some(t => String(t.fecha || '') === fecha && String(t.hora || '').slice(0, 5) === hora);
+          if (ocupadoExistente) {
+            errores.push(`Fila ${nroFila}: el horario ${convertirFechaLatina(fecha)} ${hora} ya está ocupado en la agenda.`);
+          }
+        });
+
+        if (errores.length) return;
+
+        const horaFin = hasta || horaDesdeMinutos((minutosDesdeHora(slots[slots.length - 1]) || minutosDesdeHora(desde) || 0) + (obtenerIntervaloFechaAgenda(fecha) || 30));
+
+        items.push({
+          fila: nroFila,
+          fecha,
+          horaInicio: slots[0],
+          horaFin,
+          slots,
+          dni,
+          nombre,
+          apellido,
+          telefono,
+          datosExtra,
+          confirmado: estado.confirmado,
+          estadoHoy: estado.estadoHoy,
+          tipo
+        });
+      });
+
+      return { errores, items };
+    }
+
+    async function importarTurnosDesdeArchivo(file) {
+      if (!file) return;
+      if (!CLINICA_ID) {
+        alert('No hay clínica activa para importar turnos.');
+        return;
+      }
+
+      try {
+        const filas = await leerTablaImportada(file);
+        if (!filas || filas.length < 2) {
+          alert('El archivo no tiene turnos para importar.');
+          return;
+        }
+
+        const { errores, items } = construirTurnosImportadosDesdeFilas(filas);
+
+        if (errores.length) {
+          alert('No se importó porque hay errores:\n\n' + errores.slice(0, 12).join('\n'));
+          return;
+        }
+
+        if (items.length === 0) {
+          alert('No hay filas válidas para importar.');
+          return;
+        }
+
+        const totalBloques = items.reduce((acc, item) => acc + item.slots.length, 0);
+        const ok = confirm(
+          `Se importarán ${items.length} turno${items.length === 1 ? '' : 's'} ` +
+          `(${totalBloques} bloque${totalBloques === 1 ? '' : 's'} de agenda).\n\n` +
+          'La importación no reemplaza turnos existentes. Si un paciente ya existe por DNI, se actualizará su ficha.\n\n' +
+          '¿Continuar?'
+        );
+
+        if (!ok) return;
+
+        let importados = 0;
+        const primeraFecha = items[0]?.fecha || '';
+
+        for (const item of items) {
+          const { data: paciente, error: errorPaciente } = await supabaseClient
+            .from('pacientes')
+            .upsert(payloadPacienteSupabase(item), { onConflict: 'clinica_id,dni' })
+            .select()
+            .single();
+
+          if (errorPaciente || !paciente) {
+            throw new Error(`Fila ${item.fila}: error guardando paciente: ${errorPaciente?.message || 'sin respuesta'}`);
+          }
+
+          const payloadBase = {
+            clinica_id: CLINICA_ID,
+            paciente_id: paciente.id,
+            fecha: item.fecha,
+            hora: item.slots[0],
+            confirmado: item.confirmado === true,
+            estado_hoy: item.estadoHoy || null,
+            extension: false,
+            parent_id: null
+          };
+
+          const { data: turnoBase, error: errorTurnoBase } = await supabaseClient
+            .from('turnos')
+            .insert(payloadBase)
+            .select()
+            .single();
+
+          if (errorTurnoBase || !turnoBase) {
+            const msg = errorTurnoBase?.code === '23505'
+              ? `Fila ${item.fila}: el horario ${convertirFechaLatina(item.fecha)} ${item.slots[0]} ya está ocupado.`
+              : `Fila ${item.fila}: error guardando turno: ${errorTurnoBase?.message || 'sin respuesta'}`;
+            throw new Error(msg);
+          }
+
+          if (item.slots.length > 1) {
+            const extensiones = item.slots.slice(1).map(hora => ({
+              clinica_id: CLINICA_ID,
+              paciente_id: paciente.id,
+              fecha: item.fecha,
+              hora,
+              confirmado: item.confirmado === true,
+              estado_hoy: item.estadoHoy || null,
+              extension: true,
+              parent_id: turnoBase.id
+            }));
+
+            const { error: errorExtensiones } = await supabaseClient
+              .from('turnos')
+              .insert(extensiones);
+
+            if (errorExtensiones) {
+              await supabaseClient
+                .from('turnos')
+                .delete()
+                .eq('clinica_id', CLINICA_ID)
+                .eq('id', turnoBase.id);
+
+              throw new Error(`Fila ${item.fila}: error guardando extensiones: ${errorExtensiones.message}`);
+            }
+          }
+
+          importados++;
+        }
+
+        await cargarDatosDesdeSupabase();
+
+        if (primeraFecha) {
+          const fechaImportada = fechaLocalDesdeISO(primeraFecha);
+          if (fechaImportada && !Number.isNaN(fechaImportada.getTime())) {
+            FECHA_LUNES_ACTUAL = new Date(fechaImportada);
+            FECHA_MOVIL_ACTUAL = new Date(fechaImportada);
+            sincronizarDatepickers(primeraFecha);
+          }
+        }
+
+        renderizarCalendarioCompleto();
+        calcularYRenderizarPacientes();
+        renderizarHoy();
+        mostrarToast(`Importación finalizada: ${importados} turno${importados === 1 ? '' : 's'} importado${importados === 1 ? '' : 's'}.`);
+      } catch (err) {
+        await cargarDatosDesdeSupabase();
+        renderizarCalendarioCompleto();
+        calcularYRenderizarPacientes();
+        alert('No se pudo importar turnos: ' + (err?.message || err));
+      }
     }
 
     function exportarFicheroActual() {
